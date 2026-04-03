@@ -1,0 +1,19 @@
+{
+  "dashboard": "विहंगावलोकन",
+  "profile": "प्रोफाइल",
+  "orders": "ऑर्डर्स",
+  "reports": "अहवाल",
+  "market": "बाजार",
+  "community": "समुदाय",
+  "logout": "लॉगआउट",
+  "search_placeholder": "मार्केटप्लेसमध्ये शोधा...",
+  "profile_settings": "प्रोफाइल सेटिंग्ज",
+  "personal_info": "वैयक्तिक माहिती",
+  "address": "पत्ता",
+  "phone": "फोन नंबर",
+  "update": "प्रोफाइल अद्यतनित करा",
+  "save_changes": "बदल जतन करा",
+  "change_photo": "फोटो बदला",
+  "language": "भाषा",
+  "hello": "नमस्कार"
+}

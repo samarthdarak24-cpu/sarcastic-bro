@@ -1,0 +1,19 @@
+{
+  "dashboard": "Overview",
+  "profile": "Profile",
+  "orders": "Orders",
+  "reports": "Reports",
+  "market": "Market",
+  "community": "Community",
+  "logout": "Logout",
+  "search_placeholder": "Search marketplace...",
+  "profile_settings": "Profile Settings",
+  "personal_info": "Personal Information",
+  "address": "Address",
+  "phone": "Phone Number",
+  "update": "Update Profile",
+  "save_changes": "Save Changes",
+  "change_photo": "Change Photo",
+  "language": "Language",
+  "hello": "Hello"
+}
