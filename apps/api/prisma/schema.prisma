@@ -1,0 +1,737 @@
+// ========================================================================
+//  Prisma Schema — ODOP Connect (Full Production Schema)
+//  Uses SQLite for hackathon portability. Switch to PostgreSQL by
+//  changing provider to "postgresql" and updating DATABASE_URL.
+// ========================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ─── ENUMS (modelled as String since SQLite has no native enums) ────────
+
+// UserRole: FARMER | BUYER | ADMIN
+// OrderStatus: PENDING | CONFIRMED | PROCESSING | SHIPPED | IN_TRANSIT | DELIVERED | CANCELLED
+// ProposalStatus: PENDING | ACCEPTED | REJECTED | COUNTER | EXPIRED
+// TenderStatus: OPEN | CLOSED | AWARDED | CANCELLED
+// NotificationType: ORDER | MESSAGE | PROPOSAL | TENDER | SYSTEM | KYC
+
+// ─── USER ──────────────────────────────────────────────────────────────
+
+model User {
+  id            String   @id @default(uuid())
+  name          String
+  email         String   @unique
+  password      String
+  phone         String?
+  role          String   @default("FARMER") // FARMER | BUYER | ADMIN
+  district      String?
+  state         String?
+  address       String?
+  language      String   @default("en")
+  avatarUrl     String?
+  kycStatus     String   @default("PENDING") // PENDING | VERIFIED | REJECTED
+  kycDocumentUrl String?
+  aadhaarNumber String?
+  panNumber     String?
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Reputation Score Fields
+  ratingAvg           Float    @default(5.0)
+  totalOrders         Int      @default(0)
+  successfulDeliveries Int      @default(0)
+  cancellationRate    Float    @default(0.0)
+  reputationScore     Float    @default(100.0)
+
+  // Relations
+  products          Product[]
+  ordersAsBuyer     Order[]          @relation("BuyerOrders")
+  ordersAsFarmer    Order[]          @relation("FarmerOrders")
+  sentMessages      Message[]        @relation("SentMessages")
+  receivedMessages  Message[]        @relation("ReceivedMessages")
+  proposalsSent     Proposal[]       @relation("ProposalSender")
+  proposalsReceived Proposal[]       @relation("ProposalReceiver")
+  reviewsGiven      Review[]         @relation("ReviewAuthor")
+  reviewsReceived   Review[]         @relation("ReviewTarget")
+  notifications     Notification[]
+  tenders           Tender[]
+  tenderApps        TenderApplication[]
+  sampleRequests    SampleRequest[]
+  contractsAsBuyer  Contract[]       @relation("ContractBuyer")
+  contractsAsFarmer Contract[]       @relation("ContractFarmer")
+  refreshTokens     RefreshToken[]
+  chatConversations1 ChatConversation[] @relation("ConversationUser1")
+  chatConversations2 ChatConversation[] @relation("ConversationUser2")
+  chatMessages      ChatMessage[]
+  offersAsSender    Offer[]          @relation("OfferSender")
+  offersAsReceiver  Offer[]          @relation("OfferReceiver")
+  paymentsMade      Payment[]        @relation("PaymentBuyer")
+  paymentsReceived  Payment[]        @relation("PaymentSeller")
+  scans             CropScan[]       @relation("FarmerScans")
+  autoSellRules     AutoSellRule[]
+  behaviorEvents    BehaviorEvent[]
+  blockchainTraces  BlockchainTrace[] @relation("FarmerTraces")
+  escrowAsBuyer     EscrowOrder[]    @relation("EscrowBuyer")
+  escrowAsFarmer    EscrowOrder[]    @relation("EscrowFarmer")
+  ratingsGivenOnChain    OnChainRating[] @relation("RatingRater")
+  ratingsReceivedOnChain OnChainRating[] @relation("RatingTarget")
+  insurancePolicies   InsurancePolicy[] @relation("FarmerInsurance")
+
+  @@index([email])
+  @@index([role])
+  @@index([district])
+}
+
+// ─── REFRESH TOKEN ─────────────────────────────────────────────────────
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([userId])
+}
+
+// ─── PRODUCT ───────────────────────────────────────────────────────────
+
+model Product {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  category    String
+  price       Float
+  unit        String   @default("kg")
+  quantity    Float    @default(0)
+  district    String
+  state       String
+  imageUrls   String?  // JSON array serialized as string
+  qualityGrade String?
+  qualityScore Float?
+  isODOP      Boolean  @default(false)
+  isActive    Boolean  @default(true)
+  lat         Float?
+  lng         Float?
+  address     String?
+  harvestDate DateTime?
+  farmerId    String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  farmer      User     @relation(fields: [farmerId], references: [id])
+  orders      Order[]
+  proposals   Proposal[]
+  reviews     Review[]
+  sampleRequests SampleRequest[]
+  offers      Offer[]
+  autoSellRules AutoSellRule[]
+  blockchainTraces BlockchainTrace[]
+  insurancePolicies InsurancePolicy[]
+
+  @@index([farmerId])
+  @@index([category])
+  @@index([district])
+  @@index([isActive])
+}
+
+// ─── ORDER ─────────────────────────────────────────────────────────────
+
+model Order {
+  id            String   @id @default(uuid())
+  orderNumber   String   @unique @default(uuid())
+  buyerId       String
+  farmerId      String
+  productId     String
+  quantity      Float
+  totalPrice    Float
+  status        String   @default("PENDING") // OrderStatus
+  paymentMethod String?
+  paymentStatus String   @default("PENDING")
+  shippingAddress String?
+  trackingNumber String?
+  notes         String?
+  confirmedAt   DateTime?
+  shippedAt     DateTime?
+  deliveredAt   DateTime?
+  cancelledAt   DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  buyer   User    @relation("BuyerOrders", fields: [buyerId], references: [id])
+  farmer  User    @relation("FarmerOrders", fields: [farmerId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+  logistics Logistics[]
+  escrowOrders EscrowOrder[]
+
+  @@index([buyerId])
+  @@index([farmerId])
+  @@index([status])
+  @@index([orderNumber])
+}
+
+// ─── MESSAGE ───────────────────────────────────────────────────────────
+
+model Message {
+  id         String   @id @default(uuid())
+  senderId   String
+  receiverId String
+  content    String
+  type       String   @default("text") // text | image | voice
+  fileUrl    String?
+  isRead     Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  sender   User @relation("SentMessages", fields: [senderId], references: [id])
+  receiver User @relation("ReceivedMessages", fields: [receiverId], references: [id])
+
+  @@index([senderId])
+  @@index([receiverId])
+  @@index([createdAt])
+}
+
+// ─── PROPOSAL ──────────────────────────────────────────────────────────
+
+model Proposal {
+  id          String   @id @default(uuid())
+  senderId    String
+  receiverId  String
+  productId   String
+  quantity    Float
+  pricePerUnit Float
+  totalPrice  Float
+  message     String?
+  status      String   @default("PENDING") // ProposalStatus
+  validUntil  DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  sender   User    @relation("ProposalSender", fields: [senderId], references: [id])
+  receiver User    @relation("ProposalReceiver", fields: [receiverId], references: [id])
+  product  Product @relation(fields: [productId], references: [id])
+
+  @@index([senderId])
+  @@index([receiverId])
+  @@index([status])
+}
+
+// ─── REVIEW ────────────────────────────────────────────────────────────
+
+model Review {
+  id        String   @id @default(uuid())
+  authorId  String
+  targetId  String
+  productId String?
+  rating    Int      // 1-5
+  comment   String?
+  createdAt DateTime @default(now())
+
+  author  User     @relation("ReviewAuthor", fields: [authorId], references: [id])
+  target  User     @relation("ReviewTarget", fields: [targetId], references: [id])
+  product Product? @relation(fields: [productId], references: [id])
+
+  @@index([targetId])
+  @@index([productId])
+}
+
+// ─── CONTRACT ──────────────────────────────────────────────────────────
+
+model Contract {
+  id            String   @id @default(uuid())
+  contractNumber String  @unique @default(uuid())
+  buyerId       String
+  farmerId      String
+  terms         String   // JSON string
+  totalValue    Float
+  status        String   @default("DRAFT") // DRAFT | ACTIVE | COMPLETED | TERMINATED
+  pdfUrl        String?
+  blockchainHash String?
+  qrCode        String?
+  signedAt      DateTime?
+  expiresAt     DateTime?
+  signedByFarmer Boolean   @default(false)
+  signedByBuyer  Boolean   @default(false)
+  
+  // Pre-Booking / Demand Lock Fields
+  isPreBooking  Boolean  @default(false)
+  productName   String   @default("Agri Product")
+  targetDate    DateTime?
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  buyer  User @relation("ContractBuyer", fields: [buyerId], references: [id])
+  farmer User @relation("ContractFarmer", fields: [farmerId], references: [id])
+
+  @@index([buyerId])
+  @@index([farmerId])
+  @@index([status])
+  @@index([isPreBooking])
+}
+
+// ─── NOTIFICATION ──────────────────────────────────────────────────────
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  type      String   @default("SYSTEM") // NotificationType
+  title     String
+  message   String
+  isRead    Boolean  @default(false)
+  metadata  String?  // JSON string for extra data
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([isRead])
+  @@index([type])
+}
+
+// ─── TENDER ────────────────────────────────────────────────────────────
+
+model Tender {
+  id            String   @id @default(uuid())
+  creatorId     String
+  title         String
+  description   String
+  category      String
+  quantity      Float
+  unit          String   @default("kg")
+  maxPrice      Float
+  status        String   @default("OPEN") // TenderStatus
+  deadline      DateTime
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  creator      User @relation(fields: [creatorId], references: [id])
+  applications TenderApplication[]
+
+  @@index([creatorId])
+  @@index([status])
+  @@index([category])
+}
+
+// ─── TENDER APPLICATION ────────────────────────────────────────────────
+
+model TenderApplication {
+  id          String   @id @default(uuid())
+  tenderId    String
+  applicantId String
+  priceOffer  Float
+  message     String?
+  status      String   @default("PENDING") // PENDING | ACCEPTED | REJECTED
+  createdAt   DateTime @default(now())
+
+  tender    Tender @relation(fields: [tenderId], references: [id])
+  applicant User   @relation(fields: [applicantId], references: [id])
+
+  @@index([tenderId])
+  @@index([applicantId])
+}
+
+// ─── SAMPLE REQUEST ────────────────────────────────────────────────────
+
+model SampleRequest {
+  id          String   @id @default(uuid())
+  requesterId String
+  productId   String
+  quantity    Float
+  message     String?
+  status      String   @default("PENDING") // PENDING | APPROVED | SHIPPED | RECEIVED
+  shippingAddress String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  requester User    @relation(fields: [requesterId], references: [id])
+  product   Product @relation(fields: [productId], references: [id])
+
+  @@index([requesterId])
+  @@index([productId])
+}
+
+// ─── LOGISTICS ─────────────────────────────────────────────────────────
+
+model Logistics {
+  id            String   @id @default(uuid())
+  orderId       String
+  provider      String
+  trackingId    String?
+  status        String   @default("PENDING") // PENDING | PICKED_UP | IN_TRANSIT | DELIVERED
+  fromLocation  String
+  toLocation    String
+  estimatedDate DateTime?
+  actualDate    DateTime?
+  temperature   Float?
+  humidity      Float?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  order Order @relation(fields: [orderId], references: [id])
+
+  @@index([orderId])
+  @@index([trackingId])
+}
+
+// ─── CHAT CONVERSATION ─────────────────────────────────────────────────
+
+model ChatConversation {
+  id        String   @id @default(uuid())
+  user1Id   String
+  user2Id   String
+  lastMessageAt DateTime @default(now())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user1 User @relation("ConversationUser1", fields: [user1Id], references: [id])
+  user2 User @relation("ConversationUser2", fields: [user2Id], references: [id])
+  messages ChatMessage[]
+
+  @@unique([user1Id, user2Id])
+  @@index([user1Id])
+  @@index([user2Id])
+}
+
+// ─── CHAT MESSAGE ──────────────────────────────────────────────────────
+
+model ChatMessage {
+  id             String   @id @default(uuid())
+  conversationId String
+  senderId       String
+  content        String
+  type           String   @default("text") // text | image | voice | file
+  fileUrl        String?
+  fileName       String?
+  isRead         Boolean  @default(false)
+  readAt         DateTime?
+  createdAt      DateTime @default(now())
+
+  conversation ChatConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender       User             @relation(fields: [senderId], references: [id])
+
+  @@index([conversationId])
+  @@index([senderId])
+  @@index([createdAt])
+}
+
+// ─── QUALITY GRADE (AI Results) ────────────────────────────────────────
+
+model QualityGrade {
+  id            String   @id @default(uuid())
+  productId     String?
+  imageUrl      String
+  grade         String   // A | B | C | D
+  score         Float    // 0-100
+  defectCount   Int      @default(0)
+  defects       String?  // JSON array of defect descriptions
+  heatmapUrl    String?  // URL to heatmap overlay image
+  recommendations String?  // JSON array
+  model         String   @default("v1") // Model version
+  confidence    Float    @default(0.95) // Confidence score
+  processedAt   DateTime @default(now())
+  createdAt     DateTime @default(now())
+
+  @@index([productId])
+  @@index([grade])
+  @@index([createdAt])
+}
+
+// ─── DEMAND FORECAST ───────────────────────────────────────────────────
+
+model Forecast {
+  id             String   @id @default(uuid())
+  farmerId       String?
+  buyerId        String?
+  productId      String?
+  category       String?
+  forecastData   String   // JSON: [{month, predicted, lower, upper}, ...]
+  accuracy       Float    // Accuracy percentage (0-100)
+  model          String   @default("arima") // Model type
+  modelVersion   String   @default("v1")
+  seasonality    String?  // JSON: seasonal patterns
+  trend          String?  // JSON: trend analysis
+  insights       String?  // JSON: insights and recommendations
+  validUntil     DateTime
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([farmerId])
+  @@index([buyerId])
+  @@index([productId])
+  @@index([category])
+  @@index([createdAt])
+}
+
+// ─── PRICE OFFER (Negotiation) ─────────────────────────────────────────
+
+model Offer {
+  id             String   @id @default(uuid())
+  productId      String
+  senderId       String
+  receiverId     String
+  quantity       Float
+  pricePerUnit   Float
+  totalPrice     Float
+  validUntil     DateTime
+  status         String   @default("PENDING") // PENDING | ACCEPTED | REJECTED | EXPIRED
+  counterOffers  Int      @default(0) // Number of counter offers
+  notes          String?
+  createdAt      DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  product  Product @relation(fields: [productId], references: [id])
+  sender   User    @relation("OfferSender", fields: [senderId], references: [id])
+  receiver User    @relation("OfferReceiver", fields: [receiverId], references: [id])
+
+  @@index([productId])
+  @@index([senderId])
+  @@index([receiverId])
+  @@index([status])
+}
+
+// ─── PAYMENT ───────────────────────────────────────────────────────────
+
+model Payment {
+  id              String   @id @default(uuid())
+  orderId         String?
+  contractId      String?
+  buyerId         String
+  sellerId        String
+  amount          Float
+  currency        String   @default("INR")
+  paymentMethod   String   // UPI | CARD | BANK_TRANSFER | WALLET
+  transactionId   String?  @unique
+  status          String   @default("PENDING") // PENDING | COMPLETED | FAILED | REFUND_INITIATED | REFUNDED
+  paymentGateway  String   @default("razorpay")
+  refundAmount    Float?
+  refundReason    String?
+  metadata        String?  // JSON: additional data
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  buyer  User @relation("PaymentBuyer", fields: [buyerId], references: [id])
+  seller User @relation("PaymentSeller", fields: [sellerId], references: [id])
+
+  @@index([orderId])
+  @@index([buyerId])
+  @@index([sellerId])
+  @@index([status])
+  @@index([transactionId])
+}
+
+// ─── AUDIT LOG ─────────────────────────────────────────────────────────
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  action    String   // CREATE | UPDATE | DELETE | LOGIN | LOGOUT | etc.
+  entity    String   // USER | PRODUCT | ORDER | etc.
+  entityId  String?
+  changes   String?  // JSON: what changed {before, after}
+  ipAddress String?
+  userAgent String?
+  status    String   @default("SUCCESS") // SUCCESS | FAILED
+  errorMsg  String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([action])
+  @@index([entity])
+  @@index([createdAt])
+}
+
+// ─── Add relations to User model relations (update in User model) ─────
+
+// Note: Update User model to include:
+// - chatConversations1: ChatConversation[] @relation("ConversationUser1")
+// - chatConversations2: ChatConversation[] @relation("ConversationUser2")
+// - chatMessages: ChatMessage[]
+// - offersAsSender: Offer[] @relation("OfferSender")
+// - offersAsReceiver: Offer[] @relation("OfferReceiver")
+// - paymentsMade: Payment[] @relation("PaymentBuyer")
+// ─── CROP SCAN (AI History) ───────────────────────────────────────────
+
+model CropScan {
+  id              String   @id @default(uuid())
+  farmerId        String
+  cropName        String
+  cropType        String
+  grade           String
+  confidence      Float
+  disease         String   @default("None")
+  imageUrl        String
+  bboxes          String?  // JSON string
+  recommendations String?  // JSON string
+  processedAt     Int      // processing time in ms
+  createdAt       DateTime @default(now())
+
+  farmer          User     @relation("FarmerScans", fields: [farmerId], references: [id])
+
+  @@index([farmerId])
+  @@index([grade])
+}
+
+// ─── AUTO-SELL RULE (Smart Deal Engine) ──────────────────────────────────
+
+model AutoSellRule {
+  id          String   @id @default(uuid())
+  farmerId    String
+  productId   String
+  minPrice    Float
+  quantity    Float
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  farmer      User     @relation(fields: [farmerId], references: [id])
+  product     Product  @relation(fields: [productId], references: [id])
+
+  @@index([farmerId])
+  @@index([productId])
+  @@index([isActive])
+}
+
+// ─── BEHAVIOR EVENT (Behavioral AI) ──────────────────────────────────────
+
+model BehaviorEvent {
+  id        String   @id @default(uuid())
+  userId    String
+  action    String   // VIEW | SEARCH | BUY | SELL | LOGOUT
+  category  String   // PRODUCT | CONTRACT | LOGISTICS
+  metadata  String?  // JSON string
+  timestamp DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([action])
+  @@index([timestamp])
+}
+
+// ─── BLOCKCHAIN TRACE (Supply Chain Traceability) ──────────────────────────
+
+model BlockchainTrace {
+  id            String   @id @default(uuid())
+  productId     String
+  farmerId      String
+  eventType     String   // SEED | CULTIVATION | HARVEST | QUALITY | LOGISTICS | DELIVERED
+  dataHash      String   // SHA256 hash of the event payload
+  prevHash      String   @default("0x0000000000000000000000000000000000000000000000000000000000000000")
+  blockIndex    Int      @default(0)
+  location      String?  // lat,lng or place name
+  qualityGrade  String?  // A+ | A | B | C
+  metadata      String?  // JSON string with extra details
+  txHash        String?  // simulated transaction hash
+  verified      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+
+  product       Product  @relation(fields: [productId], references: [id])
+  farmer        User     @relation("FarmerTraces", fields: [farmerId], references: [id])
+
+  @@index([productId])
+  @@index([farmerId])
+  @@index([eventType])
+  @@index([dataHash])
+}
+
+// ─── ESCROW ORDER (Smart Contract Payment System) ──────────────────────────
+
+model EscrowOrder {
+  id               String   @id @default(uuid())
+  orderId          String
+  buyerId          String
+  farmerId         String
+  amount           Float
+  status           String   @default("HELD") // HELD | RELEASED | REFUNDED | DISPUTED
+  escrowAddress    String?  // simulated smart-contract address
+  depositTxHash    String?  // simulated deposit transaction
+  releaseTxHash    String?  // simulated release transaction
+  buyerConfirmed   Boolean  @default(false)
+  farmerDelivered  Boolean  @default(false)
+  disputeReason    String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  releasedAt       DateTime?
+
+  order            Order    @relation(fields: [orderId], references: [id])
+  buyer            User     @relation("EscrowBuyer", fields: [buyerId], references: [id])
+  farmer           User     @relation("EscrowFarmer", fields: [farmerId], references: [id])
+
+  @@index([orderId])
+  @@index([buyerId])
+  @@index([farmerId])
+  @@index([status])
+}
+
+// ─── ON-CHAIN RATING (Decentralized Reputation) ────────────────────────────
+
+model OnChainRating {
+  id          String   @id @default(uuid())
+  targetId    String   // userId being rated
+  raterId     String   // userId giving the rating
+  rating      Int      // 1-5
+  txHash      String?  // simulated blockchain tx
+  dataHash    String?  // SHA256 of rating payload
+  comment     String?
+  createdAt   DateTime @default(now())
+
+  target      User     @relation("RatingTarget", fields: [targetId], references: [id])
+  rater       User     @relation("RatingRater", fields: [raterId], references: [id])
+
+  @@index([targetId])
+  @@index([raterId])
+}
+
+// ─── INSURANCE POLICY (Price Protection Engine) ───────────────────────────
+
+model InsurancePolicy {
+  id            String   @id @default(uuid())
+  policyNumber  String   @unique @default(uuid())
+  farmerId      String
+  productId     String
+  insuredPrice  Float    // Min guaranteed price
+  quantity      Float
+  totalValue    Float    // insuredPrice * quantity
+  premium       Float    // Cost paid by farmer
+  status        String   @default("ACTIVE") // ACTIVE | EXPIRED | CLAIMED | CANCELLED
+  startDate     DateTime @default(now())
+  endDate       DateTime
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  farmer        User     @relation("FarmerInsurance", fields: [farmerId], references: [id])
+  product       Product  @relation(fields: [productId], references: [id])
+  claims        InsuranceClaim[]
+
+  @@index([farmerId])
+  @@index([productId])
+  @@index([status])
+}
+
+// ─── INSURANCE CLAIM (Price Protection Engine) ────────────────────────────
+
+model InsuranceClaim {
+  id                String   @id @default(uuid())
+  policyId          String
+  marketPriceAtClaim Float
+  payoutAmount      Float
+  status            String   @default("PENDING") // PENDING | APPROVED | DISBURSED | REJECTED
+  proofUrl          String?  // Mandi price report or similar
+  processedAt       DateTime?
+  createdAt         DateTime @default(now())
+
+  policy            InsurancePolicy @relation(fields: [policyId], references: [id])
+
+  @@index([policyId])
+  @@index([status])
+}

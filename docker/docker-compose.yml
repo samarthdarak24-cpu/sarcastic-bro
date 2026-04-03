@@ -1,0 +1,169 @@
+# ========================================================================
+#  Docker Compose — ODOP Connect Full Stack + Blockchain Layer
+#  PostgreSQL + Redis + Elasticsearch + Backend + Frontend + AI + Ganache
+# ========================================================================
+
+version: "3.8"
+
+services:
+  # ─── PostgreSQL ────────────────────────────────────────────────────
+  postgres:
+    image: postgres:15-alpine
+    container_name: odop-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-odop}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+      POSTGRES_DB: ${POSTGRES_DB:-odopconnect}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - odop-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U odop -d odopconnect"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── Redis ─────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: odop-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - odop-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── Elasticsearch ─────────────────────────────────────────────────
+  elasticsearch:
+    image: elasticsearch:8.13.0
+    container_name: odop-elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    ports:
+      - "9200:9200"
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+    networks:
+      - odop-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+
+  # ─── Ganache (Local Ethereum Blockchain) ────────────────────────────
+  ganache:
+    image: trufflesuite/ganache:latest
+    container_name: odop-ganache
+    ports:
+      - "8545:8545"
+    command: >
+      --deterministic
+      --mnemonic "odop connect agri blockchain supply chain smart contract"
+      --networkId 1337
+      --accounts 10
+      --defaultBalanceEther 1000
+    networks:
+      - odop-network
+    restart: unless-stopped
+
+  # ─── Backend (Node.js + Express + Prisma + Blockchain) ──────────────
+  backend:
+    build:
+      context: ../apps/api
+      dockerfile: Dockerfile
+    container_name: odop-backend
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+      DATABASE_URL: postgresql://${POSTGRES_USER:-odop}:${POSTGRES_PASSWORD:-password}@postgres:5432/${POSTGRES_DB:-odopconnect}?schema=public
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:-odop-access-secret-prod}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-odop-refresh-secret-prod}
+      JWT_ACCESS_EXPIRY: ${JWT_ACCESS_EXPIRY:-15m}
+      JWT_REFRESH_EXPIRY: ${JWT_REFRESH_EXPIRY:-7d}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000}
+      UPLOAD_DIR: ./uploads
+      ELASTICSEARCH_URL: http://elasticsearch:9200
+      REDIS_URL: redis://redis:6379
+      BLOCKCHAIN_RPC_URL: http://ganache:8545
+      BLOCKCHAIN_NETWORK: sepolia
+    ports:
+      - "4000:4000"
+    volumes:
+      - backend_uploads:/app/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+    networks:
+      - odop-network
+    restart: unless-stopped
+
+  # ─── Frontend (Next.js) ────────────────────────────────────────────
+  frontend:
+    build:
+      context: ../apps/web
+      dockerfile: Dockerfile
+    container_name: odop-frontend
+    environment:
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:4000}
+      NEXT_PUBLIC_AI_SERVICE_URL: ${NEXT_PUBLIC_AI_SERVICE_URL:-http://localhost:8000}
+      NEXT_PUBLIC_WS_URL: ${NEXT_PUBLIC_WS_URL:-ws://localhost:4000}
+      NEXT_PUBLIC_ENABLE_OFFLINE: "true"
+      NEXT_PUBLIC_ENABLE_AI: "true"
+      NEXT_PUBLIC_BLOCKCHAIN_EXPLORER: "https://sepolia.etherscan.io"
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    networks:
+      - odop-network
+    restart: unless-stopped
+
+  # ─── AI Service (FastAPI) ──────────────────────────────────────────
+  ai-service:
+    build:
+      context: ../apps/ai-service
+      dockerfile: Dockerfile
+    container_name: odop-ai-service
+    environment:
+      PYTHONUNBUFFERED: 1
+    ports:
+      - "8000:8000"
+    networks:
+      - odop-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+
+# ─── Volumes ───────────────────────────────────────────────────────────
+volumes:
+  postgres_data:
+  redis_data:
+  es_data:
+  backend_uploads:
+
+# ─── Network ──────────────────────────────────────────────────────────
+networks:
+  odop-network:
+    driver: bridge

@@ -1,0 +1,15 @@
+node_modules/
+apps/*/node_modules/
+apps/api/.env
+apps/api/dist/
+apps/web/.next/
+apps/web/tsconfig.tsbuildinfo
+apps/ai-service/venv/
+apps/ai-service/app/__pycache__/
+apps/ai-service/app/**/__pycache__/
+*.log
+*.tsbuildinfo
+.env
+.env.*
+dist/
+coverage/
