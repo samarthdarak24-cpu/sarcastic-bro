@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { AIService } from "./ai.service";
+import { getSocketService } from "../../services/socketService";
 
 /**
  * Controller to handle AI-related requests.
@@ -19,6 +20,24 @@ export class AIController {
         product_type: product_type as string,
         product_name: product_name as string
       });
+      
+      // Emit real-time quality scan result
+      try {
+        const socketService = getSocketService();
+        const userId = (req as any).user?.id;
+        if (userId) {
+          socketService.emitQualityScanResult(userId, {
+            productName: product_name,
+            grade: result.grade,
+            score: result.score,
+            defects: result.defects,
+            timestamp: new Date()
+          });
+        }
+      } catch (err) {
+        console.error('Socket emission failed:', err);
+      }
+      
       res.status(200).json({ success: true, data: result });
     } catch (error: any) {
       Next(error);

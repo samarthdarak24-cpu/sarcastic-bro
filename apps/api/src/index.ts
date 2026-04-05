@@ -8,12 +8,17 @@ import app from "./app";
 import { env } from "./config/env";
 import prisma from "./prisma/client";
 import { SocketService } from "./config/socket";
+import { initializeSocketService } from "./services/socketService";
 
 // Create HTTP server
 const server = http.createServer(app);
 
 // Initialize Socket.IO with JWT auth and room-based architecture
 SocketService.initialize(server);
+
+// Initialize Socket Service for event emissions
+const io = SocketService.getIO();
+initializeSocketService(io);
 
 /* ─── Server Start ──────────────────────────────────────────────────── */
 

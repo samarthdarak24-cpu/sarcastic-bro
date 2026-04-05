@@ -1,0 +1,20 @@
+[
+  "﻿src/components/dashboard/buyer/OrderTracker.tsx(41,93): error TS2739: Type '{ name: string; }' is missing the following properties from type '{ id: string; name: string; price: number; unit: string; imageUrls?: string | undefined; }': id, price, unit",
+  "src/components/dashboard/buyer/OrderTracker.tsx(42,92): error TS2739: Type '{ name: string; }' is missing the following properties from type '{ id: string; name: string; price: number; unit: string; imageUrls?: string | undefined; }': id, price, unit",
+  "src/components/dashboard/buyer/OrderTracker.tsx(123,46): error TS2322: Type '{ children: \"PENDING\" | \"CONFIRMED\" | \"PROCESSING\" | \"SHIPPED\" | \"IN_TRANSIT\" | \"DELIVERED\" | \"CANCELLED\"; stone: string; className: string; }' is not assignable to type 'IntrinsicAttributes & HTMLAttributes<HTMLSpanElement> & { tone?: \"brand\" | \"amber\" | \"ink\" | undefined; }'.",
+  "src/components/dashboard/buyer/OrderTracker.tsx(132,50): error TS2339: Property 'seller' does not exist on type 'Order'.",
+  "src/components/dashboard/buyer/OrderTracker.tsx(142,113): error TS2339: Property 'price' does not exist on type 'Order'.",
+  "src/components/dashboard/buyer/SourcingSpace.tsx(188,53): error TS2552: Cannot find name 'Skeleton'. Did you mean 'Selection'?",
+  "src/components/dashboard/buyer/SupplierInsights.tsx(156,46): error TS2322: Type '{ children: (string | Element)[]; key: string; variant: string; className: string; }' is not assignable to type 'IntrinsicAttributes & HTMLAttributes<HTMLSpanElement> & { tone?: \"brand\" | \"amber\" | \"ink\" | undefined; }'.",
+  "src/components/dashboard/buyer/TrustReviews.tsx(240,47): error TS2304: Cannot find name 'Package'.",
+  "src/components/dashboard/farmer/AddProductModal.tsx(286,34): error TS2769: No overload matches this call.",
+  "  Overload 1 of 2, '(props: MapPickerProps, context?: any): string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | ... 4 more ... | undefined', gave the following error.",
+  "  Overload 2 of 2, '(props: MapPickerProps): string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | ... 4 more ... | undefined', gave the following error.",
+  "src/components/dashboard/farmer/CropQualityDetector.tsx(185,14): error TS2552: Cannot find name 'Input'. Did you mean 'oninput'?",
+  "src/components/dashboard/farmer/OrderControlCenter.tsx(184,118): error TS2339: Property 'price' does not exist on type 'Order'.",
+  "src/components/dashboard/farmer/OrderControlCenter.tsx(238,109): error TS2339: Property 'price' does not exist on type 'Order'.",
+  "src/components/dashboard/farmer/OrderControlCenter.tsx(242,104): error TS2339: Property 'price' does not exist on type 'Order'.",
+  "src/components/dashboard/farmer/OrderControlCenter.tsx(254,60): error TS2339: Property 'price' does not exist on type 'Order'.",
+  "src/components/dashboard/farmer/ProductManagement.tsx(186,24): error TS2322: Type '{ title: string; description: string; action: Element; }' is not assignable to type 'IntrinsicAttributes & EmptyStateProps'.",
+  "src/components/dashboard/farmer/ProductManagement.tsx(193,83): error TS2322: Type '{ isOpen: boolean; onClose: () => void; onAdd: () => Promise<void>; }' is not assignable to type 'IntrinsicAttributes & AddProductModalProps'."
+]

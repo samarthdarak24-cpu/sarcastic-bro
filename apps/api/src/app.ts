@@ -14,9 +14,10 @@ import { errorMiddleware } from "./middleware/error.middleware";
 import authRoutes from "./modules/auth/auth.routes";
 import userRoutes from "./modules/user/user.routes";
 import productRoutes from "./modules/product/product.routes";
+import productHubRoutes from "./modules/product/product-hub.routes";
 import orderRoutes from "./modules/order/order.routes";
 import messageRoutes from "./modules/message/message.routes";
-// import proposalRoutes from "./modules/proposal/proposal.routes";
+import proposalRoutes from "./modules/proposal/proposal.routes";
 import reviewRoutes from "./modules/review/review.routes";
 import notificationRoutes from "./modules/notification/notification.routes";
 import tenderRoutes from "./modules/tender/tender.routes";
@@ -33,6 +34,11 @@ import agricultureRoutes from "./modules/agriculture/agriculture.routes";
 import buyerRoutes from "./modules/buyer/buyer.routes";
 import paymentRoutes from "./routes/paymentRoutes";
 import analyticsRoutes from "./routes/analyticsRoutes";
+import insightsRoutes from "./modules/insights/insights.routes";
+import aggregationRoutes from "./modules/aggregation/aggregation.routes";
+import reputationRoutes from "./modules/reputation/reputation.routes";
+import supplierInsightsRoutes from "./modules/supplier-insights/supplier-insights.routes";
+import voiceRoutes from "./modules/voice/voice.routes";
 
 const app = express();
 
@@ -78,9 +84,10 @@ app.get("/health", (_req, res) => {
 app.use("/auth", authRoutes);
 app.use("/user", userRoutes);
 app.use("/products", productRoutes);
+app.use("/product-hub", productHubRoutes);
 app.use("/orders", orderRoutes);
 app.use("/messages", messageRoutes);
-// app.use("/proposals", proposalRoutes);
+app.use("/proposals", proposalRoutes);
 app.use("/reviews", reviewRoutes);
 app.use("/notifications", notificationRoutes);
 app.use("/tenders", tenderRoutes);
@@ -97,6 +104,11 @@ app.use("/agriculture", agricultureRoutes);
 app.use("/buyer", buyerRoutes);
 app.use("/payments", paymentRoutes);
 app.use("/analytics", analyticsRoutes);
+app.use("/insights", insightsRoutes);
+app.use("/aggregation", aggregationRoutes);
+app.use("/reputation", reputationRoutes);
+app.use("/supplier-insights", supplierInsightsRoutes);
+app.use("/voice", voiceRoutes);
 
 /* ─── 404 Handler ───────────────────────────────────────────────────── */
 

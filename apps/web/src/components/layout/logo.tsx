@@ -7,7 +7,7 @@ export function Logo() {
         O
       </span>
       <span className="font-heading text-lg font-semibold tracking-[-0.04em] text-[var(--text-primary)]">
-        ODOP Connect
+        FarmGuard Connect
       </span>
     </Link>
   );

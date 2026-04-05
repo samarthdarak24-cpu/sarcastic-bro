@@ -43,8 +43,10 @@ export function DashboardShell({
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "rounded-2xl px-4 py-3 text-sm font-medium text-[var(--text-secondary)] transition-all duration-200 hover:bg-white hover:text-[var(--text-primary)] hover:translate-x-1",
-                  pathname === item.href && "bg-white text-[var(--text-primary)] shadow-[0_12px_30px_rgba(52,37,20,0.08)]",
+                  "sidebar-nav-item relative rounded-2xl px-4 py-3 text-sm font-medium text-[var(--text-secondary)] transition-all duration-250 hover:bg-white hover:text-[var(--brand-primary)]",
+                  pathname === item.href 
+                    ? "bg-white text-[var(--brand-primary)] shadow-[inset_3px_0_0_var(--brand-primary),0_0_20px_rgba(34,197,94,0.08)]" 
+                    : "hover:translate-x-1",
                 )}
               >
                 {item.label}

@@ -1,45 +1,82 @@
 import { Request, Response } from "express";
-import { NotificationService } from "./notification.service";
-import { sendSuccess, sendPaginated } from "../../utils/response";
+import prisma from "../../prisma/client";
+import { getSocketService } from "../../services/socketService";
 
 export class NotificationController {
-  static async getMyNotifications(req: Request, res: Response) {
-    const { unread, page = "1", limit = "20" } = req.query;
-    const result = await NotificationService.getUserNotifications(req.user!.userId, {
-      unreadOnly: unread === "true",
-      page: Number(page),
-      limit: Number(limit),
+  // GET /notifications
+  static async getAll(req: Request, res: Response) {
+    const userId = req.user!.userId;
+    const { page = "1", limit = "20", unreadOnly } = req.query;
+    const skip = (Number(page) - 1) * Number(limit);
+
+    const where: any = { userId };
+    if (unreadOnly === "true") where.isRead = false;
+
+    const [notifications, total, unreadCount] = await Promise.all([
+      prisma.notification.findMany({
+        where,
+        orderBy: { createdAt: "desc" },
+        skip,
+        take: Number(limit),
+      }),
+      prisma.notification.count({ where }),
+      prisma.notification.count({ where: { userId, isRead: false } }),
+    ]);
+
+    res.json({
+      success: true,
+      data: { notifications, total, unreadCount, page: Number(page), limit: Number(limit) },
     });
-    return sendPaginated(res, result.notifications, result.total, Number(page), Number(limit));
   }
 
-  static async getUnreadCount(req: Request, res: Response) {
-    const count = await NotificationService.getUnreadCount(req.user!.userId);
-    return sendSuccess(res, { unreadCount: count });
+  // PATCH /notifications/read-all
+  static async markAllRead(req: Request, res: Response) {
+    const userId = req.user!.userId;
+    await prisma.notification.updateMany({
+      where: { userId, isRead: false },
+      data: { isRead: true },
+    });
+    res.json({ success: true, message: "All notifications marked as read" });
   }
 
-  static async getNotification(req: Request, res: Response) {
-    const notification = await NotificationService.getNotification(req.params.id, req.user!.userId);
-    return sendSuccess(res, notification);
+  // PATCH /notifications/:id/read
+  static async markOneRead(req: Request, res: Response) {
+    const { id } = req.params;
+    const userId = req.user!.userId;
+    await prisma.notification.updateMany({
+      where: { id, userId },
+      data: { isRead: true },
+    });
+    res.json({ success: true });
   }
 
-  static async markAsRead(req: Request, res: Response) {
-    const notification = await NotificationService.markAsRead(req.params.id, req.user!.userId);
-    return sendSuccess(res, notification, "Notification marked as read");
+  // DELETE /notifications/clear
+  static async clearAll(req: Request, res: Response) {
+    const userId = req.user!.userId;
+    await prisma.notification.deleteMany({ where: { userId } });
+    res.json({ success: true, message: "All notifications cleared" });
   }
 
-  static async markAllAsRead(req: Request, res: Response) {
-    const count = await NotificationService.markAllAsRead(req.user!.userId);
-    return sendSuccess(res, { markedCount: count }, "All notifications marked as read");
-  }
+  // POST /notifications/send (internal/admin use)
+  static async send(req: Request, res: Response) {
+    const { userId, type, title, message, metadata } = req.body;
 
-  static async deleteNotification(req: Request, res: Response) {
-    await NotificationService.deleteNotification(req.params.id, req.user!.userId);
-    return sendSuccess(res, null, "Notification deleted");
-  }
+    const notification = await prisma.notification.create({
+      data: {
+        userId,
+        type: type || "SYSTEM",
+        title,
+        message,
+        metadata: metadata ? JSON.stringify(metadata) : null,
+      },
+    });
 
-  static async deleteAllNotifications(req: Request, res: Response) {
-    const count = await NotificationService.deleteAllNotifications(req.user!.userId);
-    return sendSuccess(res, { deletedCount: count }, "All notifications deleted");
+    // Emit real-time via socket
+    try {
+      const socketService = getSocketService();
+      socketService.emitNotification(userId, { type, title, message, metadata });
+    } catch {}
+
+    res.json({ success: true, data: notification });
   }
 }

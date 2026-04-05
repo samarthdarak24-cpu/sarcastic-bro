@@ -1,77 +1,156 @@
 "use client";
 
 import Link from "next/link";
-import { Globe, Send, Briefcase, Mail } from "lucide-react";
+import { Leaf, Mail, Phone, MapPin } from "lucide-react";
+import { motion } from "framer-motion";
 
 export function LandingFooter() {
+  const footerLinks = {
+    product: [
+      { label: "Features", href: "#features" },
+      { label: "Pricing", href: "#pricing" },
+      { label: "AI Technology", href: "#ai" },
+      { label: "Security", href: "#security" }
+    ],
+    company: [
+      { label: "About Us", href: "/about" },
+      { label: "Careers", href: "/careers" },
+      { label: "Blog", href: "/blog" },
+      { label: "Press Kit", href: "/press" }
+    ],
+    support: [
+      { label: "Help Center", href: "/help" },
+      { label: "Contact Us", href: "/contact" },
+      { label: "FAQs", href: "/faq" },
+      { label: "Community", href: "/community" }
+    ],
+    legal: [
+      { label: "Privacy Policy", href: "/privacy" },
+      { label: "Terms of Service", href: "/terms" },
+      { label: "Cookie Policy", href: "/cookies" },
+      { label: "Compliance", href: "/compliance" }
+    ]
+  };
+
   return (
-    <footer className="bg-neut-900 text-white py-16 px-6">
-      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-12">
-        <div className="space-y-6">
-          <div className="flex items-center gap-2">
-            <div className="h-10 w-10 bg-brand-primary rounded-xl flex items-center justify-center text-white font-bold text-xl">
-              O
+    <footer className="bg-gray-900 text-white pt-20 pb-10">
+      <div className="max-w-7xl mx-auto px-6">
+        {/* Main Footer Content */}
+        <div className="grid grid-cols-2 md:grid-cols-6 gap-12 mb-16">
+          {/* Brand Column */}
+          <div className="col-span-2">
+            <Link href="/" className="inline-flex items-center gap-3 mb-6">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-400 flex items-center justify-center shadow-lg">
+                <Leaf size={24} className="text-white" />
+              </div>
+              <span className="text-2xl font-black">FarmGuard</span>
+            </Link>
+            <p className="text-gray-400 leading-relaxed mb-6 max-w-sm">
+              India's leading AI-powered agricultural trading platform. Connecting farmers with buyers for fair, transparent trade.
+            </p>
+            
+            {/* Contact Info */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-3 text-gray-400">
+                <Mail size={16} />
+                <span className="text-sm">support@farmguard.in</span>
+              </div>
+              <div className="flex items-center gap-3 text-gray-400">
+                <Phone size={16} />
+                <span className="text-sm">1800-123-4567</span>
+              </div>
+              <div className="flex items-center gap-3 text-gray-400">
+                <MapPin size={16} />
+                <span className="text-sm">Mumbai, Maharashtra</span>
+              </div>
             </div>
-            <span className="font-heading font-bold text-xl tracking-tight">
-              ODOP <span className="text-brand-primary">Connect</span>
-            </span>
           </div>
-          <p className="text-neut-400 text-sm leading-relaxed">
-            Revolutionizing the agricultural marketplace with direct farmer-to-buyer connectivity, AI quality assurance, and blockchain transparency.
-          </p>
-          <div className="flex gap-4">
-            <Link href="#" className="p-2 bg-neut-800 rounded-lg hover:bg-brand-primary transition-colors">
-              <Send size={20} />
-            </Link>
-            <Link href="#" className="p-2 bg-neut-800 rounded-lg hover:bg-brand-primary transition-colors">
-              <Briefcase size={20} />
-            </Link>
-            <Link href="#" className="p-2 bg-neut-800 rounded-lg hover:bg-brand-primary transition-colors">
-              <Globe size={20} />
-            </Link>
-            <Link href="#" className="p-2 bg-neut-800 rounded-lg hover:bg-brand-primary transition-colors">
-              <Mail size={20} />
-            </Link>
+
+          {/* Product Links */}
+          <div>
+            <h4 className="font-bold text-sm uppercase tracking-wider mb-6">Product</h4>
+            <ul className="space-y-3">
+              {footerLinks.product.map(link => (
+                <li key={link.label}>
+                  <Link href={link.href} className="text-gray-400 hover:text-white transition-colors text-sm">
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Company Links */}
+          <div>
+            <h4 className="font-bold text-sm uppercase tracking-wider mb-6">Company</h4>
+            <ul className="space-y-3">
+              {footerLinks.company.map(link => (
+                <li key={link.label}>
+                  <Link href={link.href} className="text-gray-400 hover:text-white transition-colors text-sm">
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Support Links */}
+          <div>
+            <h4 className="font-bold text-sm uppercase tracking-wider mb-6">Support</h4>
+            <ul className="space-y-3">
+              {footerLinks.support.map(link => (
+                <li key={link.label}>
+                  <Link href={link.href} className="text-gray-400 hover:text-white transition-colors text-sm">
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Legal Links */}
+          <div>
+            <h4 className="font-bold text-sm uppercase tracking-wider mb-6">Legal</h4>
+            <ul className="space-y-3">
+              {footerLinks.legal.map(link => (
+                <li key={link.label}>
+                  <Link href={link.href} className="text-gray-400 hover:text-white transition-colors text-sm">
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
 
-        <div>
-          <h4 className="font-heading font-bold text-lg mb-6">Product</h4>
-          <ul className="space-y-4 text-neut-400 text-sm">
-            <li><Link href="/farmer/dashboard" className="hover:text-white transition-colors">Farmer Hub</Link></li>
-            <li><Link href="/buyer/dashboard" className="hover:text-white transition-colors">Buyer Sourcing</Link></li>
-            <li><Link href="#" className="hover:text-white transition-colors">Quality Assurance</Link></li>
-            <li><Link href="#" className="hover:text-white transition-colors">Supply Tracking</Link></li>
-          </ul>
-        </div>
+        {/* Bottom Bar */}
+        <div className="pt-8 border-t border-gray-800">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+            {/* Copyright */}
+            <p className="text-sm text-gray-400">
+              © 2026 FarmGuard Technologies. All rights reserved.
+            </p>
 
-        <div>
-          <h4 className="font-heading font-bold text-lg mb-6">Company</h4>
-          <ul className="space-y-4 text-neut-400 text-sm">
-            <li><Link href="#" className="hover:text-white transition-colors">About Us</Link></li>
-            <li><Link href="#" className="hover:text-white transition-colors">Sustainability</Link></li>
-            <li><Link href="#" className="hover:text-white transition-colors">Careers</Link></li>
-            <li><Link href="#" className="hover:text-white transition-colors">Privacy Policy</Link></li>
-          </ul>
-        </div>
-
-        <div>
-          <h4 className="font-heading font-bold text-lg mb-6">Community</h4>
-          <ul className="space-y-4 text-neut-400 text-sm">
-            <li><Link href="#" className="hover:text-white transition-colors">Documentation</Link></li>
-            <li><Link href="#" className="hover:text-white transition-colors">Community Forum</Link></li>
-            <li><Link href="#" className="hover:text-white transition-colors">Open Data</Link></li>
-            <li><Link href="#" className="hover:text-white transition-colors">Developer API</Link></li>
-          </ul>
-        </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto mt-16 pt-8 border-t border-neut-800 flex flex-col md:flex-row justify-between items-center gap-4 text-neut-500 text-xs">
-        <p>© 2024 ODOP Connect. Built with Next.js 14.</p>
-        <div className="flex gap-8">
-          <Link href="#" className="hover:text-white transition-colors">Terms of Service</Link>
-          <Link href="#" className="hover:text-white transition-colors">Cookie Policy</Link>
-          <Link href="#" className="hover:text-white transition-colors">Security</Link>
+            {/* Social Links */}
+            <div className="flex items-center gap-4">
+              <motion.a
+                href="#"
+                whileHover={{ scale: 1.1, y: -2 }}
+                whileTap={{ scale: 0.95 }}
+                className="w-10 h-10 rounded-xl bg-gray-800 hover:bg-emerald-600 flex items-center justify-center transition-colors"
+              >
+                <Mail size={18} />
+              </motion.a>
+              <motion.a
+                href="#"
+                whileHover={{ scale: 1.1, y: -2 }}
+                whileTap={{ scale: 0.95 }}
+                className="w-10 h-10 rounded-xl bg-gray-800 hover:bg-emerald-600 flex items-center justify-center transition-colors"
+              >
+                <Phone size={18} />
+              </motion.a>
+            </div>
+          </div>
         </div>
       </div>
     </footer>

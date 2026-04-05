@@ -2,240 +2,336 @@
 
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  Search, 
-  Filter, 
-  MapPin, 
-  Star, 
-  ChevronRight, 
-  ShoppingCart, 
-  Info,
-  Layers,
-  Zap,
-  TrendingUp,
-  ShieldCheck,
-  CheckCircle2,
-  Package,
-  ArrowRight
-} from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
+import { Search, Filter, Star, MapPin, TrendingUp, Package, CheckCircle, Clock, Zap, Target, Award, Shield, ShoppingCart } from "lucide-react";
 import { productService } from "@/services/productService";
-import { ReputationBadge } from "@/components/ui/ReputationBadge";
+import { orderService } from "@/services/orderService";
+import { usePriceUpdates } from "@/hooks/useSocket";
+import { useRealtimeStore } from "@/store/realtimeStore";
 import toast from "react-hot-toast";
 
-export function SourcingSpace() {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [products, setProducts] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [filters, setFilters] = useState({ category: "All", quality: "All", maxPrice: 500 });
-  const [suggestions, setSuggestions] = useState<string[]>([]);
+interface Product {
+  id: string;
+  name: string;
+  category: string;
+  price: number;
+  quantity: number;
+  unit: string;
+  description?: string;
+  imageUrls?: string[];
+  qualityGrade?: string;
+  qualityScore?: number;
+  isActive: boolean;
+  district?: string;
+  state?: string;
+  farmerId: string;
+  farmer?: {
+    name: string;
+    email: string;
+  };
+}
 
+export function SourcingSpace() {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [orderQuantity, setOrderQuantity] = useState(1);
+  const [showOrderModal, setShowOrderModal] = useState(false);
+
+  const { livePrices } = useRealtimeStore();
+
+  // Load products from farmers
   useEffect(() => {
-    fetchProducts();
+    loadProducts();
   }, []);
 
-  const fetchProducts = async () => {
-    setLoading(true);
+  // Listen for real-time price updates
+  usePriceUpdates((data) => {
+    setProducts(prev => prev.map(p => 
+      p.id === data.productId ? { ...p, price: data.newPrice } : p
+    ));
+  });
+
+  const loadProducts = async () => {
     try {
+      setLoading(true);
       const data = await productService.getAll();
-      setProducts(data.products || data || []);
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to load products");
+      setProducts(data.filter(p => p.isActive));
+    } catch (error) {
+      console.error('Failed to load products:', error);
+      toast.error('Failed to load products');
     } finally {
       setLoading(false);
     }
   };
 
-  const filteredProducts = products.filter(p => 
-    (filters.category === "All" || p.category === filters.category) &&
-    (p.name.toLowerCase().includes(searchTerm.toLowerCase())) &&
-    (p.price <= filters.maxPrice)
-  );
+  const handleOrderNow = (product: Product) => {
+    setSelectedProduct(product);
+    setOrderQuantity(1);
+    setShowOrderModal(true);
+  };
 
-  const handleSearchChange = (val: string) => {
-    setSearchTerm(val);
-    if (val.length > 1) {
-      const common = ["Basmati", "Turmeric", "Alphanso", "Guntur Chillies", "Organic Honey"];
-      setSuggestions(common.filter(s => s.toLowerCase().includes(val.toLowerCase())));
-    } else {
-      setSuggestions([]);
+  const handlePlaceOrder = async () => {
+    if (!selectedProduct) return;
+
+    try {
+      await orderService.createOrder({
+        productId: selectedProduct.id,
+        quantity: orderQuantity,
+        totalAmount: selectedProduct.price * orderQuantity,
+        deliveryAddress: "Default Address", // You can add address selection
+      });
+
+      toast.success(`Order placed for ${selectedProduct.name}!`);
+      setShowOrderModal(false);
+      setSelectedProduct(null);
+    } catch (error) {
+      console.error('Failed to place order:', error);
+      toast.error('Failed to place order');
     }
   };
 
+  const filteredProducts = products.filter(product => {
+    const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         product.category.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory = selectedCategory === "All" || product.category === selectedCategory;
+    return matchesSearch && matchesCategory;
+  });
+
+  const categories = ["All", ...Array.from(new Set(products.map(p => p.category)))];
+
   return (
-    <div className="space-y-12 animate-fade-in max-w-[1800px] mx-auto text-neut-900 border-neut-200">
-      {/* Smart Search Bar */}
-      <div className="relative z-20 flex flex-col items-center justify-center pt-8 pb-16 px-4">
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="w-full max-w-4xl space-y-8"
-          >
-             <div className="text-center space-y-4">
-                <Badge tone="brand" className="h-8 px-4 rounded-full font-black text-[10px] animate-pulse">DIRECT FROM FARM GATE</Badge>
-                <h1 className="text-5xl md:text-7xl font-black tracking-tight text-neut-900">Traceable Sourcing.</h1>
-                <p className="text-xl font-medium text-neut-500 max-w-2xl mx-auto">Skip the middlemen. Connect with 15k+ verified farmers across India using advanced geolocation discovery.</p>
-             </div>
+    <div className="space-y-8">
+      {/* Header */}
+      <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+        <div>
+          <h1 className="text-4xl font-black text-slate-900 mb-2 tracking-tight">Smart Sourcing</h1>
+          <p className="text-slate-500 font-medium">Discover verified suppliers across India</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <button className="h-12 px-6 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg hover:shadow-xl flex items-center gap-2">
+            <Zap size={18} />
+            AI Match
+          </button>
+        </div>
+      </motion.div>
 
-             <div className="relative group">
-                <div className="absolute inset-x-0 -bottom-2 h-14 bg-brand-secondary/20 blur-2xl rounded-full group-focus-within:opacity-100 opacity-0 transition-opacity" />
-                <div className="relative bg-white h-20 rounded-[1.5rem] shadow-startup-medium border border-neut-100 flex items-center p-2 pr-4 hover:border-brand-secondary/30 transition-all transition-shadow">
-                    <div className="pl-6 pr-4 border-r border-neut-100">
-                        <Search size={24} className="text-neut-300 group-focus-within:text-brand-secondary" />
+      {/* Search & Filters */}
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="bg-white rounded-3xl p-6 border border-slate-200 shadow-lg">
+        <div className="flex flex-col lg:flex-row gap-4">
+          <div className="flex-1 relative">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
+            <input
+              type="text"
+              placeholder="Search suppliers, products, locations..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full h-14 pl-12 pr-4 bg-slate-50 border border-slate-200 rounded-2xl font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+            />
+          </div>
+          <button className="h-14 px-6 bg-slate-900 text-white rounded-2xl font-bold hover:bg-slate-800 transition-all flex items-center gap-2">
+            <Filter size={18} />
+            Filters
+          </button>
+        </div>
+
+        {/* Category Pills */}
+        <div className="flex flex-wrap gap-3 mt-6">
+          {categories.map((cat) => (
+            <button
+              key={cat}
+              onClick={() => setSelectedCategory(cat)}
+              className={`px-6 py-2.5 rounded-full font-bold text-sm transition-all ${
+                selectedCategory === cat
+                  ? "bg-blue-600 text-white shadow-lg"
+                  : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+              }`}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+      </motion.div>
+
+      {/* Products Grid */}
+      {loading ? (
+        <div className="flex items-center justify-center py-20">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        </div>
+      ) : filteredProducts.length === 0 ? (
+        <div className="text-center py-20">
+          <Package size={64} className="mx-auto text-slate-300 mb-4" />
+          <h3 className="text-2xl font-bold text-slate-900 mb-2">No products found</h3>
+          <p className="text-slate-500">Try adjusting your search or filters</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredProducts.map((product, idx) => {
+            const livePrice = livePrices[product.id];
+            const currentPrice = livePrice?.price || product.price;
+            const priceChange = livePrice?.changePercent || 0;
+
+            return (
+              <motion.div
+                key={product.id}
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: idx * 0.1 }}
+                className="bg-white rounded-3xl overflow-hidden border border-slate-200 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 group"
+              >
+                <div className="relative h-48 overflow-hidden bg-gradient-to-br from-green-50 to-blue-50">
+                  {product.imageUrls && product.imageUrls[0] ? (
+                    <img src={product.imageUrls[0]} alt={product.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <Package size={64} className="text-slate-300" />
                     </div>
-                    <Input 
-                        placeholder="Search crops, regions (e.g. 'Basmati', 'Guntur')..." 
-                        value={searchTerm}
-                        onChange={(e) => handleSearchChange(e.target.value)}
-                        className="flex-1 bg-transparent border-none text-lg font-bold placeholder:text-neut-300 focus-visible:ring-0"
-                    />
-                    <Button variant="gradient" className="h-14 px-8 rounded-2xl font-black text-lg shadow-lg shadow-brand-secondary/20">
-                        Search Now
-                    </Button>
+                  )}
+                  {product.qualityGrade && (
+                    <div className="absolute top-4 right-4 h-10 w-10 bg-green-600 rounded-full flex items-center justify-center shadow-lg">
+                      <span className="text-white font-bold text-sm">{product.qualityGrade}</span>
+                    </div>
+                  )}
+                  <div className="absolute bottom-4 left-4 px-4 py-2 bg-white/90 backdrop-blur-sm rounded-full font-bold text-sm text-slate-900">
+                    {product.category}
+                  </div>
+                  {priceChange !== 0 && (
+                    <div className={`absolute top-4 left-4 px-3 py-1 rounded-full font-bold text-xs ${
+                      priceChange > 0 ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+                    }`}>
+                      {priceChange > 0 ? '↑' : '↓'} {Math.abs(priceChange).toFixed(1)}%
+                    </div>
+                  )}
                 </div>
-                {suggestions.length > 0 && (
-                   <div className="absolute top-24 inset-x-0 bg-white rounded-2xl shadow-xl border border-neut-100 p-2 z-50">
-                      {suggestions.map(s => (
-                         <div 
-                            key={s} 
-                            onClick={() => { setSearchTerm(s); setSuggestions([]); }}
-                            className="p-4 hover:bg-neut-50 rounded-xl cursor-pointer font-bold text-neut-700"
-                         >
-                            {s}
-                         </div>
-                      ))}
-                   </div>
-                )}
-             </div>
 
-             <div className="flex flex-wrap items-center justify-center gap-4">
-                {["All Croups", "Grains", "Spices", "Dry Fruits", "Vegetables"].map((cat) => (
-                    <button 
-                        key={cat} 
-                        onClick={() => setFilters({...filters, category: cat})}
-                        className={`px-8 py-3 rounded-2xl font-black text-xs uppercase tracking-widest transition-all ${
-                            filters.category === cat ? "bg-neut-900 text-white shadow-lg" : "bg-white text-neut-400 hover:text-neut-900 shadow-sm border border-neut-100 hover:border-neut-900/10"
-                        }`}
-                    >
-                        {cat}
-                    </button>
-                ))}
-             </div>
-          </motion.div>
-      </div>
+                <div className="p-6">
+                  <h3 className="text-xl font-black text-slate-900 mb-2">{product.name}</h3>
+                  <div className="flex items-center gap-2 text-slate-500 text-sm mb-4">
+                    <MapPin size={14} />
+                    <span className="font-medium">{product.district || product.state || 'India'}</span>
+                  </div>
 
-      {/* Results Grid */}
-      <div className="px-4 pb-20">
-          <div className="flex items-end justify-between mb-12">
-             <div className="space-y-1">
-                <h3 className="text-3xl font-black tracking-tight">Marketplace Discoveries</h3>
-                <p className="text-xs font-black text-neut-400 uppercase tracking-widest leading-loose">SHOWING {filteredProducts.length} VERIFIED LISTINGS</p>
-             </div>
-              <div className="flex items-center gap-6">
-                 <div className="flex flex-col items-end gap-1">
-                    <span className="text-[10px] font-black text-neut-400 uppercase">Max Price: ₹{filters.maxPrice}</span>
-                    <input 
-                       type="range" 
-                       min="10" 
-                       max="1000" 
-                       value={filters.maxPrice}
-                       onChange={(e) => setFilters({...filters, maxPrice: parseInt(e.target.value)})}
-                       className="w-40 accent-brand-secondary"
-                    />
-                 </div>
-                 <Button variant="outline" className="h-12 px-6 rounded-xl font-bold border-neut-200">
-                    <Filter size={18} className="mr-2" />
-                    Refine Search
-                 </Button>
-                <div className="h-10 w-px bg-neut-100" />
-                <Button variant="ghost" size="icon" className="h-12 w-12 rounded-xl"><Layers size={24} /></Button>
-             </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
-             <AnimatePresence>
-                {loading ? (
-                    Array(8).fill(0).map((_, i) => (
-                        <div key={i} className="h-[450px] bg-neut-50 rounded-[2.5rem] animate-pulse" />
-                    ))
-                ) : filteredProducts.length > 0 ? (
-                    filteredProducts.map((p, i) => (
-                        <motion.div
-                            key={p.id}
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            transition={{ delay: i * 0.05 }}
-                        >
-                            <Card className="border-none shadow-startup-soft hover:shadow-startup-medium transition-all group overflow-hidden bg-white/80 backdrop-blur-xl h-full flex flex-col rounded-[2.5rem] border border-neut-50">
-                                <div className="h-56 bg-neut-50 overflow-hidden relative border-b border-neut-50">
-                                    <div className="absolute inset-0 flex items-center justify-center text-neut-100 animate-pulse">
-                                        <Package size={80} />
-                                    </div>
-                                    <div className="absolute top-4 left-4 p-3 bg-white/90 backdrop-blur-md rounded-2xl shadow-sm border border-white/20">
-                                        <div className="flex items-center gap-1.5 text-warning font-black text-xs">
-                                            <Star size={14} fill="currentColor" />
-                                            {4.8 + (i % 5) * 0.05}
-                                        </div>
-                                    </div>
-                                    <Badge tone="ink" className="absolute top-4 right-4 h-9 px-4 rounded-xl font-black text-[10px] uppercase shadow-sm">
-                                        {p.qualityGrade || 'A'} GRADE
-                                    </Badge>
-                                </div>
-
-                                <CardContent className="p-8 flex-1 flex flex-col">
-                                    <div className="space-y-4 mb-8">
-                                        <div className="space-y-1">
-                                            <p className="text-[10px] font-black uppercase text-brand-secondary tracking-widest">{p.category}</p>
-                                            <h4 className="text-2xl font-black text-neut-900 tracking-tight leading-tight group-hover:text-brand-secondary transition-colors line-clamp-1">{p.name}</h4>
-                                        </div>
-                                        <div className="flex flex-col gap-2">
-                                          <div className="flex items-center gap-2 text-neut-400 font-bold text-[10px] uppercase tracking-wider">
-                                              <MapPin size={12} className="text-brand-secondary" />
-                                              <span>{p.address || p.district || 'Location not set'}</span>
-                                          </div>
-                                          <div className="flex items-center gap-2">
-                                              <ReputationBadge score={p.farmer?.reputationScore || 100} compact />
-                                              <span className="text-[9px] font-black text-neut-300 uppercase">Verified Supplier</span>
-                                          </div>
-                                        </div>
-                                        <div className="p-4 bg-neut-50/50 rounded-2xl border border-neut-100/50">
-                                            <div className="flex items-center justify-between">
-                                                <span className="text-[9px] font-black text-neut-400 uppercase tracking-widest">Available Volume</span>
-                                                <span className="text-xs font-black text-neut-900">{p.quantity} {p.unit || 'kg'}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="mt-auto pt-6 border-t border-neut-50 flex items-center justify-between">
-                                        <div className="flex flex-col">
-                                            <span className="text-[9px] font-black text-neut-400 uppercase mb-0.5">Unit Price</span>
-                                            <span className="text-2xl font-black text-neut-900 tracking-tight">₹{p.price} <small className="text-[10px] text-neut-400">/kg</small></span>
-                                        </div>
-                                        <Button variant="outline" className="h-12 w-12 rounded-xl p-0 border-neut-200 group-hover:bg-brand-secondary group-hover:text-white group-hover:border-brand-secondary transition-all transform active:scale-95 shadow-startup-soft">
-                                            <ShoppingCart size={22} />
-                                        </Button>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        </motion.div>
-                    ))
-                ) : (
-                    <div className="col-span-full py-40 flex flex-col items-center text-center">
-                        <div className="h-24 w-24 bg-neut-50 rounded-[2.5rem] flex items-center justify-center text-neut-200 mb-8 animate-bounce">
-                           <Search size={48} />
-                        </div>
-                        <h4 className="text-3xl font-black text-neut-900 mb-4">No matching sources found</h4>
-                        <p className="text-neut-500 font-medium max-w-sm mx-auto text-lg leading-relaxed">Try expanding your search parameters or check our regional cluster listings.</p>
-                        <Button variant="ghost" onClick={fetchProducts} className="mt-8 font-black text-brand-secondary">Show all active listings <ArrowRight size={18} className="ml-2" /></Button>
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center gap-2">
+                      <Package size={16} className="text-slate-400" />
+                      <span className="font-medium text-slate-600">{product.quantity} {product.unit}</span>
                     </div>
-                )}
-             </AnimatePresence>
-          </div>
-      </div>
+                    {product.qualityScore && (
+                      <div className="flex items-center gap-1">
+                        <Star size={14} className="text-amber-500 fill-amber-500" />
+                        <span className="font-bold text-slate-900">{product.qualityScore}%</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex items-center justify-between pt-4 border-t border-slate-100">
+                    <div>
+                      <p className="text-xs text-slate-500 font-medium mb-1">Price per {product.unit}</p>
+                      <p className="text-2xl font-black text-blue-600">₹{currentPrice}</p>
+                    </div>
+                    <button 
+                      onClick={() => handleOrderNow(product)}
+                      className="h-12 px-6 bg-slate-900 text-white rounded-xl font-bold hover:bg-blue-600 transition-all flex items-center gap-2"
+                    >
+                      <ShoppingCart size={18} />
+                      Order
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Order Modal */}
+      <AnimatePresence>
+        {showOrderModal && selectedProduct && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={() => setShowOrderModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl"
+            >
+              <h2 className="text-2xl font-black text-slate-900 mb-6">Place Order</h2>
+              
+              <div className="space-y-4 mb-6">
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-2">Product</label>
+                  <p className="text-lg font-bold text-slate-900">{selectedProduct.name}</p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-2">Price per {selectedProduct.unit}</label>
+                  <p className="text-2xl font-black text-blue-600">₹{selectedProduct.price}</p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-2">Quantity ({selectedProduct.unit})</label>
+                  <input
+                    type="number"
+                    min="1"
+                    max={selectedProduct.quantity}
+                    value={orderQuantity}
+                    onChange={(e) => setOrderQuantity(parseInt(e.target.value) || 1)}
+                    className="w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div className="pt-4 border-t border-slate-200">
+                  <div className="flex justify-between items-center">
+                    <span className="text-lg font-bold text-slate-700">Total Amount</span>
+                    <span className="text-3xl font-black text-blue-600">₹{(selectedProduct.price * orderQuantity).toFixed(2)}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowOrderModal(false)}
+                  className="flex-1 h-12 px-6 bg-slate-100 text-slate-700 rounded-xl font-bold hover:bg-slate-200 transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handlePlaceOrder}
+                  className="flex-1 h-12 px-6 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-all"
+                >
+                  Place Order
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Stats Banner */}
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-3xl p-8 text-white">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          {[
+            { label: "Active Products", value: products.length.toString(), icon: Package },
+            { label: "Categories", value: categories.length.toString(), icon: Target },
+            { label: "Avg Price", value: `₹${products.length > 0 ? Math.round(products.reduce((sum, p) => sum + p.price, 0) / products.length) : 0}`, icon: TrendingUp },
+            { label: "Available Now", value: filteredProducts.length.toString(), icon: CheckCircle },
+          ].map((stat, idx) => (
+            <div key={idx} className="text-center">
+              <stat.icon size={32} className="mx-auto mb-3 opacity-80" />
+              <p className="text-3xl font-black mb-1">{stat.value}</p>
+              <p className="text-blue-100 text-sm font-medium">{stat.label}</p>
+            </div>
+          ))}
+        </div>
+      </motion.div>
     </div>
   );
 }

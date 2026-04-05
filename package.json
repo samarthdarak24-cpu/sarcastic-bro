@@ -10,6 +10,9 @@
     "dev:web": "npm run dev --workspace=apps/web",
     "dev:api": "npm run dev --workspace=apps/api",
     "dev:ai": "cd apps/ai-service && uvicorn app.main:app --reload",
-    "dev": "npm run dev:web & npm run dev:api"
+    "dev": "concurrently \"npm run dev:web\" \"npm run dev:api\" -n \"WEB,API\" -c \"blue,green\""
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
   }
 }

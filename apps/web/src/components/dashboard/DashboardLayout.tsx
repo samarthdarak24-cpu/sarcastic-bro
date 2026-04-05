@@ -1,39 +1,20 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import "@/lib/i18n";
 import { 
-  LayoutDashboard, 
-  Package, 
-  ShoppingCart, 
-  MessageSquare, 
-  BarChart3, 
-  Settings, 
-  LogOut, 
-  Bell, 
-  Search, 
-  Menu, 
-  X,
-  UserCircle,
-  Activity,
-  Globe,
-  Layers,
-  Sparkles,
-  Zap,
-  Target,
-  ShieldCheck,
-  Navigation,
-  CreditCard,
-  Leaf,
-  Volume2,
-  ChevronDown
+  LogOut, Search, Menu, Command
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { useAuthStore } from "@/store/authStore";
+import { authService } from "@/services/auth";
+import { LivePriceTicker } from "@/components/ui/LivePriceTicker";
+import { LiveNotificationBell } from "@/components/ui/LiveNotificationBell";
+import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
+import { VoiceAssistantButton } from "@/components/ui/VoiceAssistant/VoiceAssistantButton";
+import ChatWidget from "@/components/ui/ChatWidget";
 
 interface NavItem {
   label: string;
@@ -51,77 +32,57 @@ interface DashboardLayoutProps {
 
 export function DashboardLayout({ children, navItems, userRole }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
   const currentSection = searchParams.get("section");
-  const { user, logout } = useAuthStore();
-
-  const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
-  const [langDropdownOpen, setLangDropdownOpen] = useState(false);
-  const [isSpeaking, setIsSpeaking] = useState(false);
-
+  const user = authService.getUser();
   const { t, i18n } = useTranslation();
-
+  // Subscribe to language changes to force re-render
+  const [, setLang] = useState(i18n.language);
   useEffect(() => {
-    // Load language from storage or user object if available mapping exists
-    const storedLang = localStorage.getItem("preferredLanguage") || "en";
-    i18n.changeLanguage(storedLang);
+    const handler = (lng: string) => setLang(lng);
+    i18n.on("languageChanged", handler);
+    return () => { i18n.off("languageChanged", handler); };
   }, [i18n]);
 
-  const changeLanguage = (lng: string) => {
-    i18n.changeLanguage(lng);
-    localStorage.setItem("preferredLanguage", lng);
-    setLangDropdownOpen(false);
-  };
-
   const handleLogout = () => {
-    logout();
-    router.push("/");
+    authService.logout();
+    router.push('/login');
   };
 
-  const toggleSpeech = () => {
-    if (isSpeaking) {
-      window.speechSynthesis.cancel();
-      setIsSpeaking(false);
-    } else {
-      const utterance = new SpeechSynthesisUtterance(t("dashboard") + ". " + t("hello") + " " + (user?.name || "Premium User"));
-      // Try to set marathi voice if marathi is selected
-      if (i18n.language === "mr") {
-        utterance.lang = "mr-IN";
-      } else {
-        utterance.lang = "en-IN";
-      }
-      
-      utterance.onend = () => setIsSpeaking(false);
-      window.speechSynthesis.speak(utterance);
-      setIsSpeaking(true);
-    }
-  };
+  const isFarmer = userRole?.toLowerCase() === 'farmer';
+  const themeColor = isFarmer ? 'text-emerald-500' : 'text-blue-500';
+  const themeBg = isFarmer ? 'bg-emerald-600' : 'bg-blue-600';
+  const themeGlow = isFarmer ? 'shadow-emerald-500/20' : 'shadow-blue-500/20';
 
   return (
-    <div className="min-h-screen bg-neut-50 flex overflow-hidden font-sans">
-      {/* Sidebar - Desktop */}
-      <motion.aside
-        initial={false}
-        animate={{ width: sidebarOpen ? 300 : 90 }}
-        className="hidden lg:flex flex-col bg-white border-r border-neut-100 relative z-30 transition-all duration-300 shadow-xl shadow-neut-900/5"
+    <div className="flex h-screen w-full bg-white overflow-hidden font-sans selection:bg-brand-primary selection:text-white">
+      {/* 🚀 FIXED SIDEBAR */}
+      <aside 
+        className={`fixed inset-y-0 left-0 z-[60] bg-slate-900 border-r border-slate-800 transition-all duration-300 ease-in-out flex flex-col ${
+          sidebarOpen ? "w-80" : "w-24"
+        }`}
       >
-        <div className="p-8 flex items-center justify-between mb-8">
+        {/* Sidebar Header */}
+        <div className="h-24 flex items-center px-8 border-b border-slate-800/50 shrink-0">
           <Link href="/" className="flex items-center gap-4 group">
-            <div className="h-12 w-12 bg-brand-primary rounded-2xl flex items-center justify-center text-white font-black text-2xl shadow-lg shadow-brand-primary/20 group-hover:scale-110 transition-transform">
-              O
+            <div className={`h-12 w-12 ${themeBg} rounded-xl flex items-center justify-center text-white font-black text-xl shadow-lg group-hover:scale-110 transition-transform`}>
+              <Command size={24} />
             </div>
             {sidebarOpen && (
-              <span className="font-heading font-black text-2xl tracking-tighter text-neut-900 group-hover:text-brand-primary transition-colors">
-                ODOP<span className="text-brand-primary">.C</span>
-              </span>
+              <div className="flex flex-col animate-in fade-in slide-in-from-left-2 duration-300">
+                <span className="font-black text-xl tracking-tighter text-white">
+                    FarmGuard<span className={themeColor}>.AI</span>
+                </span>
+                <span className="text-[8px] font-black uppercase tracking-[0.3em] text-slate-500">SMART FARMING v2.0</span>
+              </div>
             )}
           </Link>
         </div>
 
-        <nav className="flex-1 px-5 space-y-1.5 overflow-y-auto custom-scrollbar scrollbar-hide">
+        {/* Sidebar Nav - Scrollable internal */}
+        <nav className="flex-1 overflow-y-auto custom-scrollbar px-4 py-8 space-y-2">
           {navItems.map((item) => {
             const isCurrentPath = pathname === item.href;
             const isActive = item.section 
@@ -134,17 +95,38 @@ export function DashboardLayout({ children, navItems, userRole }: DashboardLayou
 
             return (
               <Link key={item.label} href={linkHref}>
-                <div className={`
-                  flex items-center gap-4 px-5 py-4 rounded-[1.25rem] transition-all group cursor-pointer relative
-                  ${isActive ? 'bg-brand-primary/5 text-brand-primary shadow-sm' : 'text-neut-400 hover:bg-neut-50 hover:text-neut-900'}
-                `}>
-                  {isActive && <div className="absolute left-1 top-4 bottom-4 w-1.5 bg-brand-primary rounded-full" />}
-                  <item.icon size={22} className={`${isActive ? 'text-brand-primary' : 'group-hover:text-neut-900'} transition-colors`} />
-                  {sidebarOpen && <span className={`font-black text-[13px] tracking-tight uppercase ${isActive ? 'text-neut-900' : 'text-neut-500'}`}>{item.label}</span>}
-                  {sidebarOpen && item.badge && (
-                    <span className="ml-auto bg-brand-primary text-white text-[9px] font-black px-2 py-0.5 rounded-full shadow-lg shadow-brand-primary/20">
-                      {item.badge}
-                    </span>
+                <div
+                  className={`
+                    flex items-center gap-4 px-4 py-4 rounded-2xl transition-all group cursor-pointer relative
+                    ${isActive
+                      ? `bg-white/10 text-white shadow-xl`
+                      : 'text-slate-400 hover:bg-white/5 hover:text-white'
+                    }
+                  `}
+                >
+                  <div className={`h-10 w-10 rounded-xl flex items-center justify-center transition-all ${
+                      isActive ? `${themeBg} text-white shadow-lg ${themeGlow}` : "bg-slate-800 text-slate-400 group-hover:bg-slate-700"
+                  }`}>
+                    {React.cloneElement(item.icon as any, { size: 18, strokeWidth: isActive ? 3 : 2 })}
+                  </div>
+                  
+                  {sidebarOpen && (
+                    <div className="flex flex-col flex-1 overflow-hidden">
+                        <span className="font-bold text-[13px] tracking-tight truncate">
+                          {t(item.label)}
+                        </span>
+                        {isActive && <span className="text-[8px] font-black uppercase tracking-relative opacity-40 text-blue-200">{t('common.live')}</span>}
+                    </div>
+                  )}
+
+                  {item.badge && sidebarOpen && (
+                    <div className="h-5 w-5 rounded-full bg-red-500 flex items-center justify-center text-[10px] font-black text-white animate-pulse">
+                        {item.badge}
+                    </div>
+                  )}
+
+                  {isActive && sidebarOpen && (
+                      <div className={`absolute right-4 h-1.5 w-1.5 rounded-full ${themeBg} animate-pulse`} />
                   )}
                 </div>
               </Link>
@@ -152,196 +134,103 @@ export function DashboardLayout({ children, navItems, userRole }: DashboardLayou
           })}
         </nav>
 
-        <div className="p-4 mt-auto border-t border-neut-100">
-          <Button 
-            variant="ghost" 
-            onClick={handleLogout}
-            className={`w-full ${sidebarOpen ? 'justify-start' : 'justify-center'} px-4 py-3 text-error hover:bg-error/10 hover:text-error rounded-2xl gap-3`}
-          >
-            <LogOut size={22} />
-            {sidebarOpen && <span className="font-bold text-sm">{t("logout")}</span>}
-          </Button>
-        </div>
-      </motion.aside>
-
-      {/* Main Content Area */}
-      <main className="flex-1 flex flex-col h-screen overflow-hidden">
-        {/* Navbar */}
-        <header className="h-20 bg-white border-b border-neut-200 px-8 flex items-center justify-between z-20">
-          <div className="flex items-center gap-4">
-            <button 
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="lg:flex hidden p-2 text-neut-400 hover:text-neut-900 transition-colors"
-            >
-              <Menu size={24} />
-            </button>
-            <button 
-              onClick={() => setMobileMenuOpen(true)}
-              className="lg:hidden flex p-2 text-neut-400 hover:text-neut-900"
-            >
-              <Menu size={24} />
-            </button>
-            <div className="hidden md:flex h-11 w-80 bg-neut-50 rounded-2xl border border-neut-200 px-4 items-center gap-3 group focus-within:border-brand-primary transition-all">
-              <Search size={18} className="text-neut-400 group-focus-within:text-brand-primary" />
-              <input type="text" placeholder={t("search_placeholder") || "Search..."} className="bg-transparent border-none outline-none text-sm font-medium w-full text-neut-700" />
-            </div>
-          </div>
-
-          <div className="flex items-center gap-4 md:gap-6 relative">
-            {/* Language Toggle Dropdown */}
-            <div className="relative">
-              <button 
-                onClick={() => setLangDropdownOpen(!langDropdownOpen)}
-                className="flex items-center gap-2 p-2 px-3 rounded-xl bg-neut-50 hover:bg-neut-100 text-sm font-bold text-neut-700 transition-colors"
-              >
-                <Globe size={18} className="text-brand-primary" />
-                <span className="hidden sm:inline">
-                  {i18n.language === "mr" ? "मराठी" : i18n.language === "hi-en" ? "Hinglish" : "English"}
-                </span>
-                <ChevronDown size={14} />
-              </button>
-              
-              <AnimatePresence>
-                {langDropdownOpen && (
-                  <motion.div 
-                    initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }}
-                    className="absolute right-0 top-full mt-2 w-40 bg-white rounded-2xl shadow-xl border border-neut-100 py-2 z-50 overflow-hidden"
-                  >
-                    <button onClick={() => changeLanguage("en")} className="w-full text-left px-5 py-2.5 text-sm font-bold hover:bg-neut-50 flex items-center justify-between">
-                      English <span className="text-xl">🇬🇧</span>
-                    </button>
-                    <button onClick={() => changeLanguage("mr")} className="w-full text-left px-5 py-2.5 text-sm font-bold hover:bg-neut-50 flex items-center justify-between">
-                      मराठी <span className="text-xl">🇮🇳</span>
-                    </button>
-                    <button onClick={() => changeLanguage("hi-en")} className="w-full text-left px-5 py-2.5 text-sm font-bold hover:bg-neut-50 flex items-center justify-between">
-                      Hinglish <span className="text-xl">💬</span>
-                    </button>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-
-            {/* Speech Assistant Button */}
-            <button 
-              onClick={toggleSpeech}
-              title="Speak dashboard contents"
-              className={`hidden sm:flex h-10 w-10 rounded-full items-center justify-center transition-colors ${
-                isSpeaking ? 'bg-brand-primary text-white animate-pulse' : 'bg-neut-50 hover:bg-brand-primary/10 text-neut-500 hover:text-brand-primary'
-              }`}
-            >
-              <Volume2 size={20} />
-            </button>
-            
-            {/* Profile Dropdown */}
-            <div className="relative border-l border-neut-200 pl-4 md:pl-6">
-              <button 
-                onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
-                className="flex items-center gap-3 md:gap-4 text-left group"
-              >
-                <div className="hidden sm:block">
-                  <p className="text-sm font-black text-neut-900 tracking-tight group-hover:text-brand-primary transition-colors">{user?.name || "Premium User"}</p>
-                  <p className="text-[10px] font-bold text-brand-primary uppercase tracking-widest">{userRole}</p>
-                </div>
-                <div className="h-11 w-11 rounded-2xl overflow-hidden bg-startup-gradient flex items-center justify-center text-white font-bold text-lg shadow-startup-soft relative">
-                  {user?.avatarUrl ? (
-                    <img src={user.avatarUrl} alt={user.name} className="w-full h-full object-cover" />
-                  ) : (
-                    user?.name?.[0] || "U"
+        {/* Sidebar Footer - User Profile */}
+        <div className="p-6 border-t border-slate-800 bg-slate-900/50 shrink-0">
+            <Link href="/profile">
+              <div className={`p-4 rounded-2xl border border-slate-800 flex items-center gap-4 transition-all hover:bg-white/5 group cursor-pointer ${sidebarOpen ? 'bg-slate-800/40' : 'justify-center'}`}>
+                  <div className={`h-10 w-10 rounded-xl flex items-center justify-center text-white font-black shadow-lg ${themeBg} shrink-0`}>
+                      {user?.name?.[0] || 'U'}
+                  </div>
+                  {sidebarOpen && (
+                      <div className="flex-1 min-w-0">
+                          <p className="font-bold text-sm text-white truncate">{user?.name || "Premium User"}</p>
+                          <p className="text-[10px] font-bold text-slate-500 uppercase">{t(`auth.${userRole.toLowerCase()}` as any) || userRole}</p>
+                      </div>
                   )}
-                </div>
-              </button>
-
-              <AnimatePresence>
-                {profileDropdownOpen && (
-                  <motion.div 
-                    initial={{ opacity: 0, scale: 0.95, transformOrigin: "top right" }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.95 }}
-                    className="absolute right-0 top-full mt-4 w-56 bg-white rounded-3xl shadow-startup-medium border border-neut-100 p-2 z-50 origin-top-right"
-                  >
-                    <div className="p-3 mb-2 border-b border-neut-50">
-                      <p className="text-sm font-black text-neut-900 truncate">{user?.email || "user@example.com"}</p>
-                      <p className="text-xs font-bold text-neut-400">ID: {user?.id?.substring(0,8) || "N/A"}</p>
-                    </div>
-                    <div className="space-y-1">
-                      <Link href={`?section=Profile`} onClick={() => setProfileDropdownOpen(false)}>
-                        <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-brand-primary/5 hover:text-brand-primary transition-colors text-sm font-bold text-neut-700 cursor-pointer">
-                          <UserCircle size={18} />
-                          {t("profile_settings")}
-                        </div>
-                      </Link>
-                      <button onClick={handleLogout} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-error/10 hover:text-error transition-colors text-sm font-bold text-error cursor-pointer">
-                        <LogOut size={18} />
-                        {t("logout")}
+                  {sidebarOpen && (
+                      <button onClick={(e) => { e.preventDefault(); handleLogout(); }} className="text-slate-500 hover:text-red-500 transition-colors">
+                          <LogOut size={16} />
                       </button>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+                  )}
+              </div>
+            </Link>
+        </div>
+      </aside>
+
+      {/* 🏔️ MAIN CONTENT AREA */}
+      <main 
+        className={`flex-1 flex flex-col h-screen overflow-hidden relative transition-all duration-300 ease-in-out ${
+          sidebarOpen ? "ml-80" : "ml-24"
+        }`}
+      >
+        {/* LIVE PRICE TICKER */}
+        <LivePriceTicker />
+
+        {/* STICKY TOP HEADER */}
+        <header className="h-20 px-6 md:px-10 flex items-center justify-between bg-white/95 backdrop-blur-md border-b border-slate-200 sticky top-0 z-[50] shrink-0 shadow-sm">
+            <div className="flex items-center gap-6 flex-1">
+                <button 
+                  onClick={() => setSidebarOpen(!sidebarOpen)}
+                  className="h-10 w-10 bg-slate-50 text-slate-600 rounded-lg flex items-center justify-center hover:bg-slate-100 transition-all shadow-sm border border-slate-200"
+                >
+                  <Menu size={20} />
+                </button>
+                <div className="max-w-md w-full relative hidden md:block group">
+                   <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500" size={18} />
+                   <input 
+                     placeholder={t('common.search_placeholder')} 
+                     className="w-full h-11 bg-slate-50 border border-slate-200 rounded-xl pl-12 text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:bg-white focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 outline-none transition-all" 
+                   />
+                </div>
             </div>
-          </div>
+
+            <div className="flex items-center gap-3">
+                <div className="hidden lg:flex items-center gap-2 px-3 h-9 bg-emerald-50 rounded-xl border border-emerald-100">
+                    <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    <span className="text-[10px] font-black uppercase tracking-widest text-emerald-600">{t('common.live')}</span>
+                </div>
+                <VoiceAssistantButton />
+                <LiveNotificationBell />
+                <LanguageSwitcher />
+                <Link href="/profile">
+                  <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white font-black text-sm shadow-sm hover:scale-105 transition-transform cursor-pointer">
+                    {user?.name?.charAt(0)?.toUpperCase() || 'U'}
+                  </div>
+                </Link>
+            </div>
         </header>
 
-        {/* Dashboard Content */}
-        <div className="flex-1 overflow-y-auto p-8 bg-neut-50/50 relative">
-          <div className="gradient-blur top-0 right-0 opacity-10" />
-          {children}
+        {/* SCROLLABLE CANVAS */}
+        <div className="flex-1 overflow-y-auto bg-transparent relative z-10 custom-scrollbar">
+            <div className="min-h-full w-full max-w-[1600px] mx-auto px-6 md:px-12 py-8 md:py-12 space-y-10 flex flex-col bg-transparent">
+                <AnimatePresence mode="wait">
+                    <motion.div
+                        key={pathname + currentSection}
+                        initial={{ opacity: 0, y: 15 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -15 }}
+                        transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                        className="flex-1 w-full"
+                    >
+                        {children}
+                    </motion.div>
+                </AnimatePresence>
+
+                {/* Optional Static Footer to ensure no bottom-cut */}
+                <div className="mt-auto pt-24 pb-12 flex items-center justify-between border-t border-slate-200/50">
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">{t('page.copyright')}</p>
+                    <div className="flex gap-8">
+                        <Link href="#" className="text-[10px] font-bold text-slate-400 hover:text-blue-600 uppercase tracking-widest">{t('landing.contact')}</Link>
+                        <Link href="#" className="text-[10px] font-bold text-slate-400 hover:text-blue-600 uppercase tracking-widest">{t('common.terms', 'Terms')}</Link>
+                        <Link href="#" className="text-[10px] font-bold text-slate-400 hover:text-blue-600 uppercase tracking-widest">{t('common.privacy', 'Privacy')}</Link>
+                    </div>
+                </div>
+            </div>
         </div>
       </main>
 
-      {/* Mobile Drawer */}
-      <AnimatePresence>
-        {mobileMenuOpen && (
-          <>
-            <motion.div 
-              initial={{ opacity: 0 }} 
-              animate={{ opacity: 1 }} 
-              exit={{ opacity: 0 }}
-              onClick={() => setMobileMenuOpen(false)}
-              className="fixed inset-0 bg-neut-900/40 backdrop-blur-sm z-40 lg:hidden" 
-            />
-            <motion.aside
-              initial={{ x: -280 }}
-              animate={{ x: 0 }}
-              exit={{ x: -280 }}
-              transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="fixed left-0 top-0 bottom-0 w-[280px] bg-white z-50 lg:hidden flex flex-col"
-            >
-              <div className="p-6 flex items-center justify-between mb-8 border-b border-neut-100">
-                <Link href="/" className="flex items-center gap-3">
-                  <div className="h-10 w-10 bg-brand-primary rounded-xl flex items-center justify-center text-white font-bold text-xl">O</div>
-                  <span className="font-heading font-black text-xl tracking-tighter text-neut-900">ODOP <span className="text-brand-primary">Connect</span></span>
-                </Link>
-                <button onClick={() => setMobileMenuOpen(false)} className="p-2 text-neut-400"><X size={24} /></button>
-              </div>
-              <nav className="flex-1 px-5 space-y-2 py-6 overflow-y-auto">
-                {navItems.map((item) => {
-                  const isCurrentPath = pathname === item.href;
-                  const isActive = item.section 
-                    ? (currentSection === item.section || (!currentSection && (item.section === "Overview" || item.section === "Cockpit"))) && isCurrentPath
-                    : isCurrentPath;
-                    
-                  const linkHref = item.section && item.href?.includes("dashboard") 
-                    ? `${item.href}?section=${item.section}` 
-                    : (item.href || '#');
-
-                  return (
-                    <Link key={item.label} href={linkHref} onClick={() => setMobileMenuOpen(false)}>
-                      <div className={`
-                        flex items-center gap-4 px-5 py-4 rounded-2xl transition-all
-                        ${isActive ? 'bg-brand-primary/10 text-brand-primary font-black' : 'text-neut-500 hover:bg-neut-50'}
-                      `}>
-                        <item.icon size={22} />
-                        <span className="text-sm uppercase tracking-tight">{item.label}</span>
-                      </div>
-                    </Link>
-                  );
-                })}
-              </nav>
-            </motion.aside>
-          </>
-        )}
-      </AnimatePresence>
+      {/* AI Chat Widget */}
+      <ChatWidget />
     </div>
   );
 }

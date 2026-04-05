@@ -5,6 +5,7 @@
 import type { Request, Response } from "express";
 import { ProposalService } from "./proposal.service";
 import { sendSuccess, sendCreated, sendPaginated } from "../../utils/response";
+import { getSocketService } from "../../services/socketService";
 
 export class ProposalController {
   static async sendProposal(req: Request, res: Response) {
@@ -17,6 +18,19 @@ export class ProposalController {
       message,
       validUntil,
     });
+    
+    // Emit real-time proposal notification
+    try {
+      const socketService = getSocketService();
+      socketService.emitProposalUpdate(receiverId, {
+        proposalId: proposal.id,
+        status: proposal.status,
+        message: `New proposal received`
+      });
+    } catch (err) {
+      console.error('Socket emission failed:', err);
+    }
+    
     return sendCreated(res, proposal, "Proposal sent");
   }
 
@@ -37,11 +51,37 @@ export class ProposalController {
 
   static async acceptProposal(req: Request, res: Response) {
     const proposal = await ProposalService.acceptProposal(req.params.proposalId, req.user!.userId);
+    
+    // Emit real-time acceptance notification
+    try {
+      const socketService = getSocketService();
+      socketService.emitProposalUpdate(proposal.senderId, {
+        proposalId: proposal.id,
+        status: 'ACCEPTED',
+        message: `Your proposal has been accepted!`
+      });
+    } catch (err) {
+      console.error('Socket emission failed:', err);
+    }
+    
     return sendSuccess(res, proposal, "Proposal accepted");
   }
 
   static async rejectProposal(req: Request, res: Response) {
-    await ProposalService.rejectProposal(req.params.proposalId, req.user!.userId);
+    const proposal = await ProposalService.rejectProposal(req.params.proposalId, req.user!.userId);
+    
+    // Emit real-time rejection notification
+    try {
+      const socketService = getSocketService();
+      socketService.emitProposalUpdate(proposal.senderId, {
+        proposalId: proposal.id,
+        status: 'REJECTED',
+        message: `Your proposal was declined`
+      });
+    } catch (err) {
+      console.error('Socket emission failed:', err);
+    }
+    
     return sendSuccess(res, null, "Proposal rejected");
   }
 
@@ -51,6 +91,20 @@ export class ProposalController {
       pricePerUnit,
       quantity,
     });
+    
+    // Emit real-time counter offer notification
+    try {
+      const socketService = getSocketService();
+      const recipientId = proposal.senderId === req.user!.userId ? proposal.receiverId : proposal.senderId;
+      socketService.emitProposalUpdate(recipientId, {
+        proposalId: proposal.id,
+        status: 'COUNTER_OFFER',
+        message: `Counter offer received: ₹${pricePerUnit}/unit for ${quantity} units`
+      });
+    } catch (err) {
+      console.error('Socket emission failed:', err);
+    }
+    
     return sendSuccess(res, proposal, "Counter offer sent");
   }
 }

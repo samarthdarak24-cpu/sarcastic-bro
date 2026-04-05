@@ -5,6 +5,7 @@
 import { Router } from "express";
 import { AIController } from "./ai.controller";
 import { BehaviorController } from "./behavior.controller";
+import { ChatController } from "./chat.controller";
 import { asyncHandler } from "../../utils/asyncHandler";
 import { authMiddleware } from "../../middleware/auth.middleware";
 import multer from "multer";
@@ -52,5 +53,11 @@ router.post("/insights", asyncHandler(AIController.getUnifiedInsights));
 // Behavioral AI routes
 router.post("/behavior/track", asyncHandler(BehaviorController.trackEvent));
 router.get("/behavior/insights", asyncHandler(BehaviorController.getInsights));
+
+// Advanced AI Chat routes (ChatGPT-like)
+router.post("/chat/message", asyncHandler(ChatController.sendMessage));
+router.get("/chat/suggestions", asyncHandler(ChatController.getSuggestions));
+router.get("/chat/history", asyncHandler(ChatController.getHistory));
+router.delete("/chat/history", asyncHandler(ChatController.clearHistory));
 
 export default router;

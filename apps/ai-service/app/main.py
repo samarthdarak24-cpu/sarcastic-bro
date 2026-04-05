@@ -3,6 +3,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routers.core_router import router as core_router
 from app.routers.advanced_router import router as advanced_router
+from app.routers.chat_router import router as chat_router
+from app.routers.insights_router import router as insights_router
+from app.routers.product_hub import router as product_hub_router
 
 allowed_origins = [
     origin.strip()
@@ -31,6 +34,9 @@ app.add_middleware(
 
 app.include_router(core_router)
 app.include_router(advanced_router)
+app.include_router(chat_router)
+app.include_router(insights_router)
+app.include_router(product_hub_router)
 
 
 @app.get("/health")

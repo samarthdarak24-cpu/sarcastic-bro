@@ -9,7 +9,7 @@ export const registerSchema = z.object({
     .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
     .regex(/\d/, "Password must contain at least one number"),
   role: z.enum(["FARMER", "BUYER"]),
-  phone: z.string().regex(/^[6-9]\d{9}$/, "Invalid Indian phone number").optional(),
+  phone: z.string().regex(/^[6-9]\d{9}$/, "Invalid Indian phone number").optional().or(z.literal('')),
   district: z.string().min(1).optional(),
   state: z.string().min(1).optional(),
 });

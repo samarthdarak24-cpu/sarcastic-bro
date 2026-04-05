@@ -143,6 +143,9 @@ model Product {
   @@index([category])
   @@index([district])
   @@index([isActive])
+  @@index([category, district, isActive])
+  @@index([farmerId, isActive])
+  @@index([category, isActive])
 }
 
 // ─── ORDER ─────────────────────────────────────────────────────────────
@@ -178,6 +181,9 @@ model Order {
   @@index([farmerId])
   @@index([status])
   @@index([orderNumber])
+  @@index([status, createdAt])
+  @@index([buyerId, status])
+  @@index([farmerId, status])
 }
 
 // ─── MESSAGE ───────────────────────────────────────────────────────────

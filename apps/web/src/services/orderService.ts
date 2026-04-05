@@ -3,60 +3,118 @@ import api from './api';
 export interface Order {
   id: string;
   orderNumber: string;
+  productId: string;
   buyerId: string;
   farmerId: string;
-  productId: string;
   quantity: number;
   totalPrice: number;
-  status: 'PENDING' | 'CONFIRMED' | 'PROCESSING' | 'SHIPPED' | 'IN_TRANSIT' | 'DELIVERED' | 'CANCELLED';
-  shippingAddress?: string;
-  trackingNumber?: string;
+  status: 'PENDING' | 'CONFIRMED' | 'PROCESSING' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED';
   notes?: string;
-  confirmedAt?: string;
-  shippedAt?: string;
-  deliveredAt?: string;
-  cancelledAt?: string;
+  address?: string;
   createdAt: string;
   updatedAt: string;
-  product?: {
-    id: string;
-    name: string;
-    price: number;
-    unit: string;
-    imageUrls?: string;
-  };
-  buyer?: {
-    id: string;
-    name: string;
-    reputationScore?: number;
-    kycStatus?: string;
-  };
-  farmer?: {
-    id: string;
-    name: string;
-    reputationScore?: number;
-    kycStatus?: string;
-  };
+  product?: any;
+  buyer?: any;
+  farmer?: any;
+}
+
+export interface CreateOrderData {
+  productId: string;
+  quantity: number;
+  notes?: string;
+  address?: string;
 }
 
 export const orderService = {
-  async getAll(status?: string) {
-    const response: any = await api.get('/orders', { params: { status } });
-    return response.data; // Standard response structure from Paginated utility
+  // Get all orders
+  async getAll(): Promise<Order[]> {
+    try {
+      const response = await api.get('/orders');
+      const data = response.data.data || response.data || [];
+      return Array.isArray(data) ? data : (data.orders || []);
+    } catch (error) {
+      console.error('getAll orders error:', error);
+      return [];
+    }
   },
 
-  async getById(id: string) {
-    const response: any = await api.get(`/orders/${id}`);
+  // Get all orders for current user
+  async getMyOrders(): Promise<Order[]> {
+    try {
+      const response: any = await api.get('/orders');
+      const data = response.data || response || [];
+      return Array.isArray(data) ? data : [];
+    } catch (error) {
+      console.warn('getMyOrders error:', error);
+      return [];
+    }
+  },
+
+  // Get farmer orders
+  async getFarmerOrders(): Promise<Order[]> {
+    try {
+      const response: any = await api.get('/orders');
+      const data = response.data || response || [];
+      return Array.isArray(data) ? data : [];
+    } catch (error) {
+      return [];
+    }
+  },
+
+  // Get buyer orders
+  async getBuyerOrders(): Promise<Order[]> {
+    try {
+      const response: any = await api.get('/orders');
+      const data = response.data || response || [];
+      return Array.isArray(data) ? data : [];
+    } catch (error) {
+      return [];
+    }
+  },
+
+  // Get single order
+  async getOrder(id: string): Promise<Order> {
+    const response = await api.get(`/orders/${id}`);
     return response.data;
   },
 
-  async updateStatus(id: string, status: string) {
-    const response: any = await api.patch(`/orders/${id}/status`, { status });
+  // Create order (buyer)
+  async createOrder(data: CreateOrderData): Promise<Order> {
+    const response = await api.post('/orders', data);
     return response.data;
   },
 
-  async cancel(id: string) {
-    const response: any = await api.delete(`/orders/${id}`);
+  // Update order status (farmer)
+  async updateOrderStatus(id: string, status: Order['status']): Promise<Order> {
+    const response = await api.patch(`/orders/${id}/status`, { status });
     return response.data;
+  },
+
+  // Cancel order
+  async cancelOrder(id: string, reason?: string): Promise<Order> {
+    const response = await api.patch(`/orders/${id}/cancel`, { reason });
+    return response.data;
+  },
+
+  // Get order statistics
+  async getOrderStats(): Promise<any> {
+    try {
+      const response = await api.get('/orders/stats');
+      return response.data.data || response.data;
+    } catch (error) {
+      console.error('getOrderStats error:', error);
+      return null;
+    }
+  },
+
+  // Track order
+  async trackOrder(orderNumber: string): Promise<any> {
+    try {
+      const response = await api.get(`/orders/track/${orderNumber}`);
+      return response.data.data || response.data;
+    } catch (error) {
+      console.error('trackOrder error:', error);
+      return null;
+    }
   }
 };

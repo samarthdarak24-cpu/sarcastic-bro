@@ -1,20 +1,17 @@
-import { Router } from "express";
-import { TenderController } from "./tender.controller";
-import { asyncHandler } from "../../utils/asyncHandler";
-import { authMiddleware } from "../../middleware/auth.middleware";
-import { roleMiddleware } from "../../middleware/role.middleware";
+import { Router } from 'express';
+import { tenderController } from './tender.controller';
+import { authMiddleware } from '../../middleware/auth.middleware';
 
 const router = Router();
 
-// Public
-router.get("/", asyncHandler(TenderController.list));
+router.use(authMiddleware);
 
-// Authenticated
-router.post("/", authMiddleware, roleMiddleware("BUYER"), asyncHandler(TenderController.create));
-router.post("/:tenderId/apply", authMiddleware, roleMiddleware("FARMER"), asyncHandler(TenderController.apply));
-router.get("/my-applications", authMiddleware, asyncHandler(TenderController.listMyApplications));
-router.get("/", asyncHandler(TenderController.list));
-router.get("/:tenderId/applications", authMiddleware, asyncHandler(TenderController.getApplications));
-router.patch("/applications/:applicationId/accept", authMiddleware, roleMiddleware("BUYER"), asyncHandler(TenderController.acceptApplication));
+router.get('/marketplace', tenderController.getMarketplace.bind(tenderController));
+router.get('/my-bids', tenderController.getMyBids.bind(tenderController));
+router.get('/analytics', tenderController.getAnalytics.bind(tenderController));
+router.post('/ai-suggest', tenderController.getAISuggestion.bind(tenderController));
+router.post('/submit-bid', tenderController.submitBid.bind(tenderController));
+router.post('/update-status', tenderController.updateBidStatus.bind(tenderController));
+router.post('/create', tenderController.createTender.bind(tenderController));
 
 export default router;

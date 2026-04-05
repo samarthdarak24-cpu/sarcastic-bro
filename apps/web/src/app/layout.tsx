@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { Inter, Poppins } from "next/font/google";
 import "./globals.css";
+import { Toaster } from "react-hot-toast";
+import { RealtimeProvider } from "@/providers/RealtimeProvider";
+import { I18nProvider } from "@/providers/I18nProvider";
 
 const sans = Inter({
   subsets: ["latin"],
@@ -14,7 +17,7 @@ const heading = Poppins({
 });
 
 export const metadata: Metadata = {
-  title: "ODOP Connect | Smart Agri Marketplace",
+  title: "FarmGuard | Smart Agri Marketplace",
   description: "The premium marketplace for farmers and buyers. Direct sourcing, AI quality grading, and supply chain intelligence.",
 };
 
@@ -24,7 +27,19 @@ export default function RootLayout({
   return (
     <html lang="en" className="scroll-smooth" suppressHydrationWarning>
       <body className={`${sans.variable} ${heading.variable} font-sans antialiased text-neut-900 bg-app-bg`}>
-        {children}
+        <I18nProvider>
+          <RealtimeProvider>
+            {children}
+            <Toaster
+              position="top-right"
+              toastOptions={{
+                duration: 4000,
+                style: { borderRadius: '12px', fontWeight: 600, fontSize: '13px' },
+                success: { iconTheme: { primary: '#22c55e', secondary: '#fff' } },
+              }}
+            />
+          </RealtimeProvider>
+        </I18nProvider>
       </body>
     </html>
   );

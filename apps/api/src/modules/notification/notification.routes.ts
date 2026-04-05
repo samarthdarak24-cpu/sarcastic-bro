@@ -1,23 +1,16 @@
-/* ========================================================================
-   Notification Routes — /notifications/*
-   ======================================================================== */
-
 import { Router } from "express";
 import { NotificationController } from "./notification.controller";
-import { asyncHandler } from "../../utils/asyncHandler";
 import { authMiddleware } from "../../middleware/auth.middleware";
+import { asyncHandler } from "../../utils/asyncHandler";
 
 const router = Router();
 
 router.use(authMiddleware);
 
-// Notification endpoints
-router.get("/", asyncHandler(NotificationController.getMyNotifications));
-router.get("/unread/count", asyncHandler(NotificationController.getUnreadCount));
-router.get("/:id", asyncHandler(NotificationController.getNotification));
-router.patch("/:id/read", asyncHandler(NotificationController.markAsRead));
-router.patch("/read-all", asyncHandler(NotificationController.markAllAsRead));
-router.delete("/:id", asyncHandler(NotificationController.deleteNotification));
-router.delete("/", asyncHandler(NotificationController.deleteAllNotifications));
+router.get("/", asyncHandler(NotificationController.getAll));
+router.patch("/read-all", asyncHandler(NotificationController.markAllRead));
+router.patch("/:id/read", asyncHandler(NotificationController.markOneRead));
+router.delete("/clear", asyncHandler(NotificationController.clearAll));
+router.post("/send", asyncHandler(NotificationController.send));
 
 export default router;

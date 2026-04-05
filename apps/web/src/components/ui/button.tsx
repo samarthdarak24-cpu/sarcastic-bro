@@ -28,7 +28,7 @@ const variantClasses: Record<ButtonVariant, string> = {
   outline: "border-2 border-neut-200 bg-transparent text-neut-700 hover:border-neut-300 hover:bg-neut-50",
   ghost: "bg-transparent text-neut-600 hover:bg-neut-100",
   danger: "bg-error text-white hover:bg-error/90 shadow-startup-soft",
-  gradient: "bg-startup-gradient text-white shadow-startup-medium hover:opacity-95",
+  gradient: "bg-gradient-to-r from-brand-primary to-brand-secondary text-white shadow-glow-primary hover:opacity-95",
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
@@ -39,20 +39,22 @@ const sizeClasses: Record<ButtonSize, string> = {
 };
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant = "primary", size = "md", ...props }, ref) => {
+  ({ className, variant = "primary", size = "md", children, ...props }, ref) => {
     return (
       <motion.button
-        whileHover={{ scale: 1.02 }}
+        whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.98 }}
         className={cn(
-          "inline-flex items-center justify-center rounded-startup-xl transition-all focus:outline-none focus:ring-2 focus:ring-brand-primary/20",
+          "btn-glow ripple-effect inline-flex items-center justify-center rounded-startup-xl transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-brand-primary/20",
           "disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100",
           variantClasses[variant],
           sizeClasses[size],
           className
         )}
         {...props}
-      />
+      >
+        {children}
+      </motion.button>
     );
   }
 );

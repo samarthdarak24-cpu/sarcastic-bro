@@ -53,7 +53,7 @@ export class AuthController {
     }
     const avatarUrl = `/uploads/images/${req.file.filename}`;
     const user = await AuthService.uploadAvatar(req.user!.userId, avatarUrl);
-    return sendSuccess(res, user, "Avatar uploaded successfully");
+    return sendSuccess(res, { ...user, avatarUrl }, "Avatar uploaded successfully");
   }
 
   static async submitKYC(req: Request, res: Response) {

@@ -58,6 +58,19 @@ const config: Config = {
         "fade-in": "fadeIn 0.5s ease-out forwards",
         "slide-up": "slideUp 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards",
         "float": "float 4s ease-in-out infinite",
+        "gradient-shift": "gradientShift 15s ease infinite",
+        "glow-pulse": "glowPulse 3s ease-in-out infinite",
+        "shimmer": "shimmer 2s infinite",
+        "ripple": "ripple 0.6s ease-out",
+        "chart-draw": "chartDraw 2s ease-out forwards",
+        "bar-grow": "barGrow 0.8s ease-out forwards",
+        "shake": "shake 0.5s ease-in-out",
+        "fade-in-scale": "fadeInScale 0.5s ease-out forwards",
+        "slide-up-fade": "slideUpFade 0.5s ease-out forwards",
+        "spin-gradient": "spinGradient 1s linear infinite",
+        "dot-pulse": "dotPulse 1.4s ease-in-out infinite",
+        "badge-ping": "badgePing 1.5s cubic-bezier(0, 0, 0.2, 1) infinite",
+        "success-pop": "successPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards",
       },
       keyframes: {
         fadeIn: {
@@ -71,6 +84,61 @@ const config: Config = {
         float: {
           "0%, 100%": { transform: "translateY(0)" },
           "50%": { transform: "translateY(-10px)" },
+        },
+        gradientShift: {
+          "0%": { backgroundPosition: "0% 50%" },
+          "50%": { backgroundPosition: "100% 50%" },
+          "100%": { backgroundPosition: "0% 50%" },
+        },
+        glowPulse: {
+          "0%, 100%": { boxShadow: "0 0 10px rgba(34, 197, 94, 0.3)" },
+          "50%": { boxShadow: "0 0 30px rgba(34, 197, 94, 0.6)" },
+        },
+        shimmer: {
+          "0%": { backgroundPosition: "-1000px 0" },
+          "100%": { backgroundPosition: "1000px 0" },
+        },
+        ripple: {
+          "0%": { transform: "scale(0)", opacity: "1" },
+          "100%": { transform: "scale(4)", opacity: "0" },
+        },
+        chartDraw: {
+          "0%": { strokeDasharray: "1000", strokeDashoffset: "1000" },
+          "100%": { strokeDasharray: "1000", strokeDashoffset: "0" },
+        },
+        barGrow: {
+          "0%": { height: "0" },
+          "100%": { height: "100%" },
+        },
+        shake: {
+          "0%, 100%": { transform: "translateX(0)" },
+          "25%": { transform: "translateX(-10px)" },
+          "75%": { transform: "translateX(10px)" },
+        },
+        fadeInScale: {
+          "from": { opacity: "0", transform: "scale(0.95)" },
+          "to": { opacity: "1", transform: "scale(1)" },
+        },
+        slideUpFade: {
+          "from": { opacity: "0", transform: "translateY(20px)" },
+          "to": { opacity: "1", transform: "translateY(0)" },
+        },
+        spinGradient: {
+          "0%": { transform: "rotate(0deg)" },
+          "100%": { transform: "rotate(360deg)" },
+        },
+        dotPulse: {
+          "0%, 100%": { opacity: "0.3", transform: "scale(0.8)" },
+          "50%": { opacity: "1", transform: "scale(1.2)" },
+        },
+        badgePing: {
+          "0%": { transform: "scale(1)", opacity: "1" },
+          "75%, 100%": { transform: "scale(1.8)", opacity: "0" },
+        },
+        successPop: {
+          "0%": { transform: "scale(0)", opacity: "0" },
+          "60%": { transform: "scale(1.2)" },
+          "100%": { transform: "scale(1)", opacity: "1" },
         },
       },
     },

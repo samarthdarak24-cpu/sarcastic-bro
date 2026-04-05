@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { FinanceService } from "./finance.service";
 import { InsuranceService } from "./insurance.service";
+import { getSocketService } from "../../services/socketService";
 
 export class FinanceController {
   /**
@@ -87,6 +88,23 @@ export class FinanceController {
   // ... other methods as placeholders for MVP
   static async recordPayment(req: Request, res: Response, Next: NextFunction) {
     try {
+      const { orderId, amount, method } = req.body;
+      const userId = (req as any).user.id;
+      
+      // Emit real-time payment notification
+      try {
+        const socketService = getSocketService();
+        socketService.emitPaymentUpdate(userId, {
+          orderId,
+          amount,
+          status: 'COMPLETED',
+          method,
+          timestamp: new Date()
+        });
+      } catch (err) {
+        console.error('Socket emission failed:', err);
+      }
+      
       res.status(200).json({ success: true, message: "Payment recorded." });
     } catch (error: any) {
       Next(error);

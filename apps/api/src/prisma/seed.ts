@@ -115,6 +115,39 @@ async function seed() {
   // ─── Create Users ──────────────────────────────────────────────────
   console.log("👤 Creating users...");
   const password = await bcrypt.hash("Test@1234", HASH_ROUNDS);
+  const farmerTestPass = await bcrypt.hash("Farmer123", HASH_ROUNDS);
+  const buyerTestPass = await bcrypt.hash("Buyer123", HASH_ROUNDS);
+
+  // Create test users for login demo
+  const testFarmer = await prisma.user.create({
+    data: {
+      name: "Rajesh Kumar",
+      email: "farmer@test.com",
+      phone: "9876543210",
+      password: farmerTestPass,
+      role: "FARMER",
+      district: "Nashik",
+      state: "Maharashtra",
+      kycStatus: "VERIFIED",
+      isActive: true,
+    },
+  });
+  console.log(`  ✓ Test Farmer: ${testFarmer.name} (${testFarmer.email}) - Password: Farmer123`);
+
+  const testBuyer = await prisma.user.create({
+    data: {
+      name: "Priya Sharma",
+      email: "buyer@test.com",
+      phone: "9123456789",
+      password: buyerTestPass,
+      role: "BUYER",
+      district: "Mumbai",
+      state: "Maharashtra",
+      kycStatus: "VERIFIED",
+      isActive: true,
+    },
+  });
+  console.log(`  ✓ Test Buyer: ${testBuyer.name} (${testBuyer.email}) - Password: Buyer123`);
 
   const createdFarmers = [];
   for (const f of farmers) {

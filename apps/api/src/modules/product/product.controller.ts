@@ -6,6 +6,7 @@ import type { Request, Response } from "express";
 import { ProductService } from "./product.service";
 import { createProductSchema, updateProductSchema } from "./product.validation";
 import { sendSuccess, sendCreated, sendPaginated } from "../../utils/response";
+import { getSocketService } from "../../services/socketService";
 
 export class ProductController {
   static async create(req: Request, res: Response) {
@@ -38,7 +39,29 @@ export class ProductController {
 
   static async update(req: Request, res: Response) {
     const data = updateProductSchema.parse(req.body);
+    
+    // Get old product for price comparison
+    const oldProduct = await ProductService.getById(req.params.id);
     const product = await ProductService.update(req.params.id, req.user!.userId, data);
+    
+    // Emit price update if price changed
+    if (data.price && oldProduct.price !== data.price) {
+      try {
+        const socketService = getSocketService();
+        const change = data.price - oldProduct.price;
+        const changePercent = (change / oldProduct.price) * 100;
+        
+        socketService.emitPriceUpdate(product.id, {
+          newPrice: data.price,
+          oldPrice: oldProduct.price,
+          change,
+          changePercent
+        });
+      } catch (err) {
+        console.error('Socket emission failed:', err);
+      }
+    }
+    
     return sendSuccess(res, product, "Product updated");
   }
 

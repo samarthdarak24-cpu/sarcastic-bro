@@ -1,45 +1,43 @@
-import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+// Compatibility layer for old auth store
+// This provides the same interface as before but uses the new auth service
+
+import { authService } from '@/services/auth';
 
 interface User {
   id: string;
   name: string;
   email: string;
-  role: 'FARMER' | 'BUYER' | 'ADMIN';
-  token?: string;
+  role: string;
   phone?: string;
   avatarUrl?: string;
-  address?: string;
   district?: string;
   state?: string;
-  language?: string;
-  reputationScore?: number;
-  ratingAvg?: number;
-  totalOrders?: number;
-  successfulDeliveries?: number;
-  cancellationRate?: number;
-  trustLevel?: string;
 }
 
 interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
-  login: (user: User) => void;
-  logout: () => void;
   setUser: (user: User | null) => void;
+  logout: () => void;
 }
 
-export const useAuthStore = create<AuthState>()(
-  persist(
-    (set) => ({
-      user: null,
-      isAuthenticated: false,
-      login: (user) => set({ user, isAuthenticated: true }),
-      logout: () => set({ user: null, isAuthenticated: false }),
-      setUser: (user) => set({ user, isAuthenticated: !!user }),
-    }),
-    {
-      name: 'odop-auth-storage',
+// Create a simple store that wraps the auth service
+export const useAuthStore = () => {
+  const user = authService.getUser();
+  const isAuthenticated = authService.isAuthenticated();
+
+  return {
+    user,
+    isAuthenticated,
+    setUser: (newUser: User | null) => {
+      if (newUser) {
+        localStorage.setItem('user', JSON.stringify(newUser));
+      } else {
+        localStorage.removeItem('user');
+      }
+    },
+    logout: () => {
+      authService.logout();
     }
-  )
-);
+  };
+};

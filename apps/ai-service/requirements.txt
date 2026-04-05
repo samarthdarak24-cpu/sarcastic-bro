@@ -17,3 +17,5 @@ torch==2.1.1
 torchvision==0.16.1
 timm==0.9.12
 opencv-python-headless==4.8.1.78
+openai==1.12.0
+sse-starlette==1.8.2

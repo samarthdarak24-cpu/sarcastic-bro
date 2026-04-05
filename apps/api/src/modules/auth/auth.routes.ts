@@ -19,7 +19,9 @@ router.get("/me",        authMiddleware, asyncHandler(AuthController.me));
 router.get("/profile",   authMiddleware, asyncHandler(AuthController.me));
 
 // Profile endpoints
+router.put("/profile", authMiddleware, asyncHandler(AuthController.updateProfile));
 router.put("/profile/update", authMiddleware, asyncHandler(AuthController.updateProfile));
+router.post("/upload-avatar", authMiddleware, uploadImages.single("avatar"), asyncHandler(AuthController.uploadAvatar));
 router.post("/profile/avatar", authMiddleware, uploadImages.single("avatar"), asyncHandler(AuthController.uploadAvatar));
 
 // KYC endpoints

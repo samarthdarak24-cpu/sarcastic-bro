@@ -5,6 +5,7 @@
 import type { Request, Response } from "express";
 import { MessageService } from "./message.service";
 import { sendSuccess, sendCreated, sendPaginated } from "../../utils/response";
+import { getSocketService } from "../../services/socketService";
 
 export class MessageController {
   static async sendMessage(req: Request, res: Response) {
@@ -18,6 +19,21 @@ export class MessageController {
       type,
       fileUrl,
     });
+    
+    // Emit real-time message notification
+    try {
+      const socketService = getSocketService();
+      socketService.emitNewMessage(receiverId, {
+        messageId: message.id,
+        senderId: req.user!.userId,
+        senderName: req.user!.email || 'User',
+        content: message.content,
+        conversationId: `${req.user!.userId}-${receiverId}`
+      });
+    } catch (err) {
+      console.error('Socket emission failed:', err);
+    }
+    
     return sendCreated(res, message, "Message sent");
   }
 

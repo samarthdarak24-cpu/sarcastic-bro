@@ -7,11 +7,30 @@ import { OrderService } from "./order.service";
 import { UserService } from "../user/user.service";
 import { createOrderSchema, updateOrderStatusSchema } from "./order.service";
 import { sendSuccess, sendCreated, sendPaginated } from "../../utils/response";
+import { getSocketService } from "../../services/socketService";
 
 export class OrderController {
   static async create(req: Request, res: Response) {
     const data = createOrderSchema.parse(req.body);
     const order = await OrderService.create(req.user!.userId, data);
+    
+    // Emit real-time notification to farmer
+    try {
+      const socketService = getSocketService();
+      socketService.emitOrderUpdate(order.farmerId, {
+        orderId: order.id,
+        orderNumber: order.orderNumber,
+        status: order.status
+      });
+      socketService.emitNotification(order.farmerId, {
+        type: 'ORDER',
+        title: 'New Order Received',
+        message: `You have a new order #${order.orderNumber}`
+      });
+    } catch (err) {
+      console.error('Socket emission failed:', err);
+    }
+    
     return sendCreated(res, order, "Order placed successfully");
   }
 
@@ -43,6 +62,23 @@ export class OrderController {
     const { status } = updateOrderStatusSchema.parse(req.body);
     const order = await OrderService.updateStatus(req.params.id, req.user!.userId, status);
     
+    // Emit real-time updates to both parties
+    try {
+      const socketService = getSocketService();
+      socketService.emitOrderUpdate(order.buyerId, {
+        orderId: order.id,
+        orderNumber: order.orderNumber,
+        status: order.status
+      });
+      socketService.emitOrderUpdate(order.farmerId, {
+        orderId: order.id,
+        orderNumber: order.orderNumber,
+        status: order.status
+      });
+    } catch (err) {
+      console.error('Socket emission failed:', err);
+    }
+    
     // Trigger reputation update for both parties
     if (status === 'DELIVERED' || status === 'CANCELLED') {
       await UserService.updateReputationScore(order.buyerId);
@@ -54,6 +90,24 @@ export class OrderController {
 
   static async cancel(req: Request, res: Response) {
     const order = await OrderService.cancel(req.params.id, req.user!.userId);
+    
+    // Emit real-time cancellation notification
+    try {
+      const socketService = getSocketService();
+      const otherUserId = order.buyerId === req.user!.userId ? order.farmerId : order.buyerId;
+      socketService.emitOrderUpdate(otherUserId, {
+        orderId: order.id,
+        orderNumber: order.orderNumber,
+        status: 'CANCELLED'
+      });
+      socketService.emitNotification(otherUserId, {
+        type: 'ORDER',
+        title: 'Order Cancelled',
+        message: `Order #${order.orderNumber} has been cancelled`
+      });
+    } catch (err) {
+      console.error('Socket emission failed:', err);
+    }
     
     // Trigger reputation update for both parties on cancellation
     await UserService.updateReputationScore(order.buyerId);

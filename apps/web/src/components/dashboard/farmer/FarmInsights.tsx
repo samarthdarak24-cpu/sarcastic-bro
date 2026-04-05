@@ -1,288 +1,781 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import { 
-  TrendingUp, 
-  ShoppingBag, 
-  DollarSign, 
-  ArrowUpRight, 
-  ArrowDownRight,
-  TrendingDown,
-  LayoutGrid,
-  BarChart3,
-  Calendar,
-  Filter,
-  Package,
-  Layers,
-  CheckCircle2,
-  AlertCircle,
-  MoreVertical,
-  Zap,
-  Target
-} from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  ResponsiveContainer,
-  AreaChart,
-  Area,
-  Cell,
-  PieChart,
-  Pie
-} from "recharts";
-import { analyticsService, FarmInsightsData } from "@/services/analyticsService";
-import toast from "react-hot-toast";
+import React, { useState, useEffect } from 'react';
 
-const CHART_COLORS = ["#0a84ff", "#ff9f0a", "#32d74b", "#bf5af2", "#ff375f"];
+interface FarmInsightsProps {
+  compact?: boolean;
+}
 
-export function FarmInsights() {
-  const [timeRange, setTimeRange] = useState("30d"); // 7d, 30d, 90d, 1y
-  const [insights, setInsights] = useState<FarmInsightsData | null>(null);
-  const [loading, setLoading] = useState(true);
+export default function FarmInsights({ compact = false }: FarmInsightsProps) {
+  const [activeTab, setActiveTab] = useState<string>('overview');
+  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    fetchInsights();
-  }, [timeRange]);
-
-  const fetchInsights = async () => {
-    setLoading(true);
-    try {
-      const resp = await analyticsService.getFarmerInsights(timeRange);
-      setInsights(resp);
-    } catch (err) {
-      toast.error("Failed to load Farm Insights data.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (loading || !insights) {
-    return (
-      <div className="h-[600px] flex flex-col items-center justify-center text-center">
-        <Zap size={48} className="text-brand-primary animate-pulse mb-6" />
-        <h3 className="text-2xl font-black text-neut-900 tracking-tight">Syncing Market Intelligence...</h3>
-      </div>
-    );
-  }
-
-  // Inject beautiful demo data if account is empty (0 orders)
-  const isDemo = insights.summary.totalOrders === 0;
-  
-  const displayInsights = isDemo ? {
-    summary: { totalRevenue: 142500, totalOrders: 154, period: timeRange },
-    chartTimeSeries: [
-      { date: "Mon", revenue: 4200, orders: 12 },
-      { date: "Tue", revenue: 5100, orders: 15 },
-      { date: "Wed", revenue: 4800, orders: 14 },
-      { date: "Thu", revenue: 6100, orders: 22 },
-      { date: "Fri", revenue: 5800, orders: 18 },
-      { date: "Sat", revenue: 7200, orders: 25 },
-      { date: "Sun", revenue: 8500, orders: 32 }
-    ],
-    topProducts: [
-      { name: "Basmati Rice", quantity: 450, revenue: 45000 },
-      { name: "Turmeric", quantity: 250, revenue: 25000 },
-      { name: "Walnuts", quantity: 200, revenue: 20000 },
-      { name: "Garlic", quantity: 100, revenue: 10000 }
-    ],
-    priceComparison: [
-      { productId: "d1", name: "Basmati Rice", category: "Grains", farmerPrice: 85, marketAverage: 78, premium: 8.9 },
-      { productId: "d2", name: "Turmeric", category: "Spices", farmerPrice: 120, marketAverage: 125, premium: -4.0 },
-      { productId: "d3", name: "Walnuts", category: "Nuts", farmerPrice: 450, marketAverage: 410, premium: 9.7 }
-    ]
-  } : insights;
-
-  // Pre-process for Pie Chart
-  const pieData = displayInsights.topProducts.map((p, i) => ({
-    name: p.name,
-    value: p.revenue,
-    color: CHART_COLORS[i % CHART_COLORS.length]
-  }));
-
-  // Average Premium/Deficit Calculation
-  const avgPremium = displayInsights.priceComparison.length ? 
-    (displayInsights.priceComparison.reduce((acc, curr) => acc + curr.premium, 0) / displayInsights.priceComparison.length) : 0;
+  const tabs = [
+    { id: 'overview', label: 'Overview', icon: '📊' },
+    { id: 'weather', label: 'Weather', icon: '🌤️' },
+    { id: 'soil', label: 'Soil Health', icon: '🌱' },
+    { id: 'pest', label: 'Pest Control', icon: '🐛' },
+    { id: 'irrigation', label: 'Irrigation', icon: '💧' },
+    { id: 'fertilizer', label: 'Fertilizer', icon: '🧪' },
+    { id: 'crop', label: 'Crop Health', icon: '🌾' },
+    { id: 'yield', label: 'Yield Forecast', icon: '📈' },
+    { id: 'financial', label: 'Financial', icon: '💰' },
+    { id: 'market', label: 'Market Trends', icon: '📉' },
+    { id: 'equipment', label: 'Equipment', icon: '🚜' },
+    { id: 'alerts', label: 'Alerts', icon: '🔔' }
+  ];
 
   return (
-    <div className="space-y-10 animate-fade-in text-neut-900 border-neut-200">
-      {/* Top Level KPIs */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <KPICard title="Total Revenue" value={`₹${(displayInsights.summary.totalRevenue || 0).toLocaleString()}`} icon={<DollarSign />} isPositive />
-        <KPICard title="Total Orders" value={displayInsights.summary.totalOrders.toString()} icon={<ShoppingBag />} isPositive />
-        <KPICard title="Premium vs Market" value={`${avgPremium > 0 ? '+' : ''}${avgPremium.toFixed(1)}%`} icon={avgPremium > 0 ? <TrendingUp /> : <TrendingDown />} isPositive={avgPremium > 0} />
-        <KPICard title="Yield Stability" value={isDemo ? "94%" : "100%"} change={isDemo ? "+4.1%" : "+0.0%"} icon={<Target />} isPositive />
+    <div className="farm-insights">
+      <div className="header-section">
+        <h2 className="text-2xl font-bold text-gray-800">Farm Insights</h2>
+        <button className="btn-primary">
+          📥 Export Report
+        </button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <Card className="col-span-2 rounded-[2.5rem] border-transparent shadow-startup-soft overflow-hidden">
-          <CardHeader className="p-10 pb-0 border-b border-neut-100 bg-white/50 backdrop-blur-xl shrink-0 flex-row items-center justify-between">
-             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 w-full">
-                <div>
-                   <h2 className="text-3xl font-black tracking-tight flex items-center gap-3 mb-1">
-                      Revenue Velocity {isDemo && <Badge tone="amber" className="h-6 text-[10px] ml-2 bg-brand-primary">DEMO DATA</Badge>}
-                   </h2>
-                   <p className="text-[10px] font-bold text-brand-primary uppercase tracking-widest leading-loose">DAILY TRANSACTION VOLUME & MARKET SETTLEMENTS</p>
-                </div>
-                <div className="flex items-center gap-2 p-1 bg-neut-100 rounded-2xl">
-                   {[
-                     { label: 'W', val: '7d' }, 
-                     { label: 'M', val: '30d' }, 
-                     { label: 'Y', val: '1y' }
-                   ].map((r) => (
-                      <button 
-                        key={r.label}
-                        onClick={() => setTimeRange(r.val)}
-                        className={`w-10 h-10 flex items-center justify-center rounded-xl font-bold text-xs transition-all ${
-                           timeRange === r.val
-                           ? "bg-white text-neut-900 shadow-startup-soft" : "text-neut-400 hover:text-neut-600"
-                        }`}
-                      >
-                         {r.label}
-                      </button>
-                   ))}
-                </div>
-             </div>
-          </CardHeader>
-          <CardContent className="p-10 pt-12 h-[400px]">
-             <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={displayInsights.chartTimeSeries} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
-                   <defs>
-                      <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#0a84ff" stopOpacity={0.1}/>
-                        <stop offset="95%" stopColor="#0a84ff" stopOpacity={0}/>
-                      </linearGradient>
-                   </defs>
-                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                   <XAxis 
-                      dataKey="date" 
-                      axisLine={false} 
-                      tickLine={false} 
-                      tick={{ fontSize: 10, fontWeight: 900, fill: '#8e8e93' }} 
-                   />
-                   <YAxis 
-                      axisLine={false} 
-                      tickLine={false} 
-                      tick={{ fontSize: 10, fontWeight: 900, fill: '#8e8e93' }} 
-                   />
-                   <Tooltip 
-                      contentStyle={{ backgroundColor: '#fff', borderRadius: '1.5rem', border: 'none', boxShadow: '0 20px 40px rgba(0,0,0,0.1)', padding: '1rem' }}
-                      itemStyle={{ fontStyle: 'bold', fontSize: '12px' }}
-                   />
-                   <Area 
-                      type="monotone" 
-                      dataKey="revenue" 
-                      stroke="#0a84ff" 
-                      strokeWidth={4} 
-                      fillOpacity={1} 
-                      fill="url(#colorRev)" 
-                      animationDuration={1500}
-                   />
-                </AreaChart>
-             </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        {/* Top Products Distribution */}
-        <Card className="border-none shadow-startup-soft bg-white/80 backdrop-blur-xl flex flex-col min-h-[500px]">
-           <CardHeader className="p-10 border-b border-neut-50">
-              <h3 className="text-xl font-black tracking-tight">Category Yield</h3>
-           </CardHeader>
-           <CardContent className="flex-1 p-10 flex flex-col justify-between">
-              <div className="h-64 mb-8">
-                 <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                       <Pie
-                          data={pieData}
-                          cx="50%"
-                          cy="50%"
-                          innerRadius={60}
-                          outerRadius={90}
-                          paddingAngle={8}
-                          dataKey="value"
-                          stroke="none"
-                       >
-                          {pieData.map((entry, index) => (
-                             <Cell key={`cell-${index}`} fill={entry.color} />
-                          ))}
-                       </Pie>
-                       <Tooltip />
-                    </PieChart>
-                 </ResponsiveContainer>
-              </div>
-              <div className="space-y-4">
-                 {pieData.map((item) => (
-                    <div key={item.name} className="flex items-center justify-between">
-                       <div className="flex items-center gap-3">
-                          <div className="h-3 w-3 rounded-full" style={{ backgroundColor: item.color }} />
-                          <span className="text-sm font-bold text-neut-700">{item.name}</span>
-                       </div>
-                       <span className="text-sm font-black text-neut-900">₹{item.value.toLocaleString()}</span>
-                    </div>
-                 ))}
-              </div>
-           </CardContent>
-        </Card>
+      <div className="stats-grid">
+        <div className="stat-card">
+          <div className="stat-icon bg-blue-100">🌤️</div>
+          <div className="stat-content">
+            <p className="stat-label">Weather Score</p>
+            <p className="stat-value">85/100</p>
+          </div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-icon bg-green-100">🌱</div>
+          <div className="stat-content">
+            <p className="stat-label">Soil Health</p>
+            <p className="stat-value">Good</p>
+          </div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-icon bg-yellow-100">🐛</div>
+          <div className="stat-content">
+            <p className="stat-label">Pest Risk</p>
+            <p className="stat-value">Low</p>
+          </div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-icon bg-purple-100">💰</div>
+          <div className="stat-content">
+            <p className="stat-label">Revenue</p>
+            <p className="stat-value">₹45K</p>
+          </div>
+        </div>
       </div>
 
-      {/* Comparison Widget */}
-      <Card className="border-none shadow-startup-medium bg-startup-gradient text-white overflow-hidden p-12 relative flex flex-col md:flex-row items-center gap-12 justify-between">
-          <div className="gradient-blur top-0 left-0 opacity-20" />
-          <div className="relative z-10 max-w-lg">
-             <div className="h-14 w-14 bg-white/10 rounded-2xl flex items-center justify-center text-white mb-8"><Layers size={32} /></div>
-             <h2 className="text-4xl font-black tracking-tight leading-tight mb-4">Benchmark Against National Mandis</h2>
-             <p className="text-white/60 text-lg font-medium">See how your listed price compares to national indices in real-time. Optimize for maximum profitability.</p>
+      <div className="filter-tabs">
+        {tabs.map(tab => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={`filter-tab ${activeTab === tab.id ? 'active' : ''}`}
+          >
+            <span className="tab-icon">{tab.icon}</span>
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      <div className="tab-content">
+        {activeTab === 'overview' && (
+          <div className="insights-grid">
+            <div className="insight-card">
+              <div className="card-header">
+                <h4>🌾 Total Crops</h4>
+                <span className="status-badge bg-green-500">Active</span>
+              </div>
+              <div className="card-body">
+                <p className="insight-value">12</p>
+                <p className="insight-change">+2 this season</p>
+              </div>
+            </div>
+            <div className="insight-card">
+              <div className="card-header">
+                <h4>📏 Total Area</h4>
+                <span className="status-badge bg-blue-500">Cultivated</span>
+              </div>
+              <div className="card-body">
+                <p className="insight-value">25 Acres</p>
+                <p className="insight-change">85% utilized</p>
+              </div>
+            </div>
+            <div className="insight-card">
+              <div className="card-header">
+                <h4>💧 Water Usage</h4>
+                <span className="status-badge bg-cyan-500">Optimal</span>
+              </div>
+              <div className="card-body">
+                <p className="insight-value">1200 L/day</p>
+                <p className="insight-change">-15% vs last month</p>
+              </div>
+            </div>
+            <div className="insight-card">
+              <div className="card-header">
+                <h4>📊 Productivity</h4>
+                <span className="status-badge bg-purple-500">High</span>
+              </div>
+              <div className="card-body">
+                <p className="insight-value">92%</p>
+                <p className="insight-change">+8% improvement</p>
+              </div>
+            </div>
           </div>
-          <div className="relative z-10 w-full md:w-auto">
-             <div className="flex overflow-x-auto gap-6 pb-2 no-scrollbar">
-                {displayInsights.priceComparison.slice(0, 3).map((comp, idx) => (
-                    <div key={idx} className="flex gap-6 shrink-0">
-                        <PriceComparisonCard label={`${comp.name} (Your Price)`} value={`₹${comp.farmerPrice}`} color="text-white" />
-                        <PriceComparisonCard label={`${comp.name} (Mandi Avg)`} value={`₹${comp.marketAverage}`} color={comp.premium > 0 ? "text-success" : "text-warning"} detail={comp.premium !== 0 ? `${comp.premium > 0 ? '+' : ''}${comp.premium.toFixed(1)}%` : ""} />
-                    </div>
-                ))}
-                {displayInsights.priceComparison.length === 0 && (
-                    <div className="text-white/60 font-black tracking-widest text-sm uppercase">Add active products to view market comparisons.</div>
-                )}
-             </div>
+        )}
+
+        {activeTab === 'weather' && (
+          <div className="insights-grid">
+            <div className="insight-card">
+              <div className="card-header">
+                <h4>🌡️ Temperature</h4>
+                <span className="status-badge bg-orange-500">Warm</span>
+              </div>
+              <div className="card-body">
+                <p className="insight-value">28°C</p>
+                <p className="insight-change">+2°C from yesterday</p>
+              </div>
+            </div>
+            <div className="insight-card">
+              <div className="card-header">
+                <h4>💨 Wind Speed</h4>
+                <span className="status-badge bg-blue-500">Moderate</span>
+              </div>
+              <div className="card-body">
+                <p className="insight-value">12 km/h</p>
+                <p className="insight-change">NE direction</p>
+              </div>
+            </div>
+            <div className="insight-card">
+              <div className="card-header">
+                <h4>🌧️ Rainfall</h4>
+                <span className="status-badge bg-cyan-500">Expected</span>
+              </div>
+              <div className="card-body">
+                <p className="insight-value">15mm</p>
+                <p className="insight-change">Next 3 days</p>
+              </div>
+            </div>
+            <div className="insight-card">
+              <div className="card-header">
+                <h4>☀️ UV Index</h4>
+                <span className="status-badge bg-yellow-500">High</span>
+              </div>
+              <div className="card-body">
+                <p className="insight-value">8/10</p>
+                <p className="insight-change">Peak at 2 PM</p>
+              </div>
+            </div>
           </div>
-      </Card>
+        )}
+
+        {activeTab === 'soil' && (
+          <div className="insights-grid">
+            <div className="insight-card">
+              <div className="card-header">
+                <h4>💧 Moisture Level</h4>
+                <span className="status-badge bg-blue-500">Good</span>
+              </div>
+              <div className="card-body">
+                <p className="insight-value">65%</p>
+                <p className="insight-change">Optimal range</p>
+              </div>
+            </div>
+            <div className="insight-card">
+              <div className="card-header">
+                <h4>🧪 pH Level</h4>
+                <span className="status-badge bg-green-500">Balanced</span>
+              </div>
+              <div className="card-body">
+                <p className="insight-value">6.8</p>
+                <p className="insight-change">Ideal for crops</p>
+              </div>
+            </div>
+            <div className="insight-card">
+              <div className="card-header">
+                <h4>🌱 Nitrogen (N)</h4>
+                <span className="status-badge bg-purple-500">High</span>
+              </div>
+              <div className="card-body">
+                <p className="insight-value">85 ppm</p>
+                <p className="insight-change">+10 ppm</p>
+              </div>
+            </div>
+            <div className="insight-card">
+              <div className="card-header">
+                <h4>🔬 Organic Matter</h4>
+                <span className="status-badge bg-green-500">Rich</span>
+              </div>
+              <div className="card-body">
+                <p className="insight-value">4.2%</p>
+                <p className="insight-change">Excellent quality</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'pest' && (
+          <div className="insights-grid">
+            <div className="insight-card">
+              <div className="card-header">
+                <h4>🐛 Pest Risk Level</h4>
+                <span className="status-badge bg-green-500">Low</span>
+              </div>
+              <div className="card-body">
+                <p className="insight-value">15%</p>
+                <p className="insight-change">Safe zone</p>
+              </div>
+            </div>
+            <div className="insight-card">
+              <div className="card-header">
+                <h4>🦗 Detected Pests</h4>
+                <span className="status-badge bg-yellow-500">Monitor</span>
+              </div>
+              <div className="card-body">
+                <p className="insight-value">3 Types</p>
+                <p className="insight-change">Aphids, Beetles</p>
+              </div>
+            </div>
+            <div className="insight-card">
+              <div className="card-header">
+                <h4>💊 Treatment Status</h4>
+                <span className="status-badge bg-blue-500">Active</span>
+              </div>
+              <div className="card-body">
+                <p className="insight-value">2 Areas</p>
+                <p className="insight-change">Under treatment</p>
+              </div>
+            </div>
+            <div className="insight-card">
+              <div className="card-header">
+                <h4>🛡️ Prevention Score</h4>
+                <span className="status-badge bg-green-500">Strong</span>
+              </div>
+              <div className="card-body">
+                <p className="insight-value">88%</p>
+                <p className="insight-change">Well protected</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'irrigation' && (
+          <div className="insights-grid">
+            <div className="insight-card">
+              <div className="card-header">
+                <h4>💧 Daily Water Usage</h4>
+                <span className="status-badge bg-blue-500">Optimal</span>
+              </div>
+              <div className="card-body">
+                <p className="insight-value">1200 L</p>
+                <p className="insight-change">-15% efficient</p>
+              </div>
+            </div>
+            <div className="insight-card">
+              <div className="card-header">
+                <h4>⏰ Schedule Status</h4>
+                <span className="status-badge bg-green-500">On Track</span>
+              </div>
+              <div className="card-body">
+                <p className="insight-value">3x Daily</p>
+                <p className="insight-change">6AM, 12PM, 6PM</p>
+              </div>
+            </div>
+            <div className="insight-card">
+              <div className="card-header">
+                <h4>🚰 System Efficiency</h4>
+                <span className="status-badge bg-green-500">Excellent</span>
+              </div>
+              <div className="card-body">
+                <p className="insight-value">94%</p>
+                <p className="insight-change">No leaks detected</p>
+              </div>
+            </div>
+            <div className="insight-card">
+              <div className="card-header">
+                <h4>💰 Cost Savings</h4>
+                <span className="status-badge bg-purple-500">High</span>
+              </div>
+              <div className="card-body">
+                <p className="insight-value">₹2,400</p>
+                <p className="insight-change">This month</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'fertilizer' && (
+          <div className="insights-grid">
+            <div className="insight-card">
+              <div className="card-header">
+                <h4>🧪 NPK Ratio</h4>
+                <span className="status-badge bg-green-500">Balanced</span>
+              </div>
+              <div className="card-body">
+                <p className="insight-value">19:19:19</p>
+                <p className="insight-change">Ideal mix</p>
+              </div>
+            </div>
+            <div className="insight-card">
+              <div className="card-header">
+                <h4>📦 Stock Level</h4>
+                <span className="status-badge bg-yellow-500">Low</span>
+              </div>
+              <div className="card-body">
+                <p className="insight-value">45 kg</p>
+                <p className="insight-change">Reorder soon</p>
+              </div>
+            </div>
+            <div className="insight-card">
+              <div className="card-header">
+                <h4>📅 Last Application</h4>
+                <span className="status-badge bg-blue-500">Recent</span>
+              </div>
+              <div className="card-body">
+                <p className="insight-value">5 Days</p>
+                <p className="insight-change">Next in 10 days</p>
+              </div>
+            </div>
+            <div className="insight-card">
+              <div className="card-header">
+                <h4>💵 Monthly Cost</h4>
+                <span className="status-badge bg-purple-500">Budget</span>
+              </div>
+              <div className="card-body">
+                <p className="insight-value">₹8,500</p>
+                <p className="insight-change">Within limit</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'crop' && (
+          <div className="insights-grid">
+            <div className="insight-card">
+              <div className="card-header">
+                <h4>🌾 Overall Health</h4>
+                <span className="status-badge bg-green-500">Excellent</span>
+              </div>
+              <div className="card-body">
+                <p className="insight-value">92%</p>
+                <p className="insight-change">+5% this week</p>
+              </div>
+            </div>
+            <div className="insight-card">
+              <div className="card-header">
+                <h4>📈 Growth Rate</h4>
+                <span className="status-badge bg-green-500">Fast</span>
+              </div>
+              <div className="card-body">
+                <p className="insight-value">8 cm/week</p>
+                <p className="insight-change">Above average</p>
+              </div>
+            </div>
+            <div className="insight-card">
+              <div className="card-header">
+                <h4>🍃 Leaf Color</h4>
+                <span className="status-badge bg-green-500">Healthy</span>
+              </div>
+              <div className="card-body">
+                <p className="insight-value">Dark Green</p>
+                <p className="insight-change">No deficiency</p>
+              </div>
+            </div>
+            <div className="insight-card">
+              <div className="card-header">
+                <h4>🌱 Germination</h4>
+                <span className="status-badge bg-green-500">High</span>
+              </div>
+              <div className="card-body">
+                <p className="insight-value">95%</p>
+                <p className="insight-change">Excellent rate</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'yield' && (
+          <div className="insights-grid">
+            <div className="insight-card">
+              <div className="card-header">
+                <h4>📊 Predicted Yield</h4>
+                <span className="status-badge bg-green-500">High</span>
+              </div>
+              <div className="card-body">
+                <p className="insight-value">2,500 kg</p>
+                <p className="insight-change">+12% vs last year</p>
+              </div>
+            </div>
+            <div className="insight-card">
+              <div className="card-header">
+                <h4>📅 Harvest Date</h4>
+                <span className="status-badge bg-blue-500">Scheduled</span>
+              </div>
+              <div className="card-body">
+                <p className="insight-value">45 Days</p>
+                <p className="insight-change">May 20, 2024</p>
+              </div>
+            </div>
+            <div className="insight-card">
+              <div className="card-header">
+                <h4>💰 Expected Revenue</h4>
+                <span className="status-badge bg-purple-500">Profit</span>
+              </div>
+              <div className="card-body">
+                <p className="insight-value">₹1.2L</p>
+                <p className="insight-change">Based on market</p>
+              </div>
+            </div>
+            <div className="insight-card">
+              <div className="card-header">
+                <h4>📈 Quality Grade</h4>
+                <span className="status-badge bg-green-500">Grade A</span>
+              </div>
+              <div className="card-body">
+                <p className="insight-value">Premium</p>
+                <p className="insight-change">Top quality</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'financial' && (
+          <div className="insights-grid">
+            <div className="insight-card">
+              <div className="card-header">
+                <h4>💰 Total Revenue</h4>
+                <span className="status-badge bg-green-500">Profit</span>
+              </div>
+              <div className="card-body">
+                <p className="insight-value">₹45,000</p>
+                <p className="insight-change">+12% this month</p>
+              </div>
+            </div>
+            <div className="insight-card">
+              <div className="card-header">
+                <h4>💸 Expenses</h4>
+                <span className="status-badge bg-orange-500">Moderate</span>
+              </div>
+              <div className="card-body">
+                <p className="insight-value">₹18,500</p>
+                <p className="insight-change">Within budget</p>
+              </div>
+            </div>
+            <div className="insight-card">
+              <div className="card-header">
+                <h4>📊 Profit Margin</h4>
+                <span className="status-badge bg-green-500">Healthy</span>
+              </div>
+              <div className="card-body">
+                <p className="insight-value">58%</p>
+                <p className="insight-change">+5% improvement</p>
+              </div>
+            </div>
+            <div className="insight-card">
+              <div className="card-header">
+                <h4>💳 Pending Payments</h4>
+                <span className="status-badge bg-yellow-500">Due</span>
+              </div>
+              <div className="card-body">
+                <p className="insight-value">₹12,000</p>
+                <p className="insight-change">3 invoices</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'market' && (
+          <div className="insights-grid">
+            <div className="insight-card">
+              <div className="card-header">
+                <h4>📈 Price Trend</h4>
+                <span className="status-badge bg-green-500">Rising</span>
+              </div>
+              <div className="card-body">
+                <p className="insight-value">₹42/kg</p>
+                <p className="insight-change">+8% this week</p>
+              </div>
+            </div>
+            <div className="insight-card">
+              <div className="card-header">
+                <h4>📊 Demand Level</h4>
+                <span className="status-badge bg-green-500">High</span>
+              </div>
+              <div className="card-body">
+                <p className="insight-value">85%</p>
+                <p className="insight-change">Strong demand</p>
+              </div>
+            </div>
+            <div className="insight-card">
+              <div className="card-header">
+                <h4>🏪 Best Market</h4>
+                <span className="status-badge bg-blue-500">Local</span>
+              </div>
+              <div className="card-body">
+                <p className="insight-value">Mumbai</p>
+                <p className="insight-change">₹45/kg avg</p>
+              </div>
+            </div>
+            <div className="insight-card">
+              <div className="card-header">
+                <h4>📅 Best Sell Time</h4>
+                <span className="status-badge bg-purple-500">Optimal</span>
+              </div>
+              <div className="card-body">
+                <p className="insight-value">Next Week</p>
+                <p className="insight-change">Peak prices</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'equipment' && (
+          <div className="insights-grid">
+            <div className="insight-card">
+              <div className="card-header">
+                <h4>🚜 Tractor Status</h4>
+                <span className="status-badge bg-green-500">Operational</span>
+              </div>
+              <div className="card-body">
+                <p className="insight-value">Good</p>
+                <p className="insight-change">Last service: 15 days</p>
+              </div>
+            </div>
+            <div className="insight-card">
+              <div className="card-header">
+                <h4>⚙️ Maintenance Due</h4>
+                <span className="status-badge bg-yellow-500">Soon</span>
+              </div>
+              <div className="card-body">
+                <p className="insight-value">2 Items</p>
+                <p className="insight-change">In 10 days</p>
+              </div>
+            </div>
+            <div className="insight-card">
+              <div className="card-header">
+                <h4>⛽ Fuel Level</h4>
+                <span className="status-badge bg-orange-500">Low</span>
+              </div>
+              <div className="card-body">
+                <p className="insight-value">35%</p>
+                <p className="insight-change">Refill needed</p>
+              </div>
+            </div>
+            <div className="insight-card">
+              <div className="card-header">
+                <h4>🔧 Repair Cost</h4>
+                <span className="status-badge bg-blue-500">Budget</span>
+              </div>
+              <div className="card-body">
+                <p className="insight-value">₹5,200</p>
+                <p className="insight-change">This month</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'alerts' && (
+          <div className="insights-grid">
+            <div className="insight-card">
+              <div className="card-header">
+                <h4>🔔 Active Alerts</h4>
+                <span className="status-badge bg-red-500">Urgent</span>
+              </div>
+              <div className="card-body">
+                <p className="insight-value">3</p>
+                <p className="insight-change">Requires attention</p>
+              </div>
+            </div>
+            <div className="insight-card">
+              <div className="card-header">
+                <h4>⚠️ Weather Warning</h4>
+                <span className="status-badge bg-orange-500">Alert</span>
+              </div>
+              <div className="card-body">
+                <p className="insight-value">Heavy Rain</p>
+                <p className="insight-change">Tomorrow 3PM</p>
+              </div>
+            </div>
+            <div className="insight-card">
+              <div className="card-header">
+                <h4>💧 Low Water</h4>
+                <span className="status-badge bg-yellow-500">Warning</span>
+              </div>
+              <div className="card-body">
+                <p className="insight-value">Tank 2</p>
+                <p className="insight-change">25% remaining</p>
+              </div>
+            </div>
+            <div className="insight-card">
+              <div className="card-header">
+                <h4>📅 Task Reminder</h4>
+                <span className="status-badge bg-blue-500">Info</span>
+              </div>
+              <div className="card-body">
+                <p className="insight-value">5 Tasks</p>
+                <p className="insight-change">Due today</p>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <style jsx>{`
+        .farm-insights {
+          padding: 24px;
+          background: transparent;
+          min-height: 100vh;
+        }
+
+        .header-section {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 24px;
+        }
+
+        .btn-primary {
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          color: white;
+          padding: 12px 24px;
+          border-radius: 8px;
+          border: none;
+          cursor: pointer;
+          font-weight: 600;
+          transition: transform 0.2s;
+        }
+
+        .btn-primary:hover {
+          transform: translateY(-2px);
+        }
+
+        .stats-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+          gap: 20px;
+          margin-bottom: 24px;
+        }
+
+        .stat-card {
+          background: white;
+          padding: 20px;
+          border-radius: 12px;
+          display: flex;
+          align-items: center;
+          gap: 16px;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .stat-icon {
+          width: 50px;
+          height: 50px;
+          border-radius: 10px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 24px;
+        }
+
+        .stat-label {
+          color: #6b7280;
+          font-size: 14px;
+          margin-bottom: 4px;
+        }
+
+        .stat-value {
+          font-size: 28px;
+          font-weight: bold;
+          color: #1f2937;
+        }
+
+        .filter-tabs {
+          display: flex;
+          gap: 12px;
+          margin-bottom: 24px;
+          flex-wrap: wrap;
+        }
+
+        .filter-tab {
+          padding: 10px 20px;
+          border-radius: 8px;
+          border: 2px solid #e5e7eb;
+          background: white;
+          cursor: pointer;
+          font-weight: 500;
+          transition: all 0.2s;
+        }
+
+        .filter-tab.active {
+          background: #667eea;
+          color: white;
+          border-color: #667eea;
+        }
+
+        .insights-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+          gap: 20px;
+        }
+
+        .insight-card {
+          background: white;
+          border-radius: 12px;
+          padding: 20px;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+          transition: transform 0.2s;
+        }
+
+        .insight-card:hover {
+          transform: translateY(-4px);
+        }
+
+        .card-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 16px;
+        }
+
+        .card-header h4 {
+          font-weight: 600;
+          color: #1f2937;
+        }
+
+        .status-badge {
+          padding: 4px 12px;
+          border-radius: 12px;
+          font-size: 11px;
+          font-weight: 600;
+          color: white;
+          text-transform: uppercase;
+        }
+
+        .card-body {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
+
+        .insight-value {
+          font-size: 32px;
+          font-weight: bold;
+          color: #1f2937;
+        }
+
+        .insight-change {
+          font-size: 14px;
+          color: #059669;
+          font-weight: 600;
+        }
+
+        .loading-state,
+        .empty-state {
+          text-align: center;
+          padding: 40px;
+          color: #9ca3af;
+          grid-column: 1 / -1;
+        }
+      `}</style>
     </div>
   );
-}
-
-function KPICard({ title, value, change, icon, isPositive }: any) {
-  return (
-    <Card className="border-none shadow-startup-soft bg-white group hover:shadow-startup-medium transition-all transform hover:-translate-y-1">
-      <CardContent className="p-8">
-        <div className="flex justify-between items-start mb-6">
-          <div className="h-14 w-14 bg-neut-50 rounded-2xl flex items-center justify-center text-neut-300 group-hover:bg-brand-primary group-hover:text-white transition-all shadow-startup-soft">
-            {icon}
-          </div>
-          <Badge tone={isPositive ? 'brand' : 'ink'} className="font-black text-[10px] rounded-lg h-6">
-             {change}
-          </Badge>
-        </div>
-        <p className="text-neut-500 text-xs font-black uppercase tracking-widest mb-1">{title}</p>
-        <h3 className="text-4xl font-black text-neut-900 tracking-tight">{value}</h3>
-      </CardContent>
-    </Card>
-  );
-}
-
-function PriceComparisonCard({ label, value, color, detail }: any) {
-    return (
-        <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-8 rounded-[2rem] min-w-[180px] flex flex-col items-center">
-            <p className="text-[10px] font-black uppercase text-white/40 tracking-widest mb-2">{label}</p>
-            <h4 className={`text-4xl font-black mb-2 ${color}`}>{value}</h4>
-            {detail && <p className="text-[9px] font-black text-success tracking-widest">{detail}</p>}
-        </div>
-    );
 }
