@@ -59,43 +59,43 @@ export default function FarmerCommandCenter() {
 
 
   const mandiPrices = [
-    { crop: 'Wheat', mandi: 'Indore Mandi', price: '₹2,450', change: '+45', trend: 'up' },
-    { crop: 'Rice', mandi: 'Karnal Mandi', price: '₹3,800', change: '-20', trend: 'down' },
-    { crop: 'Tomato', mandi: 'Azadpur Mandi', price: '₹1,200', change: '+150', trend: 'up' },
-    { crop: 'Onion', mandi: 'Lasalgaon Mandi', price: '₹2,100', change: '+10', trend: 'up' },
-    { crop: 'Turmeric', mandi: 'Erode Mandi', price: '₹9,200', change: '-100', trend: 'down' }
+    { crop: t('crops.wheat'), mandi: t('mandis.indore'), price: '₹2,450', change: '+45', trend: 'up' },
+    { crop: t('crops.rice'), mandi: t('mandis.karnal'), price: '₹3,800', change: '-20', trend: 'down' },
+    { crop: t('crops.tomato'), mandi: t('mandis.azadpur'), price: '₹1,200', change: '+150', trend: 'up' },
+    { crop: t('crops.onion'), mandi: t('mandis.lasalgaon'), price: '₹2,100', change: '+10', trend: 'up' },
+    { crop: t('crops.turmeric'), mandi: t('mandis.erode'), price: '₹9,200', change: '-100', trend: 'down' }
   ];
 
   const exportOpportunities = [
     {
-      crop: 'Basmati Rice',
-      destination: 'United Arab Emirates',
-      demand: 'High Demand',
-      market: 'Dubai Market',
+      crop: t('crops.basmati_rice'),
+      destination: t('destinations.uae'),
+      demand: t('dashboard.high_demand'),
+      market: t('destinations.dubai'),
       margin: '+22%',
       color: 'emerald'
     },
     {
-      crop: 'Organic Spices',
-      destination: 'Germany',
-      demand: 'Medium Demand',
-      market: 'Hamburg Market',
+      crop: t('crops.organic_spices'),
+      destination: t('destinations.germany'),
+      demand: t('dashboard.medium_demand'),
+      market: t('destinations.hamburg'),
       margin: '+35%',
       color: 'blue'
     },
     {
-      crop: 'Fresh Mangoes',
-      destination: 'United Kingdom',
-      demand: 'Critical Demand',
-      market: 'London Market',
+      crop: t('crops.fresh_mangoes'),
+      destination: t('destinations.uk'),
+      demand: t('dashboard.critical_demand'),
+      market: t('destinations.london'),
       margin: '+40%',
       color: 'purple'
     },
     {
-      crop: 'Cashew Nuts',
-      destination: 'Vietnam',
-      demand: 'High Demand',
-      market: 'Ho Chi Minh Market',
+      crop: t('crops.cashew_nuts'),
+      destination: t('destinations.vietnam'),
+      demand: t('dashboard.high_demand'),
+      market: t('destinations.ho_chi_minh'),
       margin: '+18%',
       color: 'amber'
     }
@@ -197,26 +197,26 @@ export default function FarmerCommandCenter() {
   const recentActivity = [
     {
       type: 'harvest',
-      title: 'Harvest Ready',
-      description: 'Tomato Crop - Field A2 ready for harvest',
+      title: t('activity.harvest_ready'),
+      description: t('activity.harvest_desc', { crop: t('crops.tomato'), field: 'Field A2' }),
       status: 'success',
-      time: '2 min ago',
+      time: t('time.minutesAgo', { count: 2 }),
       icon: Sprout
     },
     {
       type: 'order',
-      title: 'New Order',
-      description: 'Basmati Rice 500kg - #ORD-445',
+      title: t('activity.new_order'),
+      description: t('activity.order_desc', { crop: t('crops.basmati_rice'), quantity: '500kg', id: 'ORD-445' }),
       status: 'processing',
-      time: '15 min ago',
+      time: t('time.minutesAgo', { count: 15 }),
       icon: ShoppingBag
     },
     {
       type: 'weather',
-      title: 'Weather Alert',
-      description: 'Light rain expected tomorrow',
+      title: t('activity.weather_alert'),
+      description: t('activity.weather_desc'),
       status: 'info',
-      time: '1 hour ago',
+      time: t('time.hourAgo'),
       icon: CloudRain
     }
   ];
@@ -240,11 +240,6 @@ export default function FarmerCommandCenter() {
 
   return (
     <div className="space-y-6">
-      {/* DEBUG: Component Loaded Indicator */}
-      <div className="bg-green-500 text-white p-4 rounded-lg text-center font-bold text-xl mb-4">
-        ✅ NEW FARMER COMMAND CENTER IS NOW ACTIVE! ✅
-        <div className="text-sm mt-1">If you see this, the component is working!</div>
-      </div>
       
       {/* Hero Section - Farmer Command Center */}
       <motion.div
@@ -325,7 +320,7 @@ export default function FarmerCommandCenter() {
             </div>
             <div className="text-right">
               <div className="text-lg font-black text-slate-600">{t('dashboard.regional_average')}</div>
-              <div className="text-2xl font-black text-emerald-600">₹2,480.00 / qtl</div>
+              <div className="text-2xl font-black text-emerald-600">₹2,480.00 {t('units.per_qtl')}</div>
             </div>
           </div>
 
@@ -435,7 +430,7 @@ export default function FarmerCommandCenter() {
                   {Object.entries(feature.metrics).map(([key, value]) => (
                     <div key={key} className="bg-slate-100 px-2 py-1 rounded-lg">
                       <span className="text-xs font-bold text-slate-900">{value}</span>
-                      <span className="text-xs text-slate-500 ml-1">{key}</span>
+                      <span className="text-xs text-slate-500 ml-1">{t(`metrics.${key}`)}</span>
                     </div>
                   ))}
                 </div>
@@ -513,8 +508,8 @@ function LiveFarmInsightsWidget() {
 
   const farmInsights = {
     weatherScore: weatherScore,
-    soilHealth: `${soilHealth}% Ideal`,
-    pestRisk: `${pestRisk}% Index`,
+    soilHealth: `${soilHealth}% ${t('units.ideal')}`,
+    pestRisk: `${pestRisk}% ${t('units.index')}`,
     revenue: `₹${revenue.toLocaleString()}`,
     totalCrops: activeCrops,
     totalArea: 25
@@ -579,7 +574,7 @@ function LiveFarmInsightsWidget() {
             <div className="text-xs text-slate-600">{t('dashboard.total_crops')}<br/>{t('dashboard.this_season')}</div>
           </div>
           <div>
-            <div className="text-2xl font-black text-blue-600">{farmInsights.totalArea} Acres</div>
+            <div className="text-2xl font-black text-blue-600">{farmInsights.totalArea} {t('units.acres')}</div>
             <div className="text-xs text-slate-600">{t('dashboard.total_area')}<br/>{t('dashboard.utilized', { percent: '85' })}</div>
           </div>
         </div>

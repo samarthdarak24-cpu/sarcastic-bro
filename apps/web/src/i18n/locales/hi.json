@@ -218,5 +218,56 @@
     "rupee": "₹",
     "dollar": "$",
     "euro": "€"
+  },
+  "cropHub": {
+    "title": "फसल प्रबंधन केंद्र।",
+    "allInOne": "ऑल-इन-वन",
+    "subtitle": "संपूर्ण फसल सूची, गुणवत्ता और जानकारी",
+    "refresh": "रिफ्रेश करें",
+    "refreshing": "रिफ्रेश हो रहा है...",
+    "tabs": {
+      "overview": "एग्री हब अवलोकन",
+      "inventory": "स्मार्ट इन्वेंटरी",
+      "quality": "गुणवत्ता स्कैनर",
+      "insights": "खेत की जानकारी",
+      "autoSell": "ऑटो-सेल नियम"
+    },
+    "stats": {
+      "totalCrops": "कुल फसलें",
+      "activeCrops": "सक्रिय फसलें",
+      "totalQuantity": "कुल मात्रा",
+      "totalValue": "कुल मूल्य",
+      "avgQuality": "औसत गुणवत्ता",
+      "readyToHarvest": "कटाई के लिए तैयार"
+    },
+    "categories": {
+      "title": "श्रेणी के अनुसार फसलें",
+      "vegetables": "सब्जियां",
+      "grains": "अनाज",
+      "fruits": "फल",
+      "pulses": "दालें",
+      "crops": "फसलें"
+    },
+    "topCrops": {
+      "title": "शीर्ष प्रदर्शन करने वाली फसलें"
+    },
+    "quality": {
+      "title": "गुणवत्ता वितरण",
+      "grade": "ग्रेड"
+    },
+    "activity": {
+      "title": "हाल की गतिविधियां"
+    },
+    "actions": {
+      "title": "त्वरित कार्रवाइयां",
+      "addCrop": "नई फसल जोड़ें",
+      "qualityScan": "गुणवत्ता स्कैन",
+      "viewInsights": "जानकारी देखें",
+      "autoSellSetup": "ऑटो-सेल सेटअप"
+    }
+  },
+  "orderHub": {
+    "title": "ऑर्डर नियंत्रण केंद्र",
+    "subtitle": "सभी आने वाले ऑर्डर और रसद प्रबंधित करें"
   }
 }

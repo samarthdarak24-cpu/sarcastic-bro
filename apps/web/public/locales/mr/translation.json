@@ -330,15 +330,15 @@
     "upgrade_desc": "तुमची सध्याची कामगिरी तुम्हाला तुमच्या प्रदेशातील अव्वल १२% शेतकऱ्यांमध्ये रँक करते. एलीट गोल्ड फायदे अनलॉक करण्यासाठी रद्द केल्याशिवाय आणखी ५ ऑर्डर्स पूर्ण करा."
   },
   "crops": {
-    "tomato": "टोमॅटो",
     "wheat": "गहू",
     "rice": "तांदूळ",
+    "tomato": "टोमॅटो",
     "onion": "कांदा",
-    "potato": "बटाटा",
-    "chilli": "मिरची",
     "turmeric": "हळद",
-    "ginger": "आले",
-    "live_mandi": "लाइव्ह मंडी"
+    "basmati_rice": "बासमती तांदूळ",
+    "organic_spices": "सेंद्रिय मसाले",
+    "fresh_mangoes": "ताजे आंबे",
+    "cashew_nuts": "काजू"
   },
   "blockchain_farmer": {
     "soil_prep": "मातीची तयारी",
@@ -903,5 +903,107 @@
     "sourcing_procurement": "सोर्सिंग आणि खरेदी",
     "orders_tracking": "ऑर्डर आणि ट्रॅकिंग",
     "negotiation_bidding": "वाटाघाटी आणि बोली"
+  },
+  "mandis": {
+    "indore": "इंदूर मंडी",
+    "karnal": "कर्नाल मंडी",
+    "azadpur": "आझादपूर मंडी",
+    "lasalgaon": "लासलगाव मंडी",
+    "erode": "इरोड मंडी"
+  },
+  "destinations": {
+    "uae": "संयुक्त अरब अमिराती",
+    "germany": "जर्मनी",
+    "uk": "युनायटेड किंगडम",
+    "vietnam": "व्हिएतनाम",
+    "dubai": "दुबई बाजार",
+    "hamburg": "हॅम्बर्ग बाजार",
+    "london": "लंडन बाजार",
+    "ho_chi_minh": "हो ची मिन्ह बाजार"
+  },
+  "metrics": {
+    "insights": "इनसाइट्स",
+    "accuracy": "अचूकता",
+    "products": "उत्पादने",
+    "active": "सक्रिय",
+    "orders": "ऑर्डर",
+    "delivered": "वितरित",
+    "balance": "शिल्लक",
+    "pending": "लंबित",
+    "won": "जिंकले",
+    "score": "स्कोर",
+    "verified": "सत्यापित",
+    "traced": "ट्रेस केले",
+    "compliant": "अनुपालक",
+    "scans": "स्कॅन",
+    "grade": "श्रेणी",
+    "alerts": "सतर्कता",
+    "chats": "चॅट"
+  },
+  "activity": {
+    "harvest_ready": "कापणीसाठी तयार",
+    "new_order": "नवीन ऑर्डर",
+    "weather_alert": "हवामान सतर्कता",
+    "harvest_desc": "{{crop}} - {{field}} कापणीसाठी तयार आहे",
+    "order_desc": "{{crop}} {{quantity}} - #{{id}}",
+    "weather_desc": "उद्या हलक्या पावसाची शक्यता आहे"
+  },
+  "units": {
+    "acres": "एकर",
+    "utilized": "वापरले",
+    "ideal": "आदर्श",
+    "index": "इंडेक्स",
+    "per_qtl": "/ क्विंटल"
+  },
+  "cropHub": {
+    "title": "पीक व्यवस्थापन केंद्र.",
+    "allInOne": "ऑल-इन-वन",
+    "subtitle": "संपूर्ण पीक यादी, गुणवत्ता आणि माहिती",
+    "refresh": "रिफ्रेश करा",
+    "refreshing": "रिफ्रेश होत आहे...",
+    "tabs": {
+      "overview": "अॅग्री हब आढावा",
+      "inventory": "स्मार्ट इन्व्हेंटरी",
+      "quality": "गुणवत्ता स्कॅनर",
+      "insights": "शेतीची माहिती",
+      "autoSell": "ऑटो-सेल नियम"
+    },
+    "stats": {
+      "totalCrops": "एकूण पिके",
+      "activeCrops": "सक्रिय पिके",
+      "totalQuantity": "एकूण प्रमाण",
+      "totalValue": "एकूण मूल्य",
+      "avgQuality": "सरासरी गुणवत्ता",
+      "readyToHarvest": "कापणीसाठी तयार"
+    },
+    "categories": {
+      "title": "प्रकारानुसार पिके",
+      "vegetables": "भाज्या",
+      "grains": "धान्य",
+      "fruits": "फळे",
+      "pulses": "डाळी",
+      "crops": "पिके"
+    },
+    "topCrops": {
+      "title": "उत्कृष्ट कामगिरी करणारी पिके"
+    },
+    "quality": {
+      "title": "गुणवत्ता वितरण",
+      "grade": "ग्रेड"
+    },
+    "activity": {
+      "title": "अलीकडील घडामोडी"
+    },
+    "actions": {
+      "title": "त्वरित कृती",
+      "addCrop": "नवीन पीक जोडा",
+      "qualityScan": "गुणवत्ता स्कॅन",
+      "viewInsights": "माहिती पहा",
+      "autoSellSetup": "ऑटो-सेल सेटअप"
+    }
+  },
+  "orderHub": {
+    "title": "ऑर्डर नियंत्रण केंद्र",
+    "subtitle": "सर्व येणार्‍या ऑर्डर आणि लॉजिस्टिक व्यवस्थापित करा"
   }
 }

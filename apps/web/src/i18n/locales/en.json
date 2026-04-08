@@ -254,5 +254,56 @@
     "rupee": "₹",
     "dollar": "$",
     "euro": "€"
+  },
+  "cropHub": {
+    "title": "Crop Management Hub.",
+    "allInOne": "ALL-IN-ONE",
+    "subtitle": "Complete crop inventory, quality & insights",
+    "refresh": "Refresh",
+    "refreshing": "Refreshing...",
+    "tabs": {
+      "overview": "Agri Hub Overview",
+      "inventory": "Smart Inventory",
+      "quality": "Quality Scanner",
+      "insights": "Farm Insights",
+      "autoSell": "Auto-Sell Rules"
+    },
+    "stats": {
+      "totalCrops": "Total Crops",
+      "activeCrops": "Active Crops",
+      "totalQuantity": "Total Quantity",
+      "totalValue": "Total Value",
+      "avgQuality": "Avg Quality",
+      "readyToHarvest": "Ready to Harvest"
+    },
+    "categories": {
+      "title": "Crops by Category",
+      "vegetables": "Vegetables",
+      "grains": "Grains",
+      "fruits": "Fruits",
+      "pulses": "Pulses",
+      "crops": "crops"
+    },
+    "topCrops": {
+      "title": "Top Performing Crops"
+    },
+    "quality": {
+      "title": "Quality Distribution",
+      "grade": "Grade"
+    },
+    "activity": {
+      "title": "Recent Activities"
+    },
+    "actions": {
+      "title": "Quick Actions",
+      "addCrop": "Add New Crop",
+      "qualityScan": "Quality Scan",
+      "viewInsights": "View Insights",
+      "autoSellSetup": "Auto-Sell Setup"
+    }
+  },
+  "orderHub": {
+    "title": "Order Control Center",
+    "subtitle": "Manage all incoming orders and logistics"
   }
 }
