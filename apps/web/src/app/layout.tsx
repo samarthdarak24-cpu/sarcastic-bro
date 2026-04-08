@@ -19,6 +19,7 @@ const heading = Poppins({
 export const metadata: Metadata = {
   title: "FarmGuard | Smart Agri Marketplace",
   description: "The premium marketplace for farmers and buyers. Direct sourcing, AI quality grading, and supply chain intelligence.",
+  metadataBase: new URL(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'),
 };
 
 export default function RootLayout({

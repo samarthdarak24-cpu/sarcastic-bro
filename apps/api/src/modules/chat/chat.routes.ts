@@ -1,35 +1,99 @@
-/* ========================================================================
-   Chat Routes — Advanced Chat & Communication System
-   ======================================================================== */
+/**
+ * Chat Routes - ChatGPT-like AI endpoints with file upload support
+ */
 
 import { Router } from 'express';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
 import { ChatController } from './chat.controller';
-import { authenticate } from '../../middleware/auth';
 
 const router = Router();
-const chatController = new ChatController();
+const controller = new ChatController();
 
-// All routes require authentication
-router.use(authenticate);
+// Configure multer for file uploads
+const uploadDir = path.join(process.cwd(), 'uploads');
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
 
-// Conversations
-router.get('/conversations', chatController.getConversations.bind(chatController));
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+  },
+});
 
-// Messages
-router.get('/messages/:conversationId', chatController.getMessages.bind(chatController));
-router.post('/send', chatController.sendMessage.bind(chatController));
-router.patch('/messages/:messageId/read', chatController.markAsRead.bind(chatController));
+const upload = multer({
+  storage: storage,
+  limits: {
+    fileSize: 50 * 1024 * 1024, // 50MB
+  },
+  fileFilter: (req, file, cb) => {
+    const allowedMimes = [
+      'image/jpeg',
+      'image/png',
+      'image/gif',
+      'image/webp',
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/vnd.ms-excel',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'text/csv',
+    ];
 
-// Translation
-router.post('/translate', chatController.translateMessage.bind(chatController));
+    if (allowedMimes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error(`File type ${file.mimetype} not allowed`));
+    }
+  },
+});
 
-// Templates
-router.get('/templates', chatController.getTemplates.bind(chatController));
+/**
+ * POST /api/chat
+ * Send message with optional file attachments and get AI response
+ * 
+ * Request body (multipart/form-data):
+ * {
+ *   "message": "Your question",
+ *   "sessionId": "optional-session-id",
+ *   "userRole": "farmer|buyer|general",
+ *   "file": <binary file data> (optional, can be multiple)
+ * }
+ * 
+ * Response:
+ * {
+ *   "response": "AI response",
+ *   "sessionId": "session-id",
+ *   "model": "mistral",
+ *   "filesProcessed": 0
+ * }
+ */
+router.post('/', upload.any(), (req, res) => controller.sendMessage(req, res));
 
-// Smart Matching
-router.post('/matching/find', chatController.findMatches.bind(chatController));
+/**
+ * GET /api/chat/health
+ * Check if Ollama is running
+ */
+router.get('/health', (req, res) => controller.health(req, res));
 
-// Analytics
-router.get('/analytics/:conversationId', chatController.getAnalytics.bind(chatController));
+/**
+ * GET /api/chat/history/:sessionId
+ * Get conversation history
+ */
+router.get('/history/:sessionId', (req, res) => controller.getHistory(req, res));
+
+/**
+ * DELETE /api/chat/session/:sessionId
+ * Clear session
+ */
+router.delete('/session/:sessionId', (req, res) =>
+  controller.clearSession(req, res)
+);
 
 export default router;

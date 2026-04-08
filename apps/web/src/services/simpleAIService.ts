@@ -30,26 +30,53 @@ class SimpleAIService {
    */
   async chat(message: string, userType: string = 'FARMER', userContext: Record<string, any> = {}): Promise<ChatResponse> {
     try {
-      const response = await fetch(`${API_URL}/ai-chat/chat`, {
+      const apiUrl = API_URL || 'http://localhost:3001';
+      
+      // Extract history if present to format properly for backend
+      const history = userContext.history || [];
+      const cleanedContext = { ...userContext };
+      delete cleanedContext.history;
+      delete cleanedContext.agent_type;
+      
+      const response = await fetch(`${apiUrl}/ollama-chat/complete`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           message,
-          user_type: userType,
-          user_context: userContext
+          conversation_history: history,
+          context: {
+            user_id: "test-user-123",
+            role: userType,
+            location: "Maharashtra",
+            crops: [],
+            language: "en",
+            session_id: "test-session",
+            ...cleanedContext
+          }
         }),
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        throw new Error(`AI Service error! status: ${response.status}`);
       }
 
-      const data: ChatResponse = await response.json();
-      return data;
+      const data = await response.json();
+      
+      if (!data.success) {
+        throw new Error(data.error || "AI Service returned failure");
+      }
+      
+      return {
+        success: true,
+        response: data.response,
+        suggestions: data.suggestions || [],
+        intent: "GENERAL",
+        confidence: 0.9
+      };
     } catch (error) {
-      console.error('Error in chat:', error);
+      console.error('Error connecting to AI service:', error);
       
       // Return fallback response
       return {

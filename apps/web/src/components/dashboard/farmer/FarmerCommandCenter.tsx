@@ -190,7 +190,7 @@ export default function FarmerCommandCenter() {
       icon: MessageSquare,
       color: 'violet',
       metrics: { chats: 23, active: '●' },
-      route: '/farmer/dashboard?section=Chat'
+      route: '/farmer/agrichat'
     }
   ];
 
@@ -446,7 +446,7 @@ export default function FarmerCommandCenter() {
         </div>
       </div>
 
-      {/* Intelligence Feed */}
+      {/* Intelligence Feed - AI Assistant */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -466,20 +466,19 @@ export default function FarmerCommandCenter() {
             </div>
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <h3 className="text-2xl font-black">Intelligence Feed</h3>
-                <span className="bg-white/20 px-3 py-1 rounded-full text-sm font-bold">AI Agent Ready</span>
+                <h3 className="text-2xl font-black">AI Intelligence Assistant</h3>
+                <span className="bg-white/20 px-3 py-1 rounded-full text-sm font-bold">🤖 Live</span>
               </div>
               <p className="text-emerald-100 text-lg">
-                "How can I help your farm today?"
+                "Get real-time insights, pricing recommendations, and growth strategies"
               </p>
             </div>
           </div>
           <button 
-            onClick={() => router.push('/ai-chat')}
-            className="h-12 px-8 bg-white text-emerald-600 rounded-xl font-black hover:bg-emerald-50 transition-all flex items-center gap-2 whitespace-nowrap"
+            onClick={() => router.push('/farmer/dashboard?section=AI Intelligence')}
+            className="bg-white text-emerald-600 px-6 py-3 rounded-xl font-bold hover:bg-emerald-50 transition-all"
           >
-            CHAT NOW
-            <ArrowRight size={20} />
+            Open Chat
           </button>
         </div>
       </motion.div>

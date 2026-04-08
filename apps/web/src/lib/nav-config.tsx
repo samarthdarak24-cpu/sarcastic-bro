@@ -67,7 +67,7 @@ export const farmerNav = [
   { label: "Security & Compliance", href: "/farmer/dashboard", icon: <ShieldAlert />, section: "Security" },
   
   // Communication
-  { label: "AgriChat Connect", href: "/farmer/dashboard", icon: <MessageSquare />, section: "Chat" },
+  { label: "AgriChat Connect", href: "/farmer/agrichat", icon: <MessageSquare />, section: "Chat" },
 ];
 
 export const buyerNav = [
@@ -99,5 +99,5 @@ export const buyerNav = [
   { label: "Security & Compliance", href: "/buyer/dashboard", icon: <ShieldAlert />, section: "Security" },
   
   // Communication
-  { label: "AgriChat", href: "/buyer/dashboard", icon: <MessageSquare />, section: "Chat" },
+  { label: "AgriChat", href: "/buyer/chat", icon: <MessageSquare />, section: "Chat" },
 ];

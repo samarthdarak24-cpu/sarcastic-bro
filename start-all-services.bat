@@ -14,11 +14,11 @@ echo ⏳ Waiting for Backend API to start...
 timeout /t 5 /nobreak >nul
 
 echo.
-echo 🤖 Starting AI Service (Port 8001)...
+echo 🤖 Starting AI Service (Port 8000)...
 echo.
 
 cd ..\ai-service
-start "AI Service" cmd /k "python -m uvicorn app.simple_main:app --reload --port 8001 --host 0.0.0.0"
+start "AI Service" cmd /k "python -m uvicorn app.simple_main:app --reload --port 8000 --host 0.0.0.0"
 
 echo ⏳ Waiting for AI Service to start...
 timeout /t 5 /nobreak >nul
@@ -30,7 +30,7 @@ echo ========================================
 echo.
 echo 🌐 Frontend: http://localhost:3000
 echo 🔌 Backend API: http://localhost:3001
-echo 🤖 AI Service: http://localhost:8001
+echo 🤖 AI Service: http://localhost:8000
 echo 🧠 Ollama: http://localhost:11434
 echo.
 echo 📚 API Documentation:

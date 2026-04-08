@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useRef } from 'react';
 import { Upload, Sparkles, AlertCircle, Trash2, Loader2 } from 'lucide-react';
@@ -77,9 +77,16 @@ export default function QualityScannerPage() {
       const formData = new FormData();
       formData.append('file', selectedFile);
 
-      const response = await fetch('http://localhost:8001/quality-shield/scan?return_visualization=true', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'}/realtime-scan/quality-shield/scan`, {
         method: 'POST',
-        body: formData,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({
+          imageBuffer: (selectedImage || '').split(',')[1],
+          cropType: 'Tomato'
+        }),
       });
 
       if (!response.ok) {
@@ -94,8 +101,15 @@ export default function QualityScannerPage() {
       } else {
         throw new Error('Scan was not successful');
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Analysis failed');
+    } catch (err: any) {
+      console.error('Scan error:', err);
+      
+      // Check if it's a network/connection error
+      if (err instanceof TypeError || err.message?.includes('fetch') || err.message?.includes('Failed to fetch')) {
+        setError('AI service is currently offline. Please ensure the quality shield service is running on port 8001.');
+      } else {
+        setError(err instanceof Error ? err.message : 'Analysis failed');
+      }
     } finally {
       setAnalyzing(false);
     }

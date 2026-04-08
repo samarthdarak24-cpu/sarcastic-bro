@@ -152,15 +152,6 @@ export default function BuyerCommandCenter() {
       metrics: { clusters: 14, active: 8 },
       route: '/buyer/dashboard?section=AI Intelligence Hub'
     },
-    {
-      id: 'agrichat',
-      title: 'AgriChat Pro',
-      description: 'Direct communication with farmers',
-      icon: MessageSquare,
-      color: 'violet',
-      metrics: { conversations: 23, unread: 5 },
-      route: '/chat'
-    }
   ];
 
   const recentActivity = [

@@ -1,7 +1,6 @@
 'use client';
 
 import { Suspense } from 'react';
-import ChatWidget from '@/components/ui/ChatWidget/ChatWidget';
 import { LiveNotificationBell } from '@/components/ui/LiveNotificationBell';
 import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher';
 
@@ -21,7 +20,6 @@ export default function BuyerDashboardLayout({
       </Suspense>
       
       {/* Global Components - Available on all buyer dashboard pages */}
-      <ChatWidget />
       <LiveNotificationBell />
       <div className="fixed top-4 right-4 z-40">
         <LanguageSwitcher />

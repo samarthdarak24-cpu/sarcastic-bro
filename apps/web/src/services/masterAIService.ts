@@ -1,9 +1,9 @@
 /**
  * Master AI Service - Frontend service for advanced AI chat
- * Handles communication with the Master AI backend
+ * Handles communication with the Master AI backend via ODOP Connect API
  */
 
-const AI_SERVICE_URL = process.env.NEXT_PUBLIC_AI_SERVICE_URL || 'http://localhost:8000';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 export interface ChatMessage {
   role: 'system' | 'user' | 'assistant';
@@ -58,7 +58,7 @@ class MasterAIService {
   private sessionId: string | null = null;
 
   constructor() {
-    this.baseUrl = `${AI_SERVICE_URL}/api/ai/master`;
+    this.baseUrl = `${API_URL}/ai-chat`;
   }
 
   /**
@@ -71,17 +71,19 @@ class MasterAIService {
     sessionId?: string
   ): Promise<ChatResponse> {
     try {
-      const response = await fetch(`${this.baseUrl}/chat`, {
+      const response = await fetch(`${this.baseUrl}/message`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           message,
-          user_id: userId,
-          session_id: sessionId || this.sessionId,
-          user_profile: userProfile,
-          stream: false,
+          context: {
+            userId,
+            role: userProfile?.role,
+            location: userProfile?.location,
+          },
+          conversationHistory: []
         }),
       });
 
@@ -89,17 +91,28 @@ class MasterAIService {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      const data: ChatResponse = await response.json();
+      const data: any = await response.json();
       
       // Store session ID for continuity
-      if (data.session_id) {
-        this.sessionId = data.session_id;
+      if (data.sessionId) {
+        this.sessionId = data.sessionId;
       }
 
-      return data;
+      return {
+        success: true,
+        message: data.response || '',
+        session_id: this.sessionId || sessionId || `session_${Date.now()}`,
+        capability: 'OLLAMA'
+      };
     } catch (error) {
       console.error('Error in chat:', error);
-      throw error;
+      // Return fallback response
+      return {
+        success: true,
+        message: 'I am your farm assistant. Ask me about prices, crops, or platform features.',
+        session_id: sessionId || `session_${Date.now()}`,
+        capability: 'FALLBACK'
+      };
     }
   }
 
@@ -113,17 +126,20 @@ class MasterAIService {
     sessionId?: string
   ): AsyncGenerator<string, void, unknown> {
     try {
-      const response = await fetch(`${this.baseUrl}/chat/stream`, {
+      const response = await fetch(`${this.baseUrl}/message`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           message,
-          user_id: userId,
-          session_id: sessionId || this.sessionId,
-          user_profile: userProfile,
-          stream: true,
+          context: {
+            userId,
+            role: userProfile?.role,
+            location: userProfile?.location,
+          },
+          conversationHistory: [],
+          stream: true
         }),
       });
 

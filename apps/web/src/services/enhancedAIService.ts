@@ -5,7 +5,7 @@
 
 import axios from 'axios';
 
-const AI_SERVICE_URL = process.env.NEXT_PUBLIC_AI_SERVICE_URL || 'http://localhost:8000';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 export interface EnhancedChatRequest {
   sessionId?: string;
@@ -44,7 +44,7 @@ class EnhancedAIService {
   private apiUrl: string;
 
   constructor() {
-    this.apiUrl = AI_SERVICE_URL;
+    this.apiUrl = API_URL;
   }
 
   /**
@@ -52,24 +52,43 @@ class EnhancedAIService {
    */
   async chat(request: EnhancedChatRequest): Promise<EnhancedChatResponse> {
     try {
-      const response = await axios.post<EnhancedChatResponse>(
-        `${this.apiUrl}/api/v1/simple-chat/chat/enhanced`,
+      const response = await axios.post<any>(
+        `${this.apiUrl}/ai-chat/message`,
         {
-          session_id: this.sessionId || request.sessionId,
           message: request.message,
-          user_id: request.userId,
-          auth_token: request.authToken,
-          real_time_data: request.realTimeData,
-          user_profile: request.userProfile,
-          system_prompt: request.systemPrompt,
+          userContext: {
+            userId: request.userId,
+            name: request.userProfile?.name,
+            role: request.userProfile?.role,
+            language: request.userProfile?.language,
+          },
+          conversationHistory: []
         },
         {
           timeout: 30000,
+          headers: {
+            'Authorization': `Bearer ${request.authToken || ''}`
+          }
         }
       );
 
-      this.sessionId = response.data.sessionId;
-      return response.data;
+      this.sessionId = request.sessionId || `session_${Date.now()}`;
+      
+      return {
+        sessionId: this.sessionId,
+        response: response.data.response || response.data.message || 'No response from AI',
+        intent: {
+          intent_type: response.data.intent || 'GENERAL',
+          entity_type: response.data.entity_type,
+          requires_data: false,
+          requires_confirmation: false,
+          is_safe_operation: true
+        },
+        dataFetched: true,
+        requiresConfirmation: false,
+        actions: response.data.actions || [],
+        timestamp: new Date().toISOString()
+      };
     } catch (error) {
       console.error('Enhanced AI chat error:', error);
       throw error;

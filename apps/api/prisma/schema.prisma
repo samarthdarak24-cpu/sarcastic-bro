@@ -85,6 +85,16 @@ model User {
   insurancePolicies   InsurancePolicy[] @relation("FarmerInsurance")
   negotiationsAsBuyer Negotiation[]    @relation("NegotiationBuyer")
   negotiationsAsSeller Negotiation[]   @relation("NegotiationSeller")
+  
+  // WhatsApp-like Chat System Relations
+  chatRoomsAsFarmer  ChatRoom[]       @relation("ChatRoomFarmer")
+  chatRoomsAsBuyer   ChatRoom[]       @relation("ChatRoomBuyer")
+  chatRoomMessages   ChatRoomMessage[]
+  typingStatus       TypingIndicator[]
+  onlineStatus       UserOnlineStatus[]
+  messageReactions   MessageReaction[]
+  chatNotifications  ChatNotification[] @relation(name: "chatNotifications")
+  chatRoomUsers      ChatRoomUser[] @relation(name: "chatRoomUsers")
 
   @@index([email])
   @@index([role])
@@ -182,6 +192,7 @@ model Order {
   product Product @relation(fields: [productId], references: [id])
   logistics Logistics[]
   escrowOrders EscrowOrder[]
+  chatRoom ChatRoom?  // WhatsApp-like chat system
 
   @@index([buyerId])
   @@index([farmerId])
@@ -1074,4 +1085,187 @@ model SecurityEvent {
   @@index([eventType])
   @@index([riskLevel])
   @@index([createdAt])
+}
+// ════════════════════════════════════════════════════════════════════════════
+// WHATSAPP-LIKE CHAT SYSTEM FOR AGRIVOICE
+// Production-ready real-time messaging system for Farmers and Buyers
+// ════════════════════════════════════════════════════════════════════════════
+
+// ─── CHAT ROOM (Feature 2: Chat Room Per Order) ──────────────────────────
+
+model ChatRoom {
+  id             String   @id @default(uuid())
+  orderId        String   // Each order has ONE chat room
+  farmerId       String    // Farmer in the conversation
+  buyerId        String    // Buyer in the conversation
+  productName    String   // For quick reference
+  orderAmount    Float    // For quick reference
+  status         String   @default("ACTIVE") // ACTIVE | ARCHIVED | CLOSED
+  lastMessageAt  DateTime @default(now())
+  lastMessageBy  String?  // ID of user who sent last message
+  unreadCount    Int      @default(0) // Unread message count
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  order           Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  farmer          User           @relation("ChatRoomFarmer", fields: [farmerId], references: [id])
+  buyer           User           @relation("ChatRoomBuyer", fields: [buyerId], references: [id])
+  messages        ChatRoomMessage[]
+  typingStatus    TypingIndicator[]
+  onlineStatus    UserOnlineStatus[]
+
+  @@unique([orderId])
+  @@index([farmerId])
+  @@index([buyerId])
+  @@index([status])
+  @@index([lastMessageAt])
+  @@index([createdAt])
+}
+
+// ─── CHAT ROOM MESSAGE (Feature 1 & 3: Real-time, Message Types) ─────────
+
+model ChatRoomMessage {
+  id             String   @id @default(uuid())
+  chatRoomId     String
+  senderId       String
+  content        String
+  type           String   @default("text") // text | image | file | voice
+  fileUrl        String?  // URL for image/file/voice
+  fileName       String?  // Original file name  
+  fileSize       Int?     // File size in bytes
+  mimeType       String?  // image/png, application/pdf, etc.
+
+  // Feature 6: Message Status Tracking
+  status         String   @default("SENT") // SENT | DELIVERED | SEEN
+  sentAt         DateTime @default(now())
+  deliveredAt    DateTime?
+  seenAt         DateTime?
+
+  // Message metadata
+  metadata       String?  // JSON: additional data (reactions, edits, etc.)
+  isEdited       Boolean  @default(false)
+  editedAt       DateTime?
+  isDeleted      Boolean  @default(false)
+  deletedAt      DateTime?
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  chatRoom       ChatRoom @relation(fields: [chatRoomId], references: [id], onDelete: Cascade)
+  sender         User     @relation(fields: [senderId], references: [id])
+  reactions      MessageReaction[]
+  searchIndex    MessageSearchIndex?
+
+  @@index([chatRoomId])
+  @@index([senderId])
+  @@index([status])
+  @@index([type])
+  @@index([createdAt])
+  @@index([chatRoomId, createdAt])
+}
+
+// ─── MESSAGE REACTIONS (Bonus: Emoji Reactions on Messages) ──────────────
+
+model MessageReaction {
+  id           String   @id @default(uuid())
+  messageId    String
+  userId       String
+  emoji        String   // ❤️🔥😂 etc
+  createdAt    DateTime @default(now())
+
+  message      ChatRoomMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user         User            @relation(fields: [userId], references: [id])
+
+  @@unique([messageId, userId, emoji])
+  @@index([messageId])
+  @@index([userId])
+}
+
+// ─── TYPING INDICATOR (Feature 5: Show typing status) ──────────────────────
+
+model TypingIndicator {
+  id           String   @id @default(uuid())
+  chatRoomId   String
+  userId       String
+  startAt      DateTime @default(now())
+  expiresAt    DateTime // Auto-expire after 3 seconds
+
+  chatRoom     ChatRoom @relation(fields: [chatRoomId], references: [id], onDelete: Cascade)
+  user         User     @relation(fields: [userId], references: [id])
+
+  @@index([chatRoomId])
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+// ─── USER ONLINE STATUS (Feature 4: Online/Offline Status) ───────────────
+
+model UserOnlineStatus {
+  id             String   @id @default(uuid())
+  chatRoomId     String
+  userId         String
+  isOnline       Boolean  @default(true)
+  lastSeenAt     DateTime @default(now())
+  socketId       String?  // Socket.io connection ID
+
+  chatRoom       ChatRoom @relation(fields: [chatRoomId], references: [id], onDelete: Cascade)
+  user           User     @relation(fields: [userId], references: [id])
+
+  @@unique([chatRoomId, userId])
+  @@index([chatRoomId])
+  @@index([userId])
+  @@index([isOnline])
+}
+
+// ─── MESSAGE SEARCH INDEX (Feature 9: Search Messages) ──────────────────
+
+model MessageSearchIndex {
+  id               String   @id @default(uuid())
+  messageId        String   @unique
+  chatRoomId       String
+  searchableText   String   // Indexed for full-text search
+  createdAt        DateTime @default(now())
+
+  message          ChatRoomMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@index([chatRoomId])
+  // @@fulltext([searchableText])  // For full-text search if using MySQL (not supported by SQLite)
+}
+
+// ─── CHAT NOTIFICATION (Feature 7: Notifications) ────────────────────────
+
+model ChatNotification {
+  id             String   @id @default(uuid())
+  chatRoomId     String
+  userId         String
+  messageId      String
+  type           String   // NEW_MESSAGE | TYPING | ONLINE | OFFLINE
+  isRead         Boolean  @default(false)
+  soundEnabled   Boolean  @default(true)
+  pushEnabled    Boolean  @default(true)
+  createdAt      DateTime @default(now())
+
+  user           User     @relation(fields: [userId], references: [id], name: "chatNotifications")
+
+  @@index([userId])
+  @@index([chatRoomId])
+  @@index([isRead])
+}
+
+// ─── Chat Room User (For permission tracking) ──────────────────────────
+
+model ChatRoomUser {
+  id             String   @id @default(uuid())
+  chatRoomId     String
+  userId         String
+  joinedAt       DateTime @default(now())
+  leftAt         DateTime?
+
+  user           User     @relation(fields: [userId], references: [id], name: "chatRoomUsers")
+  isActive       Boolean  @default(true)
+  role           String   @default("PARTICIPANT") // PARTICIPANT | ADMIN
+
+  @@unique([chatRoomId, userId])
+  @@index([chatRoomId])
+  @@index([userId])
 }

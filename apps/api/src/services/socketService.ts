@@ -458,6 +458,60 @@ export class SocketService {
     const room = this.io.sockets.adapter.rooms.get(`user:${userId}`);
     return room ? room.size > 0 : false;
   }
+
+  /**
+   * Emit AgriChat message to room
+   */
+  emitAgriChatMessage(chatRoomId: string, message: any) {
+    this.io.to(`agri-chat:${chatRoomId}`).emit('message_received', message);
+    console.log(`[AgriChat] Message sent to room:${chatRoomId}`);
+  }
+
+  /**
+   * Emit typing indicator
+   */
+  emitAgriChatTyping(chatRoomId: string, userId: string, isTyping: boolean) {
+    this.io.to(`agri-chat:${chatRoomId}`).emit('typing', {
+      userId,
+      isTyping,
+    });
+  }
+
+  /**
+   * Emit user online status
+   */
+  emitAgriChatUserOnline(chatRoomId: string, userId: string) {
+    this.io.to(`agri-chat:${chatRoomId}`).emit('user_online', userId);
+  }
+
+  /**
+   * Emit user offline status
+   */
+  emitAgriChatUserOffline(chatRoomId: string, userId: string) {
+    this.io.to(`agri-chat:${chatRoomId}`).emit('user_offline', userId);
+  }
+
+  /**
+   * Join AgriChat room
+   */
+  joinAgriChatRoom(socketId: string, chatRoomId: string) {
+    const socket = this.io.sockets.sockets.get(socketId);
+    if (socket) {
+      socket.join(`agri-chat:${chatRoomId}`);
+      console.log(`[AgriChat] Socket ${socketId} joined room ${chatRoomId}`);
+    }
+  }
+
+  /**
+   * Leave AgriChat room
+   */
+  leaveAgriChatRoom(socketId: string, chatRoomId: string) {
+    const socket = this.io.sockets.sockets.get(socketId);
+    if (socket) {
+      socket.leave(`agri-chat:${chatRoomId}`);
+      console.log(`[AgriChat] Socket ${socketId} left room ${chatRoomId}`);
+    }
+  }
 }
 
 // Singleton instance

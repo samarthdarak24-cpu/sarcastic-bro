@@ -14,7 +14,6 @@ import { LivePriceTicker } from "@/components/ui/LivePriceTicker";
 import { LiveNotificationBell } from "@/components/ui/LiveNotificationBell";
 import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
 import { JarvisButton } from "@/components/ui/JarvisAssistant/JarvisButton";
-import ChatWidget from "@/components/ui/ChatWidget";
 
 interface NavItem {
   label: string;
@@ -232,8 +231,7 @@ export function DashboardLayout({ children, navItems, userRole }: DashboardLayou
         </div>
       </main>
 
-      {/* AI Chat Widget */}
-      <ChatWidget />
+      {/* Main content area */}
     </div>
   );
 }

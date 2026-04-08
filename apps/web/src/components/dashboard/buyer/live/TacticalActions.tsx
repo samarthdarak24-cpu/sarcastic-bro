@@ -72,16 +72,6 @@ export default function TacticalActions() {
       route: "/buyer/dashboard?section=Payments"
     },
     {
-      id: "supplier-chat",
-      title: "Supplier Chat",
-      description: "Direct communication with farmers",
-      icon: MessageSquare,
-      color: "indigo",
-      gradient: "from-indigo-500 to-purple-500",
-      stats: { unread: 5, active: 12 },
-      route: "/chat"
-    },
-    {
       id: "analytics",
       title: "Analytics Dashboard",
       description: "Performance metrics and insights",

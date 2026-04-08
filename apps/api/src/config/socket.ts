@@ -8,6 +8,7 @@ import { Server, Socket } from "socket.io";
 import jwt from "jsonwebtoken";
 import { env } from "./env";
 import prisma from "../prisma/client";
+import { ChatSocketHandler } from "../services/chat-socket.service";
 
 // ─── Types & Interfaces ────────────────────────────────────────────────
 
@@ -166,6 +167,11 @@ export class SocketService {
         userId,
         timestamp: new Date(),
       });
+
+      // ─── Chat Room Socket Events (WhatsApp-like System) ──────────────────
+
+      const chatSocketHandler = new ChatSocketHandler(io);
+      chatSocketHandler.registerChatEvents(socket);
 
       // ─── Message Events ────────────────────────────────────────────────
 

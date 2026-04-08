@@ -76,7 +76,7 @@ export class MandiPricesService {
     const states = ['Maharashtra', 'Punjab', 'Haryana', 'Uttar Pradesh', 'Rajasthan', 'Gujarat'];
     const markets = ['Lasalgaon', 'Pimpalgaon', 'Nashik', 'Bangalore', 'Delhi', 'Chandigarh'];
 
-    const realistic Prices: Record<string, { basePrice: number; volatility: number }> = {
+    const realisticPrices: Record<string, { basePrice: number; volatility: number }> = {
       'Tomato': { basePrice: 1800, volatility: 400 },
       'Onion': { basePrice: 2200, volatility: 300 },
       'Potato': { basePrice: 1200, volatility: 200 },
@@ -105,7 +105,7 @@ export class MandiPricesService {
         const priceChange = (Math.random() - 0.5) * priceConfig.volatility;
         const basePrice = priceConfig.basePrice;
         const currentPrice = basePrice + priceChange;
-        const yesterday Price = currentPrice - (Math.random() - 0.5) * 200;
+        const yesterdayPrice = currentPrice - (Math.random() - 0.5) * 200;
 
         // Determine trend
         let trend: 'up' | 'down' | 'stable' = 'stable';

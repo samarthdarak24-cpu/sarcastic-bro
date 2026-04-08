@@ -1,0 +1,606 @@
+/* ========================================================================
+   Chat Room Styles - WhatsApp-like Chat UI
+   ======================================================================== */
+
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: #fff;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid #e5e5e5;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  flex: 1;
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.headerInfo {
+  display: flex;
+  flex-direction: column;
+}
+
+.userName {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 500;
+  color: #000;
+}
+
+.status {
+  margin: 4px 0 0 0;
+  font-size: 12px;
+  color: #65676b;
+}
+
+.headerActions {
+  display: flex;
+  gap: 8px;
+}
+
+.iconButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: transparent;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  color: #0084ff;
+  transition: background-color 0.2s;
+}
+
+.iconButton:hover {
+  background-color: #f0f2f5;
+}
+
+.messagesContainer {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.messagesContainer::-webkit-scrollbar {
+  width: 8px;
+}
+
+.messagesContainer::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.messagesContainer::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 4px;
+}
+
+.messagesContainer::-webkit-scrollbar-thumb:hover {
+  background: #999;
+}
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #65676b;
+  text-align: center;
+}
+
+.emptyState p {
+  font-size: 20px;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+.emptyState small {
+  font-size: 12px;
+  color: #999;
+}
+
+.loadingContainer,
+.errorContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #65676b;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f0f2f5;
+  border-top-color: #0084ff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-bottom: 12px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.inputContainer {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  padding: 12px 16px;
+  background: #fff;
+  border-top: 1px solid #e5e5e5;
+}
+
+.attachButton,
+.emojiButton,
+.sendButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: transparent;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  color: #0084ff;
+  transition: background-color 0.2s;
+}
+
+.attachButton:hover,
+.emojiButton:hover,
+.sendButton:hover {
+  background-color: #f0f2f5;
+}
+
+.sendButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 20px;
+  font-size: 14px;
+  font-family: inherit;
+  resize: none;
+  max-height: 100px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.input:focus {
+  border-color: #0084ff;
+}
+
+.input:disabled {
+  background-color: #f0f2f5;
+  cursor: not-allowed;
+}
+
+/* ========================================================================
+   New Feature Styles (10 Sub-Features)
+   ======================================================================== */
+
+/* Feature 1 & 10: Quick Replies & Templates Panel */
+.quickRepliesPanel,
+.templatesPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  background: #f0f2f5;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.quickReplyButton,
+.templateButton {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 13px;
+  text-align: left;
+}
+
+.quickReplyButton:hover,
+.templateButton:hover {
+  background: #e8f0fe;
+  border-color: #0084ff;
+}
+
+/* Feature 3: Search Panel */
+.searchPanel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  background: #f0f2f5;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.searchInput {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 20px;
+  font-size: 13px;
+  outline: none;
+}
+
+.searchInput:focus {
+  border-color: #0084ff;
+}
+
+.closeButton {
+  background: transparent;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  color: #65676b;
+  padding: 4px 8px;
+}
+
+.closeButton:hover {
+  color: #000;
+}
+
+/* Feature 4: Message Pinning */
+.messageWrapper {
+  position: relative;
+}
+
+.pinnedBadge {
+  display: inline-block;
+  font-size: 11px;
+  background: #fff3cd;
+  color: #856404;
+  padding: 4px 8px;
+  border-radius: 4px;
+  margin-bottom: 4px;
+}
+
+/* Feature 6: Video Call Modal */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal {
+  background: #fff;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  max-width: 400px;
+  width: 90%;
+  text-align: center;
+}
+
+.modal h3 {
+  margin: 0 0 12px 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.modal p {
+  margin: 0 0 20px 0;
+  color: #65676b;
+  font-size: 14px;
+}
+
+.primaryButton,
+.secondaryButton {
+  display: block;
+  width: 100%;
+  padding: 10px 16px;
+  margin-bottom: 8px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.primaryButton {
+  background: #0084ff;
+  color: #fff;
+}
+
+.primaryButton:hover {
+  background: #0073e6;
+}
+
+.secondaryButton {
+  background: #f0f2f5;
+  color: #65676b;
+}
+
+.secondaryButton:hover {
+  background: #e4e6eb;
+}
+
+/* Feature 8 & 9: Details & Delivery Status Panel */
+.detailsPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px;
+  background: #f0f2f5;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.detailsPanel h3 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.detailsContent {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: #fff;
+  padding: 12px;
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.detailsContent p {
+  margin: 0;
+  padding: 4px 0;
+}
+
+.detailsContent strong {
+  color: #000;
+}
+
+.statusStep {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+}
+
+.stepNumber {
+  font-size: 16px;
+  min-width: 20px;
+}
+
+/* Feature 2: Voice Recording Indicator */
+.recording {
+  animation: pulse 1.5s ease-in-out infinite;
+  background-color: #ff4444 !important;
+  color: #fff !important;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 68, 68, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(255, 68, 68, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 68, 68, 0);
+  }
+}
+
+/* AI Features & Smart Replies */
+.aiModal {
+  max-width: 500px;
+  background: linear-gradient(135deg, #ffffff, #f0f7ff);
+  border: 1px solid #cce4ff;
+}
+
+.aiContent {
+  text-align: left;
+  background: rgba(255, 255, 255, 0.7);
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #1a1a1b;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.aiContent h3 {
+  color: #0084ff;
+  margin-top: 0;
+}
+
+.spinning {
+  animation: spin 1s linear infinite;
+}
+
+.smartRepliesContainer {
+  display: flex;
+  gap: 8px;
+  padding: 8px 16px;
+  overflow-x: auto;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(4px);
+  border-top: 1px solid #eee;
+  white-space: nowrap;
+}
+
+.smartRepliesContainer::-webkit-scrollbar {
+  display: none;
+}
+
+.smartReplyChip {
+  padding: 6px 12px;
+  background: #0084ff;
+  color: #fff;
+  border: none;
+  border-radius: 16px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.smartReplyChip:hover {
+  background: #0073e6;
+  transform: translateY(-1px);
+}
+
+@media (max-width: 640px) {
+  .aiModal {
+    width: 95%;
+    padding: 16px;
+  }
+}
+
+/* Video Call Overlay */
+.videoOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #000;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.videoContainer {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  max-width: 1000px;
+  max-height: 800px;
+  background: #1a1a1a;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.remoteVideo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.localVideo {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 200px;
+  height: 150px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 2px solid #fff;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+}
+
+.videoControls {
+  position: absolute;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 20px;
+}
+
+.hangupButton {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: #ff3b30;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s;
+}
+
+.hangupButton:hover {
+  transform: scale(1.1);
+}
+
+/* Action Buttons */
+.actionButtons {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.confirmBtn, .cancelBtn {
+  flex: 1;
+  padding: 8px;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.confirmBtn {
+  background: #28a745;
+  color: #fff;
+}
+
+.cancelBtn {
+  background: #dc3545;
+  color: #fff;
+}
+

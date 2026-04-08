@@ -4,12 +4,15 @@
    ======================================================================== */
 
 import http from "http";
+import fs from "fs";
+import path from "path";
 import app from "./app";
 import { env } from "./config/env";
 import prisma from "./prisma/client";
 import { SocketService } from "./config/socket";
 import { initializeSocketService } from "./services/socketService";
 import { MandiRealtimeService } from "./services/mandiService";
+import { setupAgriChatSocket } from "./modules/agri-chat/agri-chat.socket";
 
 // Create HTTP server
 const server = http.createServer(app);
@@ -21,8 +24,18 @@ SocketService.initialize(server);
 const io = SocketService.getIO();
 initializeSocketService(io);
 
+// Initialize AgriChat Socket handlers
+setupAgriChatSocket(io);
+
 // Start Mandi Simulation for real-time market updates
 MandiRealtimeService.startSimulation();
+
+// Ensure uploads directory exists
+const uploadsDir = path.join(__dirname, '..', 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+  console.log('[FS] Created uploads directory');
+}
 
 /* ─── Server Start ──────────────────────────────────────────────────── */
 

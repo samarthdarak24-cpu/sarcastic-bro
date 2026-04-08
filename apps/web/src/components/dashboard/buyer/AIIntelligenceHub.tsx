@@ -7,13 +7,11 @@ import AIProcurementAdvancedFixed from './AIProcurementAdvancedFixed';
 import { AgriIntelligenceBuyer } from './AgriIntelligenceBuyer';
 import { PriceIntelligence } from './PriceIntelligence';
 import ClusterIntelligenceAdvanced from './ClusterIntelligenceAdvanced';
-import { AgriChatConnectPremium } from '@/components/shared/AgriChatConnectPremium';
 
 export default function AIIntelligenceHub() {
-  const [activeTab, setActiveTab] = useState<'chat' | 'procurement' | 'insights' | 'pricing' | 'clusters'>('chat');
+  const [activeTab, setActiveTab] = useState<'procurement' | 'insights' | 'pricing' | 'clusters'>('procurement');
 
   const tabs = [
-    { id: 'chat', label: 'AI Chat Assistant', icon: Sparkles },
     { id: 'procurement', label: 'AI Procurement', icon: Brain },
     { id: 'insights', label: 'Market Insights', icon: TrendingUp },
     { id: 'pricing', label: 'Price Intelligence', icon: Target },
@@ -60,7 +58,6 @@ export default function AIIntelligenceHub() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
       >
-        {activeTab === 'chat' && <AgriChatConnectPremium userRole="BUYER" />}
         {activeTab === 'procurement' && <AIProcurementAdvancedFixed />}
         {activeTab === 'insights' && <AgriIntelligenceBuyer />}
         {activeTab === 'pricing' && <PriceIntelligence />}

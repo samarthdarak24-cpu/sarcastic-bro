@@ -16,7 +16,6 @@ import toast from 'react-hot-toast';
 import { SmartInventoryHub } from './SmartInventoryHub';
 import { CropQualityDetector } from './CropQualityDetector';
 import FarmInsights from './FarmInsights';
-import AIPriceAdvisor from './AIPriceAdvisor';
 import { AutoSellSettings } from './AutoSellSettings';
 
 export default function CropManagementHub() {
@@ -28,7 +27,6 @@ export default function CropManagementHub() {
     { id: 'inventory', label: 'Smart Inventory', icon: Package },
     { id: 'quality', label: 'Quality Scanner', icon: ShieldCheck },
     { id: 'insights', label: 'Farm Insights', icon: BarChart3 },
-    { id: 'pricing', label: 'AI Price Advisor', icon: TrendingUp },
     { id: 'auto-sell', label: 'Auto-Sell Rules', icon: Zap },
   ];
 
@@ -322,7 +320,6 @@ export default function CropManagementHub() {
             {activeTab === 'inventory' && <SmartInventoryHub />}
             {activeTab === 'quality' && <CropQualityDetector />}
             {activeTab === 'insights' && <FarmInsights />}
-            {activeTab === 'pricing' && <AIPriceAdvisor />}
             {activeTab === 'auto-sell' && <AutoSellSettings />}
           </motion.div>
         </div>

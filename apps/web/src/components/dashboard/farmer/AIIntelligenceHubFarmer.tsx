@@ -1,20 +1,18 @@
 'use client';
 
 import { useState } from 'react';
-import { Sparkles, BarChart3, Brain, TrendingUp, Target, MessageSquare } from 'lucide-react';
+import { Sparkles, BarChart3, Brain, TrendingUp, Target } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { AgriChatConnectPremium } from '@/components/shared/AgriChatConnectPremium';
 import FarmInsights from './FarmInsights';
 import AgriIntelligence from './AgriIntelligence';
 import MarketIntelligenceHub from './MarketIntelligenceHub';
 import { BehavioralInsights } from './BehavioralInsights';
 
 export default function AIIntelligenceHubFarmer() {
-  const [activeTab, setActiveTab] = useState<'chat' | 'insights' | 'intelligence' | 'market' | 'behavioral'>('insights');
+  const [activeTab, setActiveTab] = useState<'insights' | 'intelligence' | 'market' | 'behavioral'>('insights');
 
   const tabs = [
     { id: 'insights', label: 'Farm Insights', icon: BarChart3 },
-    { id: 'chat', label: 'AI Chat Assistant', icon: MessageSquare },
     { id: 'intelligence', label: 'Agri-Intelligence', icon: Brain },
     { id: 'market', label: 'Market Intelligence', icon: TrendingUp },
     { id: 'behavioral', label: 'Behavioral Insights', icon: Target },
@@ -74,7 +72,6 @@ export default function AIIntelligenceHubFarmer() {
           >
              <div className="bg-white/40 backdrop-blur-xl rounded-[3rem] border border-slate-200/50 shadow-xl overflow-hidden p-8 md:p-12">
                 {activeTab === 'insights' && <FarmInsights />}
-                {activeTab === 'chat' && <AgriChatConnectPremium userRole="FARMER" />}
                 {activeTab === 'intelligence' && <AgriIntelligence />}
                 {activeTab === 'market' && <MarketIntelligenceHub />}
                 {activeTab === 'behavioral' && <BehavioralInsights />}

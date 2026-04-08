@@ -29,11 +29,11 @@ import logisticsRoutes from "./modules/logistics/logistics.routes";
 import exportRoutes from "./modules/export/export.routes";
 import contractRoutes from "./modules/contract/contract.routes";
 import searchRoutes from "./modules/search/search.routes";
-import aiRoutes from "./modules/ai/ai.routes";
-import aiChatRoutes from "./modules/ai/ai-chat.routes";
-import langchainChatRoutes from "./modules/ai/langchain-chat.routes";
-import simpleLangchainChatRoutes from "./modules/ai/simple-langchain-chat.routes";
-import streamChatRoutes from "./modules/ai/stream-chat.routes";
+// import aiRoutes from "./modules/ai/ai.routes";  // DISABLED - missing file
+// import aiChatRoutes from "./modules/ai/ai-chat.routes";  // DISABLED - missing file
+// import langchainChatRoutes from "./modules/ai/langchain-chat.routes";  // DISABLED - missing file
+// import simpleLangchainChatRoutes from "./modules/ai/simple-langchain-chat.routes";  // DISABLED - missing file
+// import streamChatRoutes from "./modules/ai/stream-chat.routes";  // DISABLED - missing file
 // import financeRoutes from "./modules/finance/finance.routes";  // DISABLED - missing file
 import sustainabilityRoutes from "./modules/sustainability/sustainability.routes";
 import blockchainRoutes from "./modules/blockchain/blockchain.routes";
@@ -45,14 +45,19 @@ import insightsRoutes from "./modules/insights/insights.routes";
 import aggregationRoutes from "./modules/aggregation/aggregation.routes";
 import reputationRoutes from "./modules/reputation/reputation.routes";
 import supplierInsightsRoutes from "./modules/supplier-insights/supplier-insights.routes";
-import whisperRoutes from "./modules/whisper/whisper.routes";
+// import whisperRoutes from "./modules/whisper/whisper.routes";  // DISABLED - missing file
 import paymentModuleRoutes from "./modules/payment/payment.routes";
 import escrowRoutes from "./modules/escrow/escrow.routes";
 import blockchainTraceRoutes from "./modules/blockchain-trace/blockchain-trace.routes";
 import farmerOverviewRoutes from "./modules/farmer/farmer.routes";
-import { ollamaChatRoutes } from "./modules/ollama-chat/ollama-chat.routes";
+// import { ollamaChatRoutes } from "./modules/ollama-chat/ollama-chat.routes";  // DISABLED - missing file
+import n8nChatRoutes from "./modules/n8n-chat/n8n-chat.routes";
+import chatRoutes from "./modules/chat/chat.routes";
+import chatRoomRoutes from "./modules/chat-room/chat-room.routes";
+import agriChatRoutes from "./modules/agri-chat/agri-chat.routes";
+import uploadsRoutes from "./modules/uploads/uploads.routes";
+import realtimeScanRoutes from "./modules/realtime-scan/realtime-scan.routes";
 // import communicationsRoutes from "./modules/communications/communications.routes";  // DISABLED - missing file
-// import chatRoutes from "./modules/chat/chat.routes";  // DISABLED - missing file
 
 const app = express();
 
@@ -60,8 +65,13 @@ const app = express();
 
 // Security headers
 app.use(helmet({
-  contentSecurityPolicy: false, // Disable for API
-  crossOriginEmbedderPolicy: false,
+  contentSecurityPolicy: {
+    directives: {
+      ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+      "connect-src": ["'self'", "http:", "https:", "ws:", "wss:"],
+      "img-src": ["'self'", "data:", "https:"],
+    },
+  },
 }));
 
 // Response compression
@@ -147,6 +157,10 @@ app.use("/products", productRoutes);
 app.use("/product-hub", productHubRoutes);
 app.use("/orders", orderRoutes);
 app.use("/messages", messageRoutes);
+app.use("/chat-rooms", chatRoomRoutes);  // WhatsApp-like chat system
+app.use("/api/agri-chat", agriChatRoutes);  // AgriChat - User-to-user messaging
+app.use("/uploads", uploadsRoutes);  // File uploads for chat
+app.use("/api/realtime-scan", realtimeScanRoutes); // AI Quality Shield & Real-time scan logic
 app.use("/proposals", proposalRoutes);
 app.use("/reviews", reviewRoutes);
 app.use("/notifications", notificationRoutes);
@@ -156,11 +170,11 @@ app.use("/logistics", logisticsRoutes);
 app.use("/export", exportRoutes);
 app.use("/contracts", contractRoutes);
 app.use("/search", searchRoutes);
-app.use("/ai", aiRoutes);
-app.use("/ai-chat", aiChatRoutes);
-app.use("/ai/langchain-chat", langchainChatRoutes);
-app.use("/ai/simple-langchain-chat", simpleLangchainChatRoutes);
-app.use("/stream-chat", streamChatRoutes);
+// app.use("/ai", aiRoutes);  // DISABLED - missing file
+// app.use("/ai-chat", aiChatRoutes);  // DISABLED - missing file
+// app.use("/ai/langchain-chat", langchainChatRoutes);  // DISABLED - missing file
+// app.use("/ai/simple-langchain-chat", simpleLangchainChatRoutes);  // DISABLED - missing file
+// app.use("/stream-chat", streamChatRoutes);  // DISABLED - missing file
 // app.use("/finance", financeRoutes);  // DISABLED - missing file
 app.use("/sustainability", sustainabilityRoutes);
 app.use("/blockchain", blockchainRoutes);
@@ -173,11 +187,13 @@ app.use("/insights", insightsRoutes);
 app.use("/aggregation", aggregationRoutes);
 app.use("/reputation", reputationRoutes);
 app.use("/supplier-insights", supplierInsightsRoutes);
-app.use("/whisper", whisperRoutes);
+// app.use("/whisper", whisperRoutes);  // DISABLED - missing file
 app.use("/escrow", escrowRoutes);
 app.use("/blockchain-trace", blockchainTraceRoutes);
 app.use("/api/farmer", farmerOverviewRoutes);
-app.use("/ollama-chat", ollamaChatRoutes);
+// app.use("/ollama-chat", ollamaChatRoutes);  // DISABLED - missing file
+app.use("/api/n8n", n8nChatRoutes);
+app.use("/api/chat", chatRoutes);
 // app.use("/communications", communicationsRoutes);  // DISABLED - missing file
 // app.use("/chat", chatRoutes);  // DISABLED - missing file
 
