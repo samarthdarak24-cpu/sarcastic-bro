@@ -86,12 +86,12 @@ function FarmerDashboardContent() {
             <div>
                 <h1 className="text-2xl md:text-3xl xl:text-4xl font-black tracking-tight text-slate-900 mb-2 leading-tight">
                     {activeSection === "Overview"
-                      ? `Farmer Command Center`
-                      : activeSection}
+                      ? t('dashboard.farmer_command_center')
+                      : t(`sidebar.${activeSection.toLowerCase().replace(/ /g, '_')}`, activeSection)}
                 </h1>
                 <p className="text-slate-500 font-medium text-sm md:text-base xl:text-lg italic leading-relaxed">
                     {activeSection === "Overview"
-                      ? "Welcome, Rajesh Kumar! Analyzing 12.4TB of Agricultural Intelligence for your farm today."
+                      ? t('dashboard.analyzing_intelligence', { size: '12.4TB' })
                       : `${t('common.loading')} ${activeSection.toLowerCase()}`}
                 </p>
             </div>

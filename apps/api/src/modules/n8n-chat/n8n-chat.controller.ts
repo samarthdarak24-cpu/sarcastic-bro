@@ -9,7 +9,7 @@ export class N8nChatController {
    */
   async handleChat(req: Request, res: Response) {
     try {
-      const { chatInput, message, sessionId, userId, userRole } = req.body;
+      const { chatInput, message, sessionId, userId, userRole, language } = req.body;
       
       // Support both 'chatInput' and 'message' field names
       const userMessage = chatInput || message;
@@ -18,12 +18,13 @@ export class N8nChatController {
         return res.status(400).json({ error: 'chatInput or message is required' });
       }
 
-      console.log(`[LLM N8N Chat] User: ${userMessage.substring(0, 50)}... | Role: ${userRole || 'general'}`);
+      console.log(`[LLM N8N Chat] User: ${userMessage.substring(0, 50)}... | Role: ${userRole || 'general'} | Lang: ${language || 'en'}`);
 
       const response = await ollamaChatService.chat(
         userMessage,
         sessionId,
-        userRole
+        userRole,
+        language
       );
       
       console.log(`[LLM N8N Chat] Response generated in session: ${response.sessionId}`);

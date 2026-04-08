@@ -76,17 +76,13 @@ export default function QualityScannerPage() {
     try {
       const formData = new FormData();
       formData.append('file', selectedFile);
+      formData.append('return_visualization', 'false');
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'}/realtime-scan/quality-shield/scan`, {
+      // Call AI service directly
+      const aiServiceUrl = process.env.NEXT_PUBLIC_QUALITY_SHIELD_URL || 'http://localhost:8001';
+      const response = await fetch(`${aiServiceUrl}/quality-shield/scan`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({
-          imageBuffer: (selectedImage || '').split(',')[1],
-          cropType: 'Tomato'
-        }),
+        body: formData,
       });
 
       if (!response.ok) {

@@ -3,6 +3,7 @@ import { initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
 import en from './locales/en.json';
 import hi from './locales/hi.json';
+import mr from './locales/mr.json';
 
 i18n
   // Detect language from browser
@@ -14,6 +15,7 @@ i18n
     resources: {
       en: { translation: en },
       hi: { translation: hi },
+      mr: { translation: mr },
     },
     fallbackLng: 'en',
     defaultNS: 'translation',

@@ -3,6 +3,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 
+import { useTranslation } from 'react-i18next';
+
 interface Message {
   id: string;
   text: string;
@@ -12,6 +14,7 @@ interface Message {
 
 export default function AIAssistant() {
   const { user } = useAuth();
+  const { i18n } = useTranslation();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
@@ -54,13 +57,14 @@ export default function AIAssistant() {
           chatInput: input,
           userId: user?.id,
           userRole: user?.role,
+          language: i18n.language,
         }),
       });
 
       const data = await response.json();
       const botMessage: Message = {
         id: (Date.now() + 1).toString(),
-        text: data.output,
+        text: data.output || data.response || 'Sorry, I could not generate a response.',
         sender: 'bot',
         timestamp: new Date(),
       };

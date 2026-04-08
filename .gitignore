@@ -1,15 +1,86 @@
+# Dependencies
 node_modules/
 apps/*/node_modules/
-apps/api/.env
-apps/api/dist/
-apps/web/.next/
-apps/web/tsconfig.tsbuildinfo
 apps/ai-service/venv/
-apps/ai-service/app/__pycache__/
-apps/ai-service/app/**/__pycache__/
-*.log
-*.tsbuildinfo
+apps/ai-service/__pycache__/
+apps/ai-service/**/__pycache__/
+*.pyc
+__pycache__/
+
+# Environment Variables (NEVER COMMIT THESE!)
 .env
 .env.*
+!.env.example
+!.env.production.example
+apps/api/.env
+apps/web/.env.local
+apps/ai-service/.env
+
+# Build outputs
 dist/
+build/
+apps/api/dist/
+apps/web/.next/
+apps/web/out/
+*.tsbuildinfo
+apps/web/tsconfig.tsbuildinfo
+
+# Logs
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Testing
 coverage/
+.nyc_output/
+*.test.js.snap
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+apps/api/prisma/dev.db
+apps/api/prisma/migrations/**/migration.sql
+
+# Uploads
+uploads/
+apps/api/uploads/
+apps/web/public/uploads/
+
+# AI Models (Large files - download separately)
+*.pt
+*.pth
+*.onnx
+*.h5
+*.pb
+apps/ai-service/*.pt
+apps/ai-service/models/*.pt
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Certificates and keys (NEVER COMMIT!)
+*.pem
+*.key
+*.cert
+*.crt
+
+# Backup files
+*.bak
+*.backup

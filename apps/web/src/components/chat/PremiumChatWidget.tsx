@@ -36,9 +36,33 @@ export function PremiumChatWidget() {
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [attachments, setAttachments] = useState<File[]>([]);
-  const [language, setLanguage] = useState('en-IN');
+  const [language, setLanguage] = useState(() => {
+    if (typeof document !== 'undefined') {
+      const docLang = document.documentElement.lang || 'en';
+      return docLang === 'hi' ? 'hi-IN' : docLang === 'mr' ? 'mr-IN' : 'en-IN';
+    }
+    return 'en-IN';
+  });
   const [interimText, setInterimText] = useState('');
   const [speakingMessageId, setSpeakingMessageId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const handleLangChange = () => {
+      const docLang = document.documentElement.lang || 'en';
+      const updatedLang = docLang === 'hi' ? 'hi-IN' : docLang === 'mr' ? 'mr-IN' : 'en-IN';
+      setLanguage(updatedLang);
+    };
+    
+    window.addEventListener('languageChanged', handleLangChange);
+    // Also use mutation observer on html element if languageChanged event isn't reliable
+    const observer = new MutationObserver(handleLangChange);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['lang'] });
+    
+    return () => {
+      window.removeEventListener('languageChanged', handleLangChange);
+      observer.disconnect();
+    };
+  }, []);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -231,6 +255,7 @@ export function PremiumChatWidget() {
           chatInput: messageText,
           filesCount: attachments.length,
           timestamp: new Date().toISOString(),
+          language: document.documentElement.lang || 'en', // Since it doesn't use i18n initially, get from document
         }),
       });
 
@@ -270,7 +295,7 @@ export function PremiumChatWidget() {
       setMessages((prev) => [...prev, errorMessage]);
 
       // Auto-speak error message if enabled
-      if (autoSpeakEnabled && voiceEnabled && TextToSpeechService.isSupported()) {
+      if (TextToSpeechService.isSupported()) {
         setTimeout(() => {
           const errorContent = `Sorry, I encountered an error: ${error instanceof Error ? error.message : 'Unknown error'}. Make sure the backend is running at ${webhookUrl}`;
           if (textToSpeechRef.current) {

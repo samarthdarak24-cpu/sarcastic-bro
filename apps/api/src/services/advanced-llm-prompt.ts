@@ -695,4 +695,3 @@ export function buildAdvancedSystemPrompt(userRole?: 'farmer' | 'buyer' | 'gener
 
   return prompt;
 }
-`;

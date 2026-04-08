@@ -31,6 +31,12 @@ interface ScanResult {
 }
 
 const GRADE_CONFIG: Record<string, { bg: string; text: string; glow: string; label: string }> = {
+  'Premium': { bg: 'bg-emerald-500', text: 'text-emerald-600', glow: 'shadow-emerald-500/40', label: 'Export Premium' },
+  'Grade A': { bg: 'bg-green-500',   text: 'text-green-600',   glow: 'shadow-green-500/40',   label: 'High Quality' },
+  'Grade B': { bg: 'bg-amber-500',   text: 'text-amber-600',   glow: 'shadow-amber-500/40',   label: 'Standard' },
+  'Grade C': { bg: 'bg-red-500',     text: 'text-red-600',     glow: 'shadow-red-500/40',     label: 'Needs Attention' },
+  'Rejected': { bg: 'bg-red-700',    text: 'text-red-700',     glow: 'shadow-red-700/40',     label: 'Rejected' },
+  // Legacy support
   'A+': { bg: 'bg-emerald-500', text: 'text-emerald-600', glow: 'shadow-emerald-500/40', label: 'Export Premium' },
   'A':  { bg: 'bg-green-500',   text: 'text-green-600',   glow: 'shadow-green-500/40',   label: 'High Quality' },
   'B':  { bg: 'bg-amber-500',   text: 'text-amber-600',   glow: 'shadow-amber-500/40',   label: 'Standard' },
@@ -97,11 +103,11 @@ export default function AIQualityScanPage() {
       // Step 1: Raw AI analysis (with bounding boxes)
       const formData = new FormData();
       formData.append('file', file);
-      formData.append('crop_type', file.name.toLowerCase().includes('wheat') ? 'Wheat' : 
-                                   file.name.toLowerCase().includes('rice') ? 'Rice' :
-                                   file.name.toLowerCase().includes('tomato') ? 'Tomato' : 'Crop');
+      formData.append('crop_type', 'Auto'); // Auto-detect crop type
 
-      const response = await fetch('http://localhost:8000/api/v1/trust/analyze-crop', {
+      // Use environment variable for AI service URL
+      const aiServiceUrl = process.env.NEXT_PUBLIC_QUALITY_SHIELD_URL || 'http://localhost:8001';
+      const response = await fetch(`${aiServiceUrl}/api/v1/trust/quality-scan`, {
         method: 'POST',
         body: formData
       });
@@ -116,20 +122,9 @@ export default function AIQualityScanPage() {
       clearInterval(interval);
       setProgress(95);
 
-      // Step 2: Generate blockchain certificate
-      const certForm = new FormData();
-      certForm.append('file', file);
-      certForm.append('crop_type', formData.get('crop_type') as string);
-      
-      const certResponse = await fetch('http://localhost:8000/api/v1/trust/quality-scan', {
-        method: 'POST',
-        body: certForm
-      });
-
-      if (certResponse.ok) {
-        const certData = await certResponse.json();
-        setCertResult(certData);
-      }
+      // Step 2: Generate blockchain certificate (optional - same endpoint)
+      // Already included in the first call, so we can skip this
+      setCertResult(data);
 
       setProgress(100);
       setTimeout(() => {

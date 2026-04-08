@@ -38,30 +38,48 @@ export class OllamaChatService {
   async chat(
     message: string,
     sessionId?: string,
-    userRole?: 'farmer' | 'buyer' | 'general'
+    userRole?: 'farmer' | 'buyer' | 'general',
+    language?: string
   ): Promise<{
     response: string;
     sessionId: string;
     model: string;
   }> {
     try {
+      const targetLang = language || 'en';
+      let inputMessage = message;
+
+      // Optional: Translate input to English if needed, but since it's an LLM, 
+      // we can also just tell the LLM regarding the language.
+      // Based on user request, we can translate message if not English.
+      if (targetLang !== 'en') {
+        const transPrompt = `Translate the following text into English naturally: ${message}`;
+        inputMessage = await this.callOllama(transPrompt);
+      }
+
       // Get or create session
       const session = this.getOrCreateSession(sessionId);
 
       // Add user message to session
       session.messages.push({
         role: 'user',
-        content: message,
+        content: inputMessage,
       });
 
       // Build system prompt
-      const systemPrompt = this.buildSystemPrompt(userRole);
+      const systemPrompt = this.buildSystemPrompt(userRole, targetLang);
 
       // Build full prompt with context
       const fullPrompt = this.buildPrompt(systemPrompt, session.messages);
 
       // Call Ollama
-      const aiResponse = await this.callOllama(fullPrompt);
+      let aiResponse = await this.callOllama(fullPrompt);
+
+      if (targetLang !== 'en') {
+         const langName = targetLang === 'hi' ? 'Hindi' : targetLang === 'mr' ? 'Marathi' : targetLang;
+         const transPrompt = `Translate the following text into ${langName} naturally and simply for farmers: ${aiResponse}`;
+         aiResponse = await this.callOllama(transPrompt);
+      }
 
       // Add AI response to session
       session.messages.push({
@@ -90,8 +108,12 @@ export class OllamaChatService {
    * Build system prompt for AgriVoice AI
    * Enhanced with complete platform and advanced knowledge
    */
-  private buildSystemPrompt(userRole?: string): string {
-    const basePrompt = `You are AgriVoice AI, an advanced intelligent agricultural assistant.
+  private buildSystemPrompt(userRole?: string, language: string = 'en'): string {
+    let langName = 'English';
+    if (language === 'hi') langName = 'Hindi';
+    if (language === 'mr') langName = 'Marathi';
+
+    const basePrompt = `You are AgriVoice AI, an advanced intelligent agricultural assistant. Answer clearly in ${langName}. Keep it simple for farmers.
 
 ## CORE CAPABILITIES
 

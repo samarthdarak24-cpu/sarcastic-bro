@@ -28,7 +28,26 @@
     "live": "Live",
     "view_all": "View All",
     "refresh": "Refresh",
-    "search_placeholder": "Search anything..."
+    "search_placeholder": "Search anything...",
+    "terms": "Terms",
+    "privacy": "Privacy"
+  },
+  "sidebar": {
+    "overview": "Overview",
+    "live_cockpit": "Live Cockpit",
+    "ai_quality_scan": "AI Quality Scan",
+    "ai_intelligence_hub": "AI Intelligence Hub",
+    "production_supply": "Production & Supply Chain",
+    "orders_logistics": "Orders & Logistics",
+    "payments_finance": "Payments & Finance",
+    "tender_bidding": "Tender & Bidding",
+    "trust_reputation": "Trust & Reputation",
+    "security_compliance": "Security & Compliance",
+    "agrichat_connect": "AgriChat Connect",
+    "agrichat": "AgriChat",
+    "sourcing_procurement": "Sourcing & Procurement",
+    "orders_tracking": "Orders & Tracking",
+    "negotiation_bidding": "Negotiation & Bidding"
   },
   "nav": {
     "overview": "Dashboard Overview",
@@ -57,6 +76,68 @@
     "notifications": "Notifications",
     "help": "Help",
     "logout": "Logout"
+  },
+  "dashboard": {
+    "farmer_command_center": "Farmer Command Center",
+    "welcome_farmer": "Welcome, {{name}}!",
+    "analyzing_intelligence": "Analyzing {{size}} of Agricultural Intelligence for your farm today.",
+    "system_health": "System Health",
+    "optimized": "Optimized {{percent}}%",
+    "total_crops_value": "Total Crops Value",
+    "active_orders": "Active Orders",
+    "pending_payments": "Pending Payments",
+    "market_profit_gain": "Market Profit Gain",
+    "live_mandi_prices": "Live Mandi Prices",
+    "realtime_sync": "Real-time Sync Active",
+    "regional_average": "Regional Average",
+    "global_export_hub": "Global Export Hub",
+    "global_sourcing_live": "Global Sourcing Live AI",
+    "view_analysis": "View Analysis",
+    "net_margin": "Net Margin",
+    "exporting_farmers": "+{{count}} Exporting Farmers active in your area",
+    "farm_management_hub": "Farm Management Hub",
+    "access_tools": "Access all farming tools and features",
+    "farm_yield_insights": "Farm Yield Insights",
+    "ai_prediction_engine": "AI Prediction Engine v4.2",
+    "full_detail": "Full Detail",
+    "weather_score": "Weather Score",
+    "soil_health": "Soil Health",
+    "pest_risk": "Pest Risk",
+    "revenue": "Revenue",
+    "total_crops": "Total Crops",
+    "this_season": "this season",
+    "total_area": "Total Area",
+    "utilized": "{{percent}}% utilized",
+    "ai_intelligence_assistant": "AI Intelligence Assistant",
+    "ai_insights_desc": "Get real-time insights, pricing recommendations, and growth strategies",
+    "open_chat": "Open Chat",
+    "copyright": "© 2026 FarmGuard Technologies. All rights reserved.",
+    "high_demand": "High Demand",
+    "medium_demand": "Medium Demand",
+    "critical_demand": "Critical Demand",
+    "today": "today"
+  },
+  "features": {
+    "ai_intelligence_hub": "AI Intelligence Hub",
+    "ai_intelligence_desc": "AI-powered insights, recommendations, and smart analytics",
+    "production_supply": "Production & Supply Chain",
+    "production_desc": "Smart product hub, crop management, and inventory",
+    "orders_logistics": "Orders & Logistics",
+    "orders_desc": "Order control, delivery management, and tracking",
+    "payments_finance": "Payments & Finance",
+    "payments_desc": "AgriPay center, auto-sell rules, and financial management",
+    "tender_bidding": "Tender & Bidding",
+    "tender_desc": "Government tenders, contract farming, bulk sales",
+    "trust_reputation": "Trust & Reputation",
+    "trust_desc": "Identity verification, ratings, and credibility",
+    "security_compliance": "Security & Compliance",
+    "security_desc": "Blockchain trace, quality compliance, export audit",
+    "quality_detector": "Quality Detector",
+    "quality_desc": "AI-powered crop quality analysis and grading",
+    "farm_insights": "Farm Insights",
+    "farm_insights_desc": "Weather, soil health, pest detection, and analytics",
+    "agrichat_connect": "AgriChat Connect",
+    "agrichat_desc": "Voice-enabled AI assistant and communication hub"
   },
   "farmer": {
     "title": "Farmer Dashboard",
@@ -123,6 +204,19 @@
     "traceability": "Track product origin and quality verification",
     "priceComparison": "Compare prices from multiple suppliers",
     "qualityGrade": "View AI-analyzed product quality grades"
+  },
+  "auth": {
+    "farmer": "Farmer",
+    "buyer": "Buyer"
+  },
+  "page": {
+    "copyright": "© 2026 FarmGuard Technologies. All rights reserved."
+  },
+  "landing": {
+    "contact": "Contact"
+  },
+  "language_switcher": {
+    "select": "Select Language"
   },
   "messages": {
     "noProducts": "No products found",
