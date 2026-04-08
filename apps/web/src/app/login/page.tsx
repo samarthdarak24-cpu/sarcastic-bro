@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { authService } from '@/services/auth';
-import { Eye, EyeOff, Mail, Lock, Loader2, Sprout, Wheat, Leaf } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, Loader2, Sprout, Wheat, Leaf, ShieldCheck } from 'lucide-react';
 import BackendStatusBanner from '@/components/ui/BackendStatusBanner';
 
 // Generate fixed particle positions to avoid hydration mismatch
@@ -61,27 +61,39 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
+      console.log('🔄 Attempting login with:', { email, apiUrl: process.env.NEXT_PUBLIC_API_URL });
+      
       const response = await authService.login({ email, password });
 
-      console.log('Login response:', response);
+      console.log('✅ Login response:', response);
 
       // Ensure data is stored
       if (typeof window !== 'undefined' && response.token) {
         localStorage.setItem('token', response.token);
         localStorage.setItem('user', JSON.stringify(response.user));
+        console.log('💾 Stored token and user data');
       }
 
       // Use window.location for reliable redirect
+      console.log('🔄 Redirecting to dashboard...');
       if (response.user.role === 'FARMER') {
         window.location.href = '/farmer/dashboard';
       } else if (response.user.role === 'BUYER') {
         window.location.href = '/buyer/dashboard';
       }
     } catch (err: any) {
-      console.error('Login error:', err);
+      console.error('❌ Login error:', err);
+      
       let errorMessage = 'Login failed. Please check your credentials and try again.';
 
-      if (err.response?.data?.message) {
+      // Check if it's a network error
+      if (err.code === 'ERR_NETWORK' || err.message?.includes('Network Error') || err.isMockFallbackError) {
+        errorMessage = '🔴 Backend server not running. Using mock authentication instead. Login with: farmer@test.com / Farmer123 or buyer@test.com / Buyer123';
+      } else if (err.response?.status === 401) {
+        errorMessage = '❌ Invalid email or password. Please check your credentials.';
+      } else if (err.response?.status === 500) {
+        errorMessage = '⚠️ Server error. Please try again later.';
+      } else if (err.response?.data?.message) {
         errorMessage = err.response.data.message;
       } else if (err.response?.data?.error) {
         errorMessage = err.response.data.error;
@@ -97,6 +109,15 @@ export default function LoginPage() {
       }
 
       setError(errorMessage);
+      
+      // Log detailed error for debugging
+      console.error('Detailed error:', {
+        status: err.response?.status,
+        statusText: err.response?.statusText,
+        data: err.response?.data,
+        message: err.message,
+        code: err.code,
+      });
     } finally {
       setLoading(false);
     }
@@ -166,10 +187,17 @@ export default function LoginPage() {
               className="inline-flex items-center gap-3 mb-6"
               whileHover={{ scale: 1.05 }}
             >
-              <div className="w-16 h-16 bg-gradient-to-br from-green-400 to-emerald-500 rounded-2xl flex items-center justify-center shadow-2xl">
-                <Sprout className="w-8 h-8 text-white" />
+              <div className="w-16 h-16 shadow-lg rounded-2xl flex items-center justify-center relative overflow-hidden group bg-white">
+                <img src="/farmguard-logo.png" alt="FarmGuard Logo" className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500" />
               </div>
-              <h1 className="text-5xl font-black text-white">ODOP Connect</h1>
+              <motion.h1 
+                className="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-emerald-400 tracking-tighter inline-block"
+                animate={{ backgroundPosition: ['0% center', '200% center'] }}
+                transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
+                style={{ backgroundSize: '200% auto' }}
+              >
+                FarmGuard
+              </motion.h1>
             </motion.div>
             <motion.p
               className="text-2xl text-white/90 font-semibold mb-4"
@@ -247,19 +275,11 @@ export default function LoginPage() {
           {/* Header with Logo */}
           <motion.div variants={itemVariants} className="text-center mb-8">
             <motion.div
-              className="inline-flex items-center justify-center w-24 h-24 bg-gradient-to-br from-green-400 via-emerald-400 to-green-500 rounded-3xl mb-6 shadow-2xl relative"
-              whileHover={{ scale: 1.1, rotate: 360 }}
+              className="inline-flex items-center justify-center w-28 h-28 mb-6 shadow-2xl relative overflow-hidden bg-white rounded-3xl"
+              whileHover={{ scale: 1.1, rotate: 5 }}
               transition={{ type: 'spring', stiffness: 200, duration: 0.8 }}
             >
-              <motion.div
-                className="absolute inset-0 bg-gradient-to-br from-green-300 to-emerald-500 rounded-3xl blur-xl opacity-50"
-                animate={{
-                  scale: [1, 1.2, 1],
-                  opacity: [0.5, 0.8, 0.5],
-                }}
-                transition={{ duration: 2, repeat: Infinity }}
-              />
-              <Sprout className="w-12 h-12 text-white relative z-10" />
+              <img src="/farmguard-logo.png" alt="FarmGuard Logo" className="w-full h-full object-cover" />
             </motion.div>
             
             <motion.h1
@@ -286,7 +306,12 @@ export default function LoginPage() {
               animate={{ opacity: 1 }}
               transition={{ delay: 0.5 }}
             >
-              Sign in to <span className="font-bold text-white">ODOP Connect</span>
+              Sign in to <motion.span 
+                className="font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-emerald-400 inline-block"
+                animate={{ backgroundPosition: ['0% center', '200% center'] }}
+                transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
+                style={{ backgroundSize: '200% auto' }}
+              >FarmGuard</motion.span>
             </motion.p>
           </motion.div>
 

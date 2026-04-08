@@ -1,10 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
-import axios from 'axios';
-
-const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://localhost:8000';
+import { OllamaService } from '../../services/ollamaService';
 
 interface ChatMessage {
-  role: 'user' | 'assistant';
+  role: 'user' | 'assistant' | 'system' | 'bot';
   content: string;
   timestamp?: Date;
 }
@@ -19,122 +17,110 @@ interface ChatRequest {
 export class ChatController {
   static async sendMessage(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { message, conversationHistory = [], userContext = {}, stream = false } = req.body as ChatRequest;
-      const user = (req as unknown as Record<string, unknown>).user as Record<string, unknown> | undefined;
+      const { message, conversationHistory = [], userContext = {}, stream = true } = req.body as ChatRequest;
+      const user = (req as any).user as Record<string, unknown> | undefined;
+      const role = (user?.role as 'FARMER' | 'BUYER' | 'ADMIN') || 'FARMER';
       
-      const enhancedContext = {
-        ...userContext,
-        userId: user?.id,
-        name: user?.name,
-        userType: user?.role,
-        location: user?.district || user?.state,
-      };
+      const history = conversationHistory.map(m => ({
+        role: m.role === 'bot' || m.role === 'assistant' ? 'assistant' : 'user',
+        content: m.content
+      })).slice(-10); // Keep last 10 messages for context
 
       if (stream) {
-        const response = await axios.post(
-          `${AI_SERVICE_URL}/ai/chat/stream`,
-          {
-            message,
-            user_type: user?.role || 'FARMER',
-            conversation_history: conversationHistory,
-            user_context: enhancedContext,
-          },
-          {
-            timeout: 60000,
-            responseType: 'stream',
-          }
-        );
+        let buffer = '';
+        const ollamaStream = await OllamaService.chatStream({
+          message,
+          role,
+          history
+        });
 
         res.setHeader('Content-Type', 'text/event-stream');
         res.setHeader('Cache-Control', 'no-cache');
         res.setHeader('Connection', 'keep-alive');
         res.setHeader('X-Accel-Buffering', 'no');
 
-        response.data.pipe(res);
-      } else {
-        const response = await axios.post(
-          `${AI_SERVICE_URL}/ai/chat/context-aware`,
-          {
-            message,
-            user_type: user?.role || 'FARMER',
-            conversation_history: conversationHistory,
-            user_context: enhancedContext,
-          },
-          {
-            timeout: 30000,
+        // Initial metadata chunk
+        const initialMetadata = {
+          type: 'metadata',
+          intent: 'GENERAL',
+          confidence: 0.95,
+          suggestions: role === 'FARMER' ? ['Best crop to grow?', 'Should I sell?'] : ['Market trends', 'Top suppliers']
+        };
+        res.write(`data: ${JSON.stringify(initialMetadata)}\n\n`);
+
+        ollamaStream.on('data', (chunk: Buffer) => {
+          buffer += chunk.toString();
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
+
+          for (const line of lines) {
+            const cleanLine = line.trim();
+            if (!cleanLine) continue;
+
+            try {
+              const data = JSON.parse(cleanLine);
+              if (data.message && data.message.content) {
+                res.write(`data: ${JSON.stringify({ type: 'content', content: data.message.content })}\n\n`);
+              }
+              if (data.done) {
+                res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
+                res.end();
+              }
+            } catch (e) {
+              // Partial JSON
+            }
           }
-        );
+        });
+
+        ollamaStream.on('error', (err: any) => {
+          console.error('[AI Stream Error]', err);
+          res.write(`data: ${JSON.stringify({ type: 'error', error: 'OLLAMA_ERROR', message: 'Local AI failed' })}\n\n`);
+          res.end();
+        });
+
+      } else {
+        const responseData = await OllamaService.chat({
+          message,
+          role,
+          history
+        });
 
         res.status(200).json({
           success: true,
-          data: response.data,
+          data: {
+              response: responseData.response,
+              intent: responseData.intent,
+              suggestions: responseData.suggestions,
+              confidence: 0.95
+          }
         });
       }
     } catch (error: unknown) {
-      const err = error as { response?: { status?: number; data?: { detail?: { error?: string; message?: string } } }; message?: string };
-      console.error('AI Chat Error:', err.message);
-      
-      if (err.response?.status === 503 && err.response?.data?.detail?.error === 'API_KEY_MISSING') {
-        res.status(503).json({
-          success: false,
-          error: 'API_KEY_MISSING',
-          message: 'AI service is not configured. Please contact support.',
-        });
-        return;
-      }
-      
-      if (err.response?.status === 429) {
-        res.status(429).json({
-          success: false,
-          error: 'RATE_LIMIT',
-          message: 'Too many requests. Please wait a moment and try again.',
-        });
-        return;
-      }
-      
-      res.status(200).json({
-        success: true,
-        data: {
-          response: "I'm here to help! I can assist you with pricing, quality checks, finding buyers/suppliers, market trends, and much more. What would you like to know?",
-          suggestions: [
-            'Check market prices',
-            'Find buyers/suppliers',
-            'Analyze crop quality',
-            'Get market insights',
-          ],
-          intent: 'general',
-          confidence: 0.5,
-          actions: [],
-        },
-      });
+      console.error('AI Chat Error:', (error as Error).message);
+      res.status(500).json({ success: false, message: (error as Error).message });
     }
   }
 
   static async getSuggestions(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const user = (req as unknown as Record<string, unknown>).user as Record<string, unknown> | undefined;
+      const user = (req as any).user as Record<string, unknown> | undefined;
       const userType = user?.role || 'FARMER';
 
       const farmerSuggestions = [
-        'What is the current market price for wheat?',
-        'Analyze my crop quality',
-        'Find buyers for my produce',
-        'Show me price trends',
+        'Best crop to grow now?',
+        'Should I sell my harvest or wait?',
+        'Where are the best export opportunities?',
+        'Analyze my current crop quality',
         'Recommend crops for my soil',
         'Detect pests in my field',
-        'How to improve crop quality?',
-        'Connect me with bulk buyers',
       ];
 
       const buyerSuggestions = [
-        'Find wheat suppliers in Punjab',
-        'Compare rice prices across regions',
+        'Find reliable wheat suppliers',
+        'Should I buy now or wait for price drop?',
+        'What is the export potential for organic rice?',
         'Show me top-rated suppliers',
-        'Get bulk order quotes',
         'Analyze market trends for pulses',
-        'Find organic certified farmers',
-        'Negotiate better prices',
-        'Track my orders',
       ];
 
       res.status(200).json({

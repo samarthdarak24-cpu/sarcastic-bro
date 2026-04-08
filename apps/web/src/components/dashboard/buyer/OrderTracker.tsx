@@ -2,11 +2,11 @@
 
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Package, Truck, CheckCircle, Clock, MapPin, Eye } from "lucide-react";
-import { orderService } from "@/services/orderService";
-import { useOrderUpdates } from "@/hooks/useSocket";
-import { useRealtimeStore } from "@/store/realtimeStore";
+import { Package, Truck, CheckCircle, Clock, MapPin } from "lucide-react";
+import { buyerOrderTrackingService } from "@/services/buyerOrderTrackingService";
+import { useSocket } from "@/hooks/useSocket";
 import toast from "react-hot-toast";
+import { SkeletonList } from "@/components/ui/SkeletonLoader";
 
 interface Order {
   id: string;
@@ -26,25 +26,34 @@ interface Order {
 export function OrderTracker() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
-  const { liveOrders } = useRealtimeStore();
+  const socket = useSocket();
 
-  // Load orders
   useEffect(() => {
     loadOrders();
+    setupSocketListeners();
   }, []);
 
-  // Listen for real-time order updates
-  useOrderUpdates((data) => {
-    setOrders(prev => prev.map(order => 
-      order.id === data.orderId ? { ...order, status: data.status } : order
-    ));
-  });
+  const setupSocketListeners = () => {
+    if (!socket) return;
+
+    socket.on('order:location-update', (data: any) => {
+      toast(`Order at ${data.location}`, {
+        icon: '📍',
+      });
+      loadOrders();
+    });
+
+    return () => {
+      socket.off('order:location-update');
+    };
+  };
 
   const loadOrders = async () => {
     try {
       setLoading(true);
-      const data = await orderService.getMyOrders();
-      setOrders(data);
+      const token = localStorage.getItem('token') || '';
+      const { orders: data } = await buyerOrderTrackingService.getOrders({}, token);
+      setOrders(data || []);
     } catch (error) {
       console.error('Failed to load orders:', error);
       toast.error('Failed to load orders');
@@ -58,8 +67,9 @@ export function OrderTracker() {
       case "DELIVERED": return "emerald";
       case "SHIPPED": 
       case "IN_TRANSIT": return "blue";
-      case "PROCESSING": return "amber";
-      case "PENDING": return "yellow";
+      case "PROCESSING": return "purple";
+      case "CONFIRMED": return "blue";
+      case "PENDING": return "orange";
       case "CANCELLED": return "red";
       default: return "slate";
     }
@@ -68,9 +78,10 @@ export function OrderTracker() {
   const getStatusProgress = (status: string) => {
     switch (status.toUpperCase()) {
       case "PENDING": return 10;
-      case "PROCESSING": return 30;
+      case "CONFIRMED": return 20;
+      case "PROCESSING": return 40;
       case "SHIPPED":
-      case "IN_TRANSIT": return 60;
+      case "IN_TRANSIT": return 70;
       case "DELIVERED": return 100;
       case "CANCELLED": return 0;
       default: return 0;
@@ -79,16 +90,25 @@ export function OrderTracker() {
 
   const statusCounts = {
     total: orders.length,
-    inTransit: orders.filter(o => o.status === 'SHIPPED' || o.status === 'IN_TRANSIT').length,
-    delivered: orders.filter(o => o.status === 'DELIVERED').length,
-    pending: orders.filter(o => o.status === 'PENDING' || o.status === 'PROCESSING').length,
+    inTransit: orders.filter(o => ['SHIPPED', 'IN_TRANSIT', 'PROCESSING', 'CONFIRMED'].includes(o.status.toUpperCase())).length,
+    delivered: orders.filter(o => o.status.toUpperCase() === 'DELIVERED').length,
+    pending: orders.filter(o => o.status.toUpperCase() === 'PENDING').length,
   };
 
   return (
     <div className="space-y-8">
-      <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
-        <h1 className="text-4xl font-black text-slate-900 mb-2">Order Tracker</h1>
-        <p className="text-slate-500 font-medium">Real-time shipment monitoring</p>
+      <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="flex items-center justify-between">
+        <div>
+          <h1 className="text-4xl font-black text-slate-900 mb-2">Order Tracker</h1>
+          <p className="text-slate-500 font-medium">Real-time shipment monitoring</p>
+        </div>
+        <button 
+          onClick={loadOrders}
+          className="h-12 px-6 bg-slate-100 hover:bg-slate-200 text-slate-900 rounded-2xl font-bold transition-all flex items-center gap-2"
+        >
+          <Clock size={18} className={loading ? "animate-spin" : ""} />
+          Refresh
+        </button>
       </motion.div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -109,9 +129,7 @@ export function OrderTracker() {
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center py-20">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-        </div>
+        <SkeletonList />
       ) : orders.length === 0 ? (
         <div className="text-center py-20 bg-white rounded-3xl border border-slate-200">
           <Package size={64} className="mx-auto text-slate-300 mb-4" />
@@ -123,8 +141,6 @@ export function OrderTracker() {
           {orders.map((order, idx) => {
             const color = getStatusColor(order.status);
             const progress = getStatusProgress(order.status);
-            const liveOrder = liveOrders[order.id];
-            const currentStatus = liveOrder?.status || order.status;
 
             return (
               <motion.div key={order.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.1 }} className="bg-white rounded-3xl p-6 border border-slate-200 shadow-lg hover:shadow-xl transition-all">
@@ -135,8 +151,8 @@ export function OrderTracker() {
                       {order.product?.name || 'Product'} - {order.quantity} {order.product?.unit || 'units'}
                     </p>
                   </div>
-                  <div className={`px-4 py-2 bg-${color}-50 text-${color}-600 rounded-full font-bold text-sm`}>
-                    {currentStatus.replace('_', ' ')}
+                  <div className={`px-4 py-2 bg-${color}-50 text-${color}-600 rounded-full font-bold text-sm uppercase tracking-wider`}>
+                    {order.status.replace('_', ' ')}
                   </div>
                 </div>
 
@@ -158,9 +174,9 @@ export function OrderTracker() {
                 <div className="flex items-center justify-between pt-4 border-t border-slate-100">
                   <div className="flex items-center gap-2 text-slate-600">
                     <MapPin size={16} />
-                    <span className="text-sm font-medium">{order.deliveryAddress}</span>
+                    <span className="text-sm font-medium">{order.deliveryAddress || (order as any).shippingAddress || 'Address N/A'}</span>
                   </div>
-                  <div className="text-sm font-bold text-slate-900">₹{order.totalAmount}</div>
+                  <div className="text-sm font-bold text-slate-900">₹{(order.totalAmount || (order as any).totalPrice || 0).toLocaleString()}</div>
                 </div>
               </motion.div>
             );

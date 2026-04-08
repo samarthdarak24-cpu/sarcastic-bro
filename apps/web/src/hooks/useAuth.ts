@@ -1,54 +1,68 @@
-'use client';
-
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { authService } from '@/services/auth';
+
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  avatarUrl?: string;
+  district?: string;
+  fullName?: string;
+}
 
 export function useAuth(requiredRole?: 'FARMER' | 'BUYER') {
-  const router = useRouter();
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
-    const checkAuth = () => {
-      const isAuthenticated = authService.isAuthenticated();
-      const currentUser = authService.getUser();
+    // Check if user is logged in
+    const token = localStorage.getItem('token');
+    const userData = localStorage.getItem('user');
 
-      console.log('useAuth check:', { isAuthenticated, currentUser, requiredRole });
-
-      if (!isAuthenticated || !currentUser) {
-        console.log('Not authenticated, redirecting to login');
-        setLoading(false);
-        window.location.href = '/login';
-        return;
-      }
-
-      if (requiredRole && currentUser?.role !== requiredRole) {
-        console.log('Role mismatch:', { currentRole: currentUser?.role, requiredRole });
-        setLoading(false);
-        // Redirect to correct dashboard
-        if (currentUser?.role === 'FARMER') {
-          window.location.href = '/farmer/dashboard';
-        } else if (currentUser?.role === 'BUYER') {
-          window.location.href = '/buyer/dashboard';
-        } else {
-          window.location.href = '/login';
+    if (token && userData) {
+      try {
+        const parsedUser = JSON.parse(userData);
+        setUser(parsedUser);
+        
+        // Only redirect if role is required and doesn't match
+        if (requiredRole && parsedUser.role !== requiredRole) {
+          console.warn(`User role ${parsedUser.role} doesn't match required role ${requiredRole}`);
+          // Don't redirect, just log warning
         }
-        return;
+      } catch (error) {
+        console.error('Error parsing user data:', error);
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
       }
+    } else if (requiredRole) {
+      // Only redirect to login if a role is required and user is not authenticated
+      // Don't redirect immediately, give components a chance to handle it
+      console.log('No authentication found, but required role:', requiredRole);
+    }
 
-      console.log('Auth check passed, setting user');
-      setUser(currentUser);
-      setLoading(false);
-    };
-
-    checkAuth();
+    setLoading(false);
   }, [requiredRole]);
 
+  const login = (userData: User, token: string) => {
+    localStorage.setItem('token', token);
+    localStorage.setItem('user', JSON.stringify(userData));
+    setUser(userData);
+  };
+
   const logout = () => {
-    authService.logout();
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    setUser(null);
     router.push('/login');
   };
 
-  return { user, loading, logout };
+  return {
+    user,
+    loading,
+    login,
+    logout,
+    isAuthenticated: !!user,
+  };
 }

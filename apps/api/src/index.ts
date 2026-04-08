@@ -9,6 +9,7 @@ import { env } from "./config/env";
 import prisma from "./prisma/client";
 import { SocketService } from "./config/socket";
 import { initializeSocketService } from "./services/socketService";
+import { MandiRealtimeService } from "./services/mandiService";
 
 // Create HTTP server
 const server = http.createServer(app);
@@ -19,6 +20,9 @@ SocketService.initialize(server);
 // Initialize Socket Service for event emissions
 const io = SocketService.getIO();
 initializeSocketService(io);
+
+// Start Mandi Simulation for real-time market updates
+MandiRealtimeService.startSimulation();
 
 /* ─── Server Start ──────────────────────────────────────────────────── */
 

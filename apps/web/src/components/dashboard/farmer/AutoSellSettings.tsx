@@ -18,7 +18,7 @@ export function AutoSellSettings() {
   const [refreshing, setRefreshing] = useState(false);
 
   const tabs = [
-    { id: 'overview', label: 'Overview', icon: Activity },
+    { id: 'overview', label: 'Auto-Sell Overview', icon: Activity },
     { id: 'create-rule', label: 'New Rule', icon: Plus },
     { id: 'active-rules', label: 'Active Rules', icon: Zap },
     { id: 'matches', label: 'Matches', icon: Target },
@@ -90,7 +90,7 @@ export function AutoSellSettings() {
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex items-center gap-2 px-5 py-3 rounded-xl font-black text-xs uppercase whitespace-nowrap transition-all ${
                   activeTab === tab.id
-                    ? 'bg-brand-primary text-white shadow-lg scale-105'
+                    ? 'bg-emerald-600 text-white shadow-lg scale-105'
                     : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
                 }`}
               >

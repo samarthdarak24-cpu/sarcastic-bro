@@ -3,9 +3,13 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X } from "lucide-react";
+import { Menu, X, ShieldCheck } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
+import "@/lib/i18n";
 
 export function NewNavbar() {
+  const { t } = useTranslation();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -18,10 +22,10 @@ export function NewNavbar() {
   }, []);
 
   const navLinks = [
-    { label: "Features", href: "#features" },
-    { label: "How It Works", href: "#how-it-works" },
-    { label: "Market Stats", href: "#stats" },
-    { label: "Contact", href: "#contact" },
+    { label: t('landing.intelligent_sourcing'), href: "#features" },
+    { label: t('landing.trade_network'), href: "#how-it-works" },
+    { label: t('landing.market_intel'), href: "#stats" },
+    { label: t('landing.contact'), href: "#contact" },
   ];
 
   return (
@@ -32,21 +36,38 @@ export function NewNavbar() {
         transition={{ duration: 0.6 }}
         className={`fixed top-0 inset-x-0 z-50 transition-all duration-300 ${
           scrolled
-            ? "bg-white/70 backdrop-blur-2xl border-b border-white/20 shadow-lg"
-            : "bg-white/20 backdrop-blur-md"
+            ? "bg-white/95 backdrop-blur-xl border-b border-gray-200 shadow-lg"
+            : "bg-transparent"
         }`}
       >
         <div className="max-w-7xl mx-auto px-6">
           <div className="flex items-center justify-between h-[70px]">
             {/* Logo */}
-            <Link href="/" className="flex items-center gap-2 group">
+            <Link href="/" className="flex items-center gap-3 group">
+              {/* Premium FarmGuard Logo */}
+              <motion.div
+                className="relative flex items-center justify-center w-12 h-12 rounded-xl shadow-lg bg-white overflow-hidden"
+                whileHover={{ scale: 1.15, rotate: 5 }}
+                transition={{ duration: 0.4, type: "spring", stiffness: 200 }}
+              >
+                <img src="/farmguard-logo.png" alt="FarmGuard Logo" className="w-full h-full object-cover" />
+              </motion.div>
+
+              {/* Text */}
               <motion.div
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className="text-2xl font-bold"
+                className="text-2xl font-bold flex items-center"
               >
-                <span className="text-[#22c55e]">ODOP</span>
-                <span className="text-[#111827]">Connect</span>
+                <motion.span 
+                  className="bg-clip-text text-transparent bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-500 tracking-tighter text-3xl font-black inline-block"
+                  animate={{ backgroundPosition: ['0% center', '200% center'] }}
+                  transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
+                  style={{ backgroundSize: '200% auto' }}
+                >
+                  Farm
+                </motion.span>
+                <span className="text-[#111827] tracking-tighter text-3xl font-black">Guard</span>
               </motion.div>
             </Link>
 
@@ -56,7 +77,14 @@ export function NewNavbar() {
                 <a
                   key={link.href}
                   href={link.href}
-                  className="text-sm font-medium text-[#6b7280] hover:text-[#22c55e] transition-colors relative group"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    const target = document.querySelector(link.href);
+                    if (target) {
+                      target.scrollIntoView({ behavior: 'smooth' });
+                    }
+                  }}
+                  className="text-sm font-medium text-[#6b7280] hover:text-[#22c55e] transition-colors relative group cursor-pointer"
                 >
                   {link.label}
                   <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#22c55e] group-hover:w-full transition-all duration-300" />
@@ -66,11 +94,8 @@ export function NewNavbar() {
 
             {/* Right Actions */}
             <div className="hidden lg:flex items-center gap-4">
-              {/* Language Selector */}
-              <select className="text-sm font-medium text-[#6b7280] bg-transparent border-none cursor-pointer focus:outline-none">
-                <option value="en">🇬🇧 English</option>
-                <option value="hi">🇮🇳 Hindi</option>
-              </select>
+              {/* Language Switcher */}
+              <LanguageSwitcher />
 
               {/* Login Button */}
               <Link href="/login">
@@ -79,7 +104,7 @@ export function NewNavbar() {
                   whileTap={{ scale: 0.95 }}
                   className="px-6 py-2.5 text-sm font-semibold text-[#22c55e] border-2 border-[#22c55e] rounded-lg hover:bg-[#22c55e] hover:text-white transition-all duration-300"
                 >
-                  Login
+                  {t('auth.login')}
                 </motion.button>
               </Link>
 
@@ -90,7 +115,7 @@ export function NewNavbar() {
                   whileTap={{ scale: 0.95 }}
                   className="px-8 py-3 text-sm font-bold text-white bg-gradient-to-r from-[#22c55e] to-[#16a34a] rounded-lg shadow-lg hover:shadow-xl transition-all duration-300"
                 >
-                  Get Started
+                  {t('landing.get_started')}
                 </motion.button>
               </Link>
             </div>
@@ -124,22 +149,34 @@ export function NewNavbar() {
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: i * 0.1 }}
-                  onClick={() => setMobileOpen(false)}
-                  className="text-2xl font-bold text-[#111827] py-4 border-b border-gray-200"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setMobileOpen(false);
+                    const target = document.querySelector(link.href);
+                    if (target) {
+                      target.scrollIntoView({ behavior: 'smooth' });
+                    }
+                  }}
+                  className="text-2xl font-bold text-[#111827] py-4 border-b border-gray-200 cursor-pointer"
                 >
                   {link.label}
                 </motion.a>
               ))}
 
               <div className="mt-auto pb-8 space-y-4">
+                {/* Language Switcher for Mobile */}
+                <div className="mb-4 pb-4 border-b border-gray-200">
+                  <LanguageSwitcher />
+                </div>
+                
                 <Link href="/login" onClick={() => setMobileOpen(false)}>
                   <button className="w-full px-6 py-3 text-sm font-semibold text-[#22c55e] border-2 border-[#22c55e] rounded-lg">
-                    Login
+                    {t('auth.login')}
                   </button>
                 </Link>
                 <Link href="/register" onClick={() => setMobileOpen(false)}>
                   <button className="w-full px-8 py-4 text-sm font-bold text-white bg-gradient-to-r from-[#22c55e] to-[#16a34a] rounded-lg">
-                    Get Started
+                    {t('landing.get_started')}
                   </button>
                 </Link>
               </div>

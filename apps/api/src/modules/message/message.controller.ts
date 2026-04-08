@@ -1,74 +1,225 @@
 /* ========================================================================
-   Message Controller — HTTP handlers for messaging
+   Message Controller — Real-time Chat and Messaging Endpoints
+   Handles HTTP endpoints for chat and messaging features
    ======================================================================== */
 
-import type { Request, Response } from "express";
-import { MessageService } from "./message.service";
-import { sendSuccess, sendCreated, sendPaginated } from "../../utils/response";
-import { getSocketService } from "../../services/socketService";
+import { Request, Response } from 'express';
+import { MessageService } from './message.service';
+import prisma from '../../prisma/client';
 
 export class MessageController {
+  /**
+   * POST /api/messages
+   * Send a message
+   */
   static async sendMessage(req: Request, res: Response) {
-    const { receiverId, content, type = "text", fileUrl } = req.body;
-    if (!receiverId || !content) {
-      return sendSuccess(res, { error: "receiverId and content required" });
-    }
-    const message = await MessageService.sendMessage(req.user!.userId, {
-      receiverId,
-      content,
-      type,
-      fileUrl,
-    });
-    
-    // Emit real-time message notification
     try {
-      const socketService = getSocketService();
-      socketService.emitNewMessage(receiverId, {
-        messageId: message.id,
-        senderId: req.user!.userId,
-        senderName: req.user!.email || 'User',
-        content: message.content,
-        conversationId: `${req.user!.userId}-${receiverId}`
+      const senderId = req.user?.userId;
+      if (!senderId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      const { receiverId, content, type, fileUrl } = req.body;
+
+      if (!receiverId || !content) {
+        return res.status(400).json({ error: 'Receiver ID and content are required' });
+      }
+
+      const message = await MessageService.sendMessage({
+        senderId,
+        receiverId,
+        content,
+        type,
+        fileUrl,
       });
-    } catch (err) {
-      console.error('Socket emission failed:', err);
+
+      res.status(201).json({
+        success: true,
+        message: 'Message sent successfully',
+        data: message,
+      });
+    } catch (error: any) {
+      console.error('[MessageController] Send message error:', error.message);
+      res.status(500).json({ error: error.message });
     }
-    
-    return sendCreated(res, message, "Message sent");
   }
 
+  /**
+   * GET /api/messages/conversations
+   * Get all conversations for the authenticated user
+   */
   static async getConversations(req: Request, res: Response) {
-    const { page = "1", limit = "20" } = req.query;
-    const result = await MessageService.getConversations(req.user!.userId, {
-      page: Number(page),
-      limit: Number(limit),
-    });
-    return sendPaginated(res, result.conversations, result.total, Number(page), Number(limit));
+    try {
+      const userId = req.user?.userId;
+      if (!userId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      const conversations = await MessageService.getConversations(userId);
+
+      res.status(200).json({
+        success: true,
+        data: conversations,
+      });
+    } catch (error: any) {
+      console.error('[MessageController] Get conversations error:', error.message);
+      res.status(500).json({ error: error.message });
+    }
   }
 
-  static async getConversation(req: Request, res: Response) {
-    const { userId } = req.params;
-    const { page = "1", limit = "50" } = req.query;
-    const result = await MessageService.getConversation(req.user!.userId, userId, {
-      page: Number(page),
-      limit: Number(limit),
-    });
-    return sendPaginated(res, result.messages, result.total, Number(page), Number(limit));
+  /**
+   * GET /api/messages/conversation/:userId
+   * Get messages in a conversation with a specific user
+   */
+  static async getConversationMessages(req: Request, res: Response) {
+    try {
+      const userId = req.user?.userId;
+      if (!userId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      const { userId: otherUserId } = req.params;
+      const limit = parseInt(req.query.limit as string) || 50;
+
+      if (!otherUserId) {
+        return res.status(400).json({ error: 'User ID is required' });
+      }
+
+      const messages = await MessageService.getConversationMessages(
+        userId,
+        otherUserId,
+        limit
+      );
+
+      res.status(200).json({
+        success: true,
+        data: messages,
+      });
+    } catch (error: any) {
+      console.error('[MessageController] Get conversation messages error:', error.message);
+      res.status(500).json({ error: error.message });
+    }
   }
 
+  /**
+   * PUT /api/messages/:id/read
+   * Mark a message as read
+   */
   static async markAsRead(req: Request, res: Response) {
-    const { messageId } = req.params;
-    const message = await MessageService.markAsRead(messageId, req.user!.userId);
-    return sendSuccess(res, message, "Marked as read");
+    try {
+      const userId = req.user?.userId;
+      if (!userId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      const { id: messageId } = req.params;
+
+      if (!messageId) {
+        return res.status(400).json({ error: 'Message ID is required' });
+      }
+
+      const result = await MessageService.markAsRead(messageId, userId);
+
+      res.status(200).json({
+        success: true,
+        ...result,
+      });
+    } catch (error: any) {
+      console.error('[MessageController] Mark as read error:', error.message);
+      res.status(500).json({ error: error.message });
+    }
   }
 
-  static async deleteMessage(req: Request, res: Response) {
-    await MessageService.deleteMessage(req.params.messageId, req.user!.userId);
-    return sendSuccess(res, null, "Message deleted");
+  /**
+   * POST /api/messages/typing
+   * Emit typing indicator
+   */
+  static async emitTyping(req: Request, res: Response) {
+    try {
+      const userId = req.user?.userId;
+      
+      if (!userId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      const { conversationId, isTyping } = req.body;
+
+      if (!conversationId || typeof isTyping !== 'boolean') {
+        return res.status(400).json({ error: 'Conversation ID and isTyping are required' });
+      }
+
+      // Fetch user name from database
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { name: true },
+      });
+
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      MessageService.emitTyping(conversationId, userId, user.name, isTyping);
+
+      res.status(200).json({
+        success: true,
+        message: 'Typing indicator sent',
+      });
+    } catch (error: any) {
+      console.error('[MessageController] Emit typing error:', error.message);
+      res.status(500).json({ error: error.message });
+    }
   }
 
+  /**
+   * GET /api/messages/unread-count
+   * Get unread message count
+   */
   static async getUnreadCount(req: Request, res: Response) {
-    const count = await MessageService.getUnreadCount(req.user!.userId);
-    return sendSuccess(res, { unreadCount: count });
+    try {
+      const userId = req.user?.userId;
+      if (!userId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      const unreadCount = await MessageService.getUnreadCount(userId);
+
+      res.status(200).json({
+        success: true,
+        data: { unreadCount },
+      });
+    } catch (error: any) {
+      console.error('[MessageController] Get unread count error:', error.message);
+      res.status(500).json({ error: error.message });
+    }
+  }
+
+  /**
+   * GET /api/messages/search
+   * Search messages within conversations
+   */
+  static async searchMessages(req: Request, res: Response) {
+    try {
+      const userId = req.user?.userId;
+      if (!userId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      const { q: query } = req.query;
+      const limit = parseInt(req.query.limit as string) || 20;
+
+      if (!query || typeof query !== 'string') {
+        return res.status(400).json({ error: 'Search query is required' });
+      }
+
+      const messages = await MessageService.searchMessages(userId, query, limit);
+
+      res.status(200).json({
+        success: true,
+        data: messages,
+      });
+    } catch (error: any) {
+      console.error('[MessageController] Search messages error:', error.message);
+      res.status(500).json({ error: error.message });
+    }
   }
 }

@@ -2,8 +2,10 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 
 export function TestimonialsCarousel() {
+  const { t } = useTranslation();
   const [activeIndex, setActiveIndex] = useState(0);
 
   const testimonials = [
@@ -11,25 +13,25 @@ export function TestimonialsCarousel() {
       name: "Rajesh Kumar",
       role: "Tomato Farmer, Nashik",
       image: "https://images.unsplash.com/photo-1595273670150-bd0c3c392e46?w=200&q=80",
-      quote: "My income increased by 45% with AI quality grading and direct buyer connections!",
+      quote: t("landing.testimonials.quote1", "My income increased by 45% with AI quality grading and direct buyer connections!"),
       metric: "45%",
-      metricLabel: "Income Increase",
+      metricLabel: t("landing.testimonials.income_increase"),
     },
     {
       name: "Priya Deshmukh",
       role: "Organic Farmer, Pune",
       image: "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=200&q=80",
-      quote: "The AI quality detection is amazing! I get A+ grades consistently.",
+      quote: t("landing.testimonials.quote2", "The AI quality detection is amazing! I get A+ grades consistently."),
       metric: "A+",
-      metricLabel: "Quality Grade",
+      metricLabel: t("landing.testimonials.quality_grade"),
     },
     {
       name: "Amit Patil",
       role: "Rice Farmer, Solapur",
       image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&q=80",
-      quote: "Real-time market prices help me plan better. Blockchain tracking builds trust.",
+      quote: t("landing.testimonials.quote3", "Real-time market prices help me plan better. Blockchain tracking builds trust."),
       metric: "₹12L",
-      metricLabel: "Monthly GMV",
+      metricLabel: t("landing.testimonials.monthly_gmv"),
     },
   ];
 
@@ -64,11 +66,11 @@ export function TestimonialsCarousel() {
             className="inline-block mb-4"
           >
             <div className="px-4 py-2 bg-yellow-100 text-yellow-700 rounded-full text-sm font-bold">
-              ⭐ Success Stories
+              ⭐ {t("landing.testimonials.badge")}
             </div>
           </motion.div>
           <h2 className="text-4xl md:text-5xl font-black text-gray-900">
-            Farmers Love Us
+            {t("landing.testimonials.title")}
           </h2>
         </motion.div>
 

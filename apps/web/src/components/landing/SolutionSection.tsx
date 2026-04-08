@@ -1,29 +1,31 @@
 "use client";
 
 import { motion } from "framer-motion";
-import Image from "next/image";
+import { useTranslation } from "react-i18next";
 
 export function SolutionSection() {
+  const { t } = useTranslation();
+
   const benefits = [
     {
       icon: "🤝",
-      title: "Direct Connection",
-      description: "Farmers connect directly with buyers, eliminating middlemen and increasing profits",
-      highlight: "↑ 30-40% Higher Profits",
+      title: t("landing.solution.direct_title"),
+      description: t("landing.solution.direct_desc"),
+      highlight: t("landing.solution.direct_highlight"),
       color: "#22c55e",
     },
     {
       icon: "🤖",
-      title: "Quality Verified",
-      description: "AI analyzes product quality with 98.5% accuracy using image recognition",
-      highlight: "98.5% Quality Accuracy",
+      title: t("landing.solution.quality_title"),
+      description: t("landing.solution.quality_desc"),
+      highlight: t("landing.solution.quality_highlight"),
       color: "#0ea5e9",
     },
     {
       icon: "⛓️",
-      title: "Complete Transparency",
-      description: "Blockchain tracks supply chain from farm to buyer ensuring authenticity",
-      highlight: "Immutable Records",
+      title: t("landing.solution.transparency_title"),
+      description: t("landing.solution.transparency_desc"),
+      highlight: t("landing.solution.transparency_highlight"),
       color: "#f59e0b",
     },
   ];
@@ -40,10 +42,10 @@ export function SolutionSection() {
           className="text-center mb-16"
         >
           <h2 className="text-4xl md:text-5xl font-black text-[#111827] mb-6">
-            Our Solution
+            {t("landing.solution.title")}
           </h2>
           <p className="text-lg text-[#6b7280] max-w-2xl mx-auto">
-            ODOP Connect eliminates middlemen, ensures quality, and brings transparency
+            {t("landing.solution.subtitle")}
           </p>
         </motion.div>
 
@@ -86,8 +88,8 @@ export function SolutionSection() {
                         />
                       </div>
                       <div>
-                        <div className="text-white font-bold text-sm">Rajesh Kumar</div>
-                        <div className="text-white/80 text-xs">Tomato Farmer</div>
+                        <div className="text-white font-bold text-sm">{t("landing.solution.mockup.farmer_name")}</div>
+                        <div className="text-white/80 text-xs">{t("landing.solution.mockup.farmer_role")}</div>
                       </div>
                     </div>
                     <div className="text-white text-xs font-bold bg-white/20 px-3 py-1 rounded-full">
@@ -101,15 +103,15 @@ export function SolutionSection() {
                     <div className="grid grid-cols-3 gap-2">
                       <div className="bg-[#22c55e]/10 rounded-lg p-2 text-center">
                         <div className="text-lg font-bold text-[#22c55e]">₹45K</div>
-                        <div className="text-xs text-gray-600">This Month</div>
+                        <div className="text-xs text-gray-600">{t("landing.solution.this_month")}</div>
                       </div>
                       <div className="bg-[#0ea5e9]/10 rounded-lg p-2 text-center">
                         <div className="text-lg font-bold text-[#0ea5e9]">28</div>
-                        <div className="text-xs text-gray-600">Orders</div>
+                        <div className="text-xs text-gray-600">{t("landing.solution.orders")}</div>
                       </div>
                       <div className="bg-[#f59e0b]/10 rounded-lg p-2 text-center">
                         <div className="text-lg font-bold text-[#f59e0b]">A+</div>
-                        <div className="text-xs text-gray-600">Grade</div>
+                        <div className="text-xs text-gray-600">{t("landing.solution.grade")}</div>
                       </div>
                     </div>
 
@@ -121,8 +123,8 @@ export function SolutionSection() {
                         className="w-16 h-16 rounded-lg object-cover"
                       />
                       <div className="flex-1">
-                        <div className="font-bold text-sm text-gray-800">Fresh Tomatoes</div>
-                        <div className="text-xs text-gray-600">500 kg available</div>
+                        <div className="font-bold text-sm text-gray-800">{t("landing.solution.fresh_tomatoes")}</div>
+                        <div className="text-xs text-gray-600">500 {t("landing.solution.kg_available")}</div>
                         <div className="text-sm font-bold text-[#22c55e] mt-1">₹35/kg</div>
                       </div>
                     </div>
@@ -130,10 +132,10 @@ export function SolutionSection() {
                     {/* Quick Actions */}
                     <div className="grid grid-cols-2 gap-2">
                       <button className="bg-[#22c55e] text-white text-xs font-bold py-2 rounded-lg">
-                        📸 AI Grade
+                        📸 {t("landing.solution.ai_grade_btn")}
                       </button>
                       <button className="bg-[#0ea5e9] text-white text-xs font-bold py-2 rounded-lg">
-                        💬 Chat
+                        💬 {t("landing.solution.chat_btn")}
                       </button>
                     </div>
                   </div>
@@ -145,7 +147,7 @@ export function SolutionSection() {
                   transition={{ duration: 3, repeat: Infinity }}
                   className="absolute -top-4 -right-4 glass-effect rounded-xl p-3 shadow-lg"
                 >
-                  <div className="text-xs font-bold text-[#22c55e]">✓ Verified</div>
+                  <div className="text-xs font-bold text-[#22c55e]">✓ {t("landing.solution.verified")}</div>
                 </motion.div>
 
                 <motion.div
@@ -153,7 +155,7 @@ export function SolutionSection() {
                   transition={{ duration: 3, repeat: Infinity, delay: 0.5 }}
                   className="absolute -bottom-4 -left-4 glass-effect rounded-xl p-3 shadow-lg"
                 >
-                  <div className="text-xs font-bold text-[#0ea5e9]">🔒 Blockchain</div>
+                  <div className="text-xs font-bold text-[#0ea5e9]">🔒 {t("landing.solution.blockchain")}</div>
                 </motion.div>
               </div>
             </motion.div>

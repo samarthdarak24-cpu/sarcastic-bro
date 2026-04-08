@@ -28,11 +28,16 @@ api.interceptors.response.use(
   (error) => {
     // Handle network errors
     if (!error.response) {
-      console.error('Network Error:', {
-        message: error.message,
-        url: error.config?.url,
-        method: error.config?.method
-      });
+      const url = error.config?.url || '';
+      
+      // Only log network errors if NOT from background-heavy endpoints to avoid spamming the console
+      if (!url.includes('/notifications') && !url.includes('/orders')) {
+        console.error('Network Error:', {
+          message: error.message,
+          url: url,
+          method: error.config?.method
+        });
+      }
       
       const networkError: any = new Error('Network error. Please check your internet connection.');
       networkError.isNetworkError = true;
@@ -56,13 +61,14 @@ api.interceptors.response.use(
       message = error.message;
     }
     
-    // Only log errors for non-notification endpoints to avoid console spam
+    // Only log errors for non-notification endpoints and non-401 auth errors to avoid console spam
     const url = error.config?.url || '';
-    if (!url.includes('/notifications')) {
+    const status = error.response?.status;
+    if (!url.includes('/notifications') && status !== 401) {
       console.error('API Error:', {
         url: error.config?.url,
         method: error.config?.method,
-        status: error.response?.status,
+        status: status,
         message: message,
         data: error.response?.data
       });

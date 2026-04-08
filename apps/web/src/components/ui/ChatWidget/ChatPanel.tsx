@@ -1,22 +1,31 @@
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Sparkles } from 'lucide-react';
 import { ChatMessage, QuickAction } from '@/types/chat';
 import MessageList from './MessageList';
 import ChatInput from './ChatInput';
 import QuickActions from './QuickActions';
+import ChatHeader from './ChatHeader';
+import { useTranslation } from 'react-i18next';
 
 interface ChatPanelProps {
   messages: ChatMessage[];
   isLoading: boolean;
   quickActions: QuickAction[];
   onSendMessage: (text: string) => void;
+  onActionClick?: (action: QuickAction) => void;
   onClose: () => void;
   userRole: 'FARMER' | 'BUYER';
   showSlowConnectionWarning?: boolean;
   streamingMessage?: string;
   errorState?: {type: string; message: string} | null;
+  language?: 'en' | 'hi' | 'mr';
+  onLanguageChange?: (lang: 'en' | 'hi' | 'mr') => void;
+  voiceEnabled?: boolean;
+  onToggleVoice?: () => void;
+  isSpeaking?: boolean;
+  ttsSupported?: boolean;
+  onClearHistory?: () => void;
 }
 
 export default function ChatPanel({
@@ -24,11 +33,21 @@ export default function ChatPanel({
   isLoading,
   quickActions,
   onSendMessage,
+  onActionClick,
   onClose,
   showSlowConnectionWarning = false,
   streamingMessage = '',
   errorState = null,
+  language = 'en',
+  onLanguageChange,
+  voiceEnabled = true,
+  onToggleVoice,
+  isSpeaking = false,
+  ttsSupported = false,
+  onClearHistory,
 }: ChatPanelProps) {
+  const { t } = useTranslation();
+
   return (
     <AnimatePresence>
       <motion.div
@@ -39,33 +58,22 @@ export default function ChatPanel({
         className="fixed bottom-28 md:bottom-32 right-4 md:right-6 z-[999]
           w-[calc(100vw-2rem)] md:w-[400px] 
           h-[calc(100vh-10rem)] md:h-[600px]
-          bg-white dark:bg-slate-900 
+          bg-white
           rounded-2xl shadow-2xl 
           flex flex-col overflow-hidden
-          border border-slate-200 dark:border-slate-700"
+          border border-blue-200"
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-700 bg-gradient-to-r from-blue-600 to-blue-700">
-          <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-full bg-white/20 flex items-center justify-center">
-              <Sparkles size={18} className="text-white" />
-            </div>
-            <div>
-              <h3 className="text-white font-bold text-sm">AI Assistant</h3>
-              <div className="flex items-center gap-1">
-                <div className="h-2 w-2 rounded-full bg-green-400 animate-pulse" />
-                <span className="text-white/80 text-xs">Online</span>
-              </div>
-            </div>
-          </div>
-          <button
-            onClick={onClose}
-            className="h-8 w-8 rounded-full hover:bg-white/20 flex items-center justify-center transition-colors"
-            aria-label="Close chat"
-          >
-            <X size={20} className="text-white" />
-          </button>
-        </div>
+        <ChatHeader
+          onClose={onClose}
+          language={language}
+          onLanguageChange={onLanguageChange}
+          voiceEnabled={voiceEnabled}
+          onToggleVoice={onToggleVoice}
+          isSpeaking={isSpeaking}
+          ttsSupported={ttsSupported}
+          onClearHistory={onClearHistory}
+        />
 
         {/* Messages Area */}
         <div className="flex-1 overflow-hidden relative">
@@ -107,7 +115,7 @@ export default function ChatPanel({
               className="absolute top-2 left-2 right-2 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg p-3 shadow-sm"
             >
               <p className="text-xs text-yellow-800 dark:text-yellow-200">
-                ⚠️ Slow connection detected. Response may take longer than usual...
+                ⚠️ {t("ai_assistant.slow_conn")}
               </p>
             </motion.div>
           )}
@@ -115,21 +123,22 @@ export default function ChatPanel({
 
         {/* Quick Actions */}
         {quickActions.length > 0 && (
-          <div className="px-4 py-2 border-t border-slate-200 dark:border-slate-700">
+          <div className="px-4 py-3 border-t border-blue-100 bg-white">
             <QuickActions 
               actions={quickActions} 
-              onActionClick={(action) => onSendMessage(action.query)}
+              onActionClick={onActionClick || ((action) => onSendMessage(action.query))}
               disabled={isLoading}
             />
           </div>
         )}
 
         {/* Input Area */}
-        <div className="p-4 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800">
+        <div className="p-4 border-t border-blue-200 bg-white">
           <ChatInput
             onSend={onSendMessage}
             disabled={isLoading}
-            placeholder="Ask me anything..."
+            placeholder={t("ai_assistant.placeholder")}
+            language={language}
           />
         </div>
       </motion.div>

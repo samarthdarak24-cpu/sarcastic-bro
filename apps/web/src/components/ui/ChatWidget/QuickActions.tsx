@@ -30,15 +30,16 @@ export default function QuickActions({ actions, onActionClick, disabled }: Quick
             onClick={() => onActionClick(action)}
             disabled={disabled}
             className="flex items-center gap-1.5 px-3 py-1.5 
-              bg-blue-50 dark:bg-blue-900/20 
-              hover:bg-blue-100 dark:hover:bg-blue-900/30
-              text-blue-700 dark:text-blue-300
-              rounded-lg text-xs font-medium
+              bg-white 
+              hover:bg-blue-50
+              text-black
+              rounded-lg text-xs
               transition-colors duration-200
               disabled:opacity-50 disabled:cursor-not-allowed
-              border border-blue-200 dark:border-blue-800"
+              border border-blue-600
+              shadow-sm hover:shadow"
           >
-            {Icon && <Icon size={14} />}
+            {Icon && <Icon size={14} className="text-blue-600" />}
             <span>{action.label}</span>
           </button>
         );

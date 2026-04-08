@@ -6,7 +6,7 @@ import {
   Sparkles, TrendingUp, Target, Zap, ShieldCheck, Globe, Activity,
   Cpu, Brain, ArrowUpRight, BarChart3, Eye, Database, LineChart,
   PieChart, TrendingDown, AlertTriangle, CheckCircle, Download,
-  Calendar, MapPin, Users, DollarSign, Layers, Cloud
+  Calendar, MapPin, Users, DollarSign, Layers, Cloud, RefreshCw
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -19,7 +19,7 @@ export default function AgriIntelligence() {
   const [refreshing, setRefreshing] = useState(false);
 
   const tabs = [
-    { id: 'overview', label: 'Overview', icon: Activity },
+    { id: 'overview', label: 'Intelligence Overview', icon: Activity },
     { id: 'predictive-analytics', label: 'Predictive', icon: Brain },
     { id: 'market-trends', label: 'Market Trends', icon: TrendingUp },
     { id: 'yield-forecast', label: 'Yield Forecast', icon: Target },
@@ -115,7 +115,7 @@ export default function AgriIntelligence() {
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex items-center gap-2 px-5 py-3 rounded-xl font-black text-xs uppercase whitespace-nowrap transition-all ${
                   activeTab === tab.id
-                    ? 'bg-brand-primary text-white shadow-lg scale-105'
+                    ? 'bg-emerald-600 text-white shadow-lg scale-105'
                     : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
                 }`}
               >

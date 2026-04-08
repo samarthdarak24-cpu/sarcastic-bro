@@ -134,6 +134,137 @@ export class InsightsController {
       res.status(500).json({ error: 'Failed to update equipment status' });
     }
   }
+
+  // Price Intelligence endpoints
+  async getPriceTrends(req: Request, res: Response) {
+    try {
+      const { category, district, state, days } = req.query;
+      
+      if (!category) {
+        return res.status(400).json({ error: 'Category is required' });
+      }
+
+      const data = await insightsService.getPriceTrends(
+        category as string,
+        district as string,
+        state as string,
+        days ? parseInt(days as string) : 30
+      );
+      
+      res.json({
+        success: true,
+        data
+      });
+    } catch (error) {
+      console.error('Get price trends error:', error);
+      res.status(500).json({ 
+        success: false,
+        error: 'Failed to fetch price trends' 
+      });
+    }
+  }
+
+  async getPriceForecast(req: Request, res: Response) {
+    try {
+      const { category, district, state, quantity, qualityGrade } = req.query;
+      
+      if (!category || !district || !state || !quantity) {
+        return res.status(400).json({ 
+          error: 'Category, district, state, and quantity are required' 
+        });
+      }
+
+      const data = await insightsService.getPriceForecast(
+        category as string,
+        district as string,
+        state as string,
+        parseFloat(quantity as string),
+        qualityGrade as string
+      );
+      
+      res.json({
+        success: true,
+        data
+      });
+    } catch (error) {
+      console.error('Get price forecast error:', error);
+      res.status(500).json({ 
+        success: false,
+        error: 'Failed to fetch price forecast' 
+      });
+    }
+  }
+
+  async createPriceAlert(req: Request, res: Response) {
+    try {
+      const userId = (req as any).user.id;
+      const { category, targetPrice, condition, district, state } = req.body;
+      
+      if (!category || !targetPrice || !condition) {
+        return res.status(400).json({ 
+          error: 'Category, targetPrice, and condition are required' 
+        });
+      }
+
+      if (!['ABOVE', 'BELOW'].includes(condition)) {
+        return res.status(400).json({ 
+          error: 'Condition must be either ABOVE or BELOW' 
+        });
+      }
+
+      const result = await insightsService.createPriceAlert(
+        userId,
+        category,
+        targetPrice,
+        condition,
+        district,
+        state
+      );
+      
+      res.json(result);
+    } catch (error) {
+      console.error('Create price alert error:', error);
+      res.status(500).json({ 
+        success: false,
+        error: 'Failed to create price alert' 
+      });
+    }
+  }
+
+  async getPriceAlerts(req: Request, res: Response) {
+    try {
+      const userId = (req as any).user.id;
+      const alerts = await insightsService.getPriceAlerts(userId);
+      
+      res.json({
+        success: true,
+        data: alerts
+      });
+    } catch (error) {
+      console.error('Get price alerts error:', error);
+      res.status(500).json({ 
+        success: false,
+        error: 'Failed to fetch price alerts' 
+      });
+    }
+  }
+
+  async deletePriceAlert(req: Request, res: Response) {
+    try {
+      const userId = (req as any).user.id;
+      const { alertId } = req.params;
+      
+      const result = await insightsService.deletePriceAlert(userId, alertId);
+      
+      res.json(result);
+    } catch (error) {
+      console.error('Delete price alert error:', error);
+      res.status(500).json({ 
+        success: false,
+        error: 'Failed to delete price alert' 
+      });
+    }
+  }
 }
 
 export const insightsController = new InsightsController();

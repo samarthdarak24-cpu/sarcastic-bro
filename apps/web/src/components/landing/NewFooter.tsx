@@ -3,8 +3,10 @@
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 export function NewFooter() {
+  const { t } = useTranslation();
   const [email, setEmail] = useState("");
 
   const handleNewsletterSubmit = (e: React.FormEvent) => {
@@ -16,33 +18,33 @@ export function NewFooter() {
 
   const footerLinks = {
     platform: [
-      { label: "For Farmers", href: "/farmer" },
-      { label: "For Buyers", href: "/buyer" },
-      { label: "Pricing", href: "/pricing" },
-      { label: "Features", href: "#features" },
+      { label: t("common.for_farmers"), href: "/farmer" },
+      { label: t("common.for_buyers"), href: "/buyer" },
+      { label: t("common.pricing"), href: "/pricing" },
+      { label: t("common.features"), href: "#features" },
     ],
     company: [
-      { label: "About Us", href: "/about" },
-      { label: "Careers", href: "/careers" },
-      { label: "Blog", href: "/blog" },
-      { label: "Press Kit", href: "/press" },
+      { label: t("common.about_us"), href: "/about" },
+      { label: t("common.careers"), href: "/careers" },
+      { label: t("common.blog"), href: "/blog" },
+      { label: t("common.press_kit"), href: "/press" },
     ],
     support: [
-      { label: "Help Center", href: "/help" },
-      { label: "Contact Us", href: "/contact" },
-      { label: "API Docs", href: "/docs" },
-      { label: "Status", href: "/status" },
+      { label: t("common.help_center"), href: "/help" },
+      { label: t("common.contact_us"), href: "/contact" },
+      { label: t("common.api_docs"), href: "/docs" },
+      { label: t("common.status"), href: "/status" },
     ],
     legal: [
-      { label: "Privacy Policy", href: "/privacy" },
-      { label: "Terms of Service", href: "/terms" },
-      { label: "Cookie Policy", href: "/cookies" },
-      { label: "Licenses", href: "/licenses" },
+      { label: t("common.privacy"), href: "/privacy" },
+      { label: t("common.terms"), href: "/terms" },
+      { label: t("common.cookies"), href: "/cookies" },
+      { label: t("common.licenses"), href: "/licenses" },
     ],
   };
 
   return (
-    <footer className="bg-gradient-to-br from-[#111827] to-[#1f2937] text-white pt-16 pb-8">
+    <footer id="contact" className="bg-gradient-to-br from-[#111827] to-[#1f2937] text-white pt-16 pb-8">
       <div className="max-w-7xl mx-auto px-6">
         {/* Top Section - Newsletter */}
         <motion.div
@@ -53,9 +55,9 @@ export function NewFooter() {
         >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
             <div>
-              <h3 className="text-3xl font-black mb-2">Stay Updated</h3>
+              <h3 className="text-3xl font-black mb-2">{t("landing.footer.stay_updated")}</h3>
               <p className="text-white/70">
-                Get the latest updates on features, market trends, and success stories.
+                {t("landing.footer.newsletter_desc")}
               </p>
             </div>
             <form onSubmit={handleNewsletterSubmit} className="flex gap-3">
@@ -63,7 +65,7 @@ export function NewFooter() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter your email"
+                placeholder={t("landing.footer.placeholder")}
                 required
                 className="flex-1 px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-white/50 focus:outline-none focus:border-[#22c55e]"
               />
@@ -73,7 +75,7 @@ export function NewFooter() {
                 type="submit"
                 className="px-6 py-3 bg-[#22c55e] rounded-xl font-bold hover:bg-[#16a34a] transition-colors"
               >
-                Subscribe
+                {t("landing.footer.subscribe")}
               </motion.button>
             </form>
           </div>
@@ -83,7 +85,7 @@ export function NewFooter() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
           {/* Platform */}
           <div>
-            <h4 className="font-bold text-lg mb-4">Platform</h4>
+            <h4 className="font-bold text-lg mb-4">{t("landing.footer.platform")}</h4>
             <ul className="space-y-2">
               {footerLinks.platform.map((link) => (
                 <li key={link.label}>
@@ -100,7 +102,7 @@ export function NewFooter() {
 
           {/* Company */}
           <div>
-            <h4 className="font-bold text-lg mb-4">Company</h4>
+            <h4 className="font-bold text-lg mb-4">{t("landing.footer.company")}</h4>
             <ul className="space-y-2">
               {footerLinks.company.map((link) => (
                 <li key={link.label}>
@@ -117,7 +119,7 @@ export function NewFooter() {
 
           {/* Support */}
           <div>
-            <h4 className="font-bold text-lg mb-4">Support</h4>
+            <h4 className="font-bold text-lg mb-4">{t("landing.footer.support")}</h4>
             <ul className="space-y-2">
               {footerLinks.support.map((link) => (
                 <li key={link.label}>
@@ -134,7 +136,7 @@ export function NewFooter() {
 
           {/* Legal */}
           <div>
-            <h4 className="font-bold text-lg mb-4">Legal</h4>
+            <h4 className="font-bold text-lg mb-4">{t("landing.footer.legal")}</h4>
             <ul className="space-y-2">
               {footerLinks.legal.map((link) => (
                 <li key={link.label}>
@@ -159,7 +161,7 @@ export function NewFooter() {
               <div>
                 <div className="font-black text-xl">FarmGuard</div>
                 <div className="text-xs text-white/50">
-                  © 2024 FarmGuard. All rights reserved.
+                  © 2024 FarmGuard. {t("landing.footer.rights")}
                 </div>
               </div>
             </div>

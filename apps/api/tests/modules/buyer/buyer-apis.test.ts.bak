@@ -1,0 +1,301 @@
+import request from 'supertest';
+import app from '../../../src/app';
+import { PrismaClient } from '@prisma/client';
+import jwt from 'jsonwebtoken';
+
+const prisma = new PrismaClient();
+const JWT_SECRET = process.env.JWT_SECRET || 'test-jwt-secret-key-for-testing-only';
+
+const createTestToken = (userId: string, role: string = 'BUYER') => {
+  return jwt.sign(
+    { userId, id: userId, email: 'test@example.com', role },
+    JWT_SECRET,
+    { expiresIn: '1h' }
+  );
+};
+
+describe('Buyer APIs - Phase 3 Implementation', () => {
+  let buyerToken: string;
+  let buyerId: string;
+  let supplierId: string;
+  let productId: string;
+
+  beforeAll(async () => {
+    // Create test buyer
+    const buyer = await prisma.user.create({
+      data: {
+        name: 'Test Buyer',
+        email: `buyer-${Date.now()}@test.com`,
+        password: 'hashed_password',
+        role: 'BUYER',
+        district: 'Test District',
+        state: 'Test State'
+      }
+    });
+    buyerId = buyer.id;
+    buyerToken = createTestToken(buyerId, 'BUYER');
+
+    // Create test supplier
+    const supplier = await prisma.user.create({
+      data: {
+        name: 'Test Supplier',
+        email: `supplier-${Date.now()}@test.com`,
+        password: 'hashed_password',
+        role: 'FARMER',
+        district: 'Test District',
+        state: 'Test State',
+        ratingAvg: 4.5
+      }
+    });
+
+    // Create supplier record
+    const supplierRecord = await prisma.supplier.create({
+      data: {
+        businessName: 'Test Supplier Farm',
+        userId: supplier.id,
+        rating: 4.5,
+        responseTime: 2,
+        isActive: true
+      }
+    });
+    supplierId = supplierRecord.id;
+
+    // Create test bulk product
+    const product = await prisma.bulkProduct.create({
+      data: {
+        name: 'Tomatoes',
+        category: 'Vegetables',
+        supplierId: supplierId,
+        minQuantity: 100,
+        maxQuantity: 1000,
+        unit: 'kg',
+        pricePerUnit: 25,
+        qualityGrade: 'A',
+        district: 'Test District',
+        state: 'Test State',
+        isActive: true
+      }
+    });
+    productId = product.id;
+
+    // Create test product for procurement history
+    await prisma.product.create({
+      data: {
+        name: 'Test Product',
+        category: 'Vegetables',
+        farmerId: supplier.id,
+        price: 25,
+        quantity: 1000,
+        unit: 'kg',
+        qualityScore: 85,
+        district: 'Test District',
+        state: 'Test State',
+        isActive: true
+      }
+    });
+  });
+
+  afterAll(async () => {
+    await prisma.order.deleteMany({});
+    await prisma.bulkProduct.deleteMany({});
+    await prisma.product.deleteMany({});
+    await prisma.supplier.deleteMany({});
+    await prisma.user.deleteMany({});
+    await prisma.$disconnect();
+  });
+
+  describe('Task 3.1: Supplier APIs', () => {
+    describe('GET /buyer/suppliers', () => {
+      it('should return list of suppliers with authentication', async () => {
+        const response = await request(app)
+          .get('/buyer/suppliers')
+          .set('Authorization', `Bearer ${buyerToken}`);
+
+        expect(response.status).toBe(200);
+        expect(response.body).toHaveProperty('suppliers');
+        expect(Array.isArray(response.body.suppliers)).toBe(true);
+      });
+
+      it('should require authentication', async () => {
+        const response = await request(app)
+          .get('/buyer/suppliers');
+
+        expect(response.status).toBe(401);
+      });
+
+      it('should support pagination', async () => {
+        const response = await request(app)
+          .get('/buyer/suppliers?page=1&limit=10')
+          .set('Authorization', `Bearer ${buyerToken}`);
+
+        expect(response.status).toBe(200);
+        expect(response.body).toHaveProperty('pagination');
+      });
+    });
+
+    describe('GET /buyer/suppliers/:id', () => {
+      it('should return supplier detail', async () => {
+        const response = await request(app)
+          .get(`/buyer/suppliers/${supplierId}`)
+          .set('Authorization', `Bearer ${buyerToken}`);
+
+        expect(response.status).toBe(200);
+        expect(response.body).toHaveProperty('id', supplierId);
+      });
+    });
+
+    describe('GET /buyer/suppliers/:id/analytics', () => {
+      it('should return supplier analytics', async () => {
+        const response = await request(app)
+          .get(`/buyer/suppliers/${supplierId}/analytics`)
+          .set('Authorization', `Bearer ${buyerToken}`);
+
+        expect(response.status).toBe(200);
+        expect(response.body).toHaveProperty('totalOrders');
+        expect(response.body).toHaveProperty('completedOrders');
+        expect(response.body).toHaveProperty('totalRevenue');
+      });
+    });
+
+    describe('GET /buyer/suppliers/:id/products', () => {
+      it('should return supplier products', async () => {
+        const response = await request(app)
+          .get(`/buyer/suppliers/${supplierId}/products`)
+          .set('Authorization', `Bearer ${buyerToken}`);
+
+        expect(response.status).toBe(200);
+        expect(response.body).toHaveProperty('products');
+        expect(Array.isArray(response.body.products)).toBe(true);
+      });
+    });
+  });
+
+  describe('Task 3.2: Bulk Product APIs', () => {
+    describe('GET /buyer/bulk-products', () => {
+      it('should return list of bulk products', async () => {
+        const response = await request(app)
+          .get('/buyer/bulk-products')
+          .set('Authorization', `Bearer ${buyerToken}`);
+
+        expect(response.status).toBe(200);
+        expect(response.body).toHaveProperty('products');
+        expect(Array.isArray(response.body.products)).toBe(true);
+      });
+
+      it('should support filtering by category', async () => {
+        const response = await request(app)
+          .get('/buyer/bulk-products?category=Vegetables')
+          .set('Authorization', `Bearer ${buyerToken}`);
+
+        expect(response.status).toBe(200);
+        if (response.body.products.length > 0) {
+          expect(response.body.products[0].category).toBe('Vegetables');
+        }
+      });
+    });
+
+    describe('GET /buyer/bulk-products/:id', () => {
+      it('should return bulk product detail', async () => {
+        const response = await request(app)
+          .get(`/buyer/bulk-products/${productId}`)
+          .set('Authorization', `Bearer ${buyerToken}`);
+
+        expect(response.status).toBe(200);
+        expect(response.body).toHaveProperty('id', productId);
+        expect(response.body).toHaveProperty('name', 'Tomatoes');
+      });
+    });
+
+    describe('POST /buyer/bulk-products/inquiry', () => {
+      it('should create inquiry for bulk product', async () => {
+        const response = await request(app)
+          .post('/buyer/bulk-products/inquiry')
+          .set('Authorization', `Bearer ${buyerToken}`)
+          .send({
+            productId: productId,
+            quantity: 500,
+            message: 'Interested in bulk purchase'
+          });
+
+        expect(response.status).toBe(201);
+        expect(response.body).toHaveProperty('id');
+        expect(response.body).toHaveProperty('status', 'PENDING');
+      });
+
+      it('should validate required fields', async () => {
+        const response = await request(app)
+          .post('/buyer/bulk-products/inquiry')
+          .set('Authorization', `Bearer ${buyerToken}`)
+          .send({
+            quantity: 500
+          });
+
+        expect(response.status).toBe(400);
+      });
+    });
+  });
+
+  describe('Task 3.3: Procurement APIs', () => {
+    describe('POST /buyer/procurement/recommendations', () => {
+      it('should return procurement recommendations', async () => {
+        const response = await request(app)
+          .post('/buyer/procurement/recommendations')
+          .set('Authorization', `Bearer ${buyerToken}`)
+          .send({
+            category: 'Vegetables',
+            quantity: 500,
+            budget: 15000
+          });
+
+        expect(response.status).toBe(200);
+        expect(response.body).toHaveProperty('recommendations');
+        expect(Array.isArray(response.body.recommendations)).toBe(true);
+      });
+
+      it('should work without optional parameters', async () => {
+        const response = await request(app)
+          .post('/buyer/procurement/recommendations')
+          .set('Authorization', `Bearer ${buyerToken}`)
+          .send({});
+
+        expect(response.status).toBe(200);
+        expect(response.body).toHaveProperty('recommendations');
+      });
+
+      it('should require buyer role', async () => {
+        const farmerToken = createTestToken('farmer-id', 'FARMER');
+        const response = await request(app)
+          .post('/buyer/procurement/recommendations')
+          .set('Authorization', `Bearer ${farmerToken}`)
+          .send({
+            category: 'Vegetables'
+          });
+
+        expect(response.status).toBe(403);
+      });
+    });
+
+    describe('GET /buyer/procurement/history', () => {
+      it('should return procurement history', async () => {
+        const response = await request(app)
+          .get('/buyer/procurement/history')
+          .set('Authorization', `Bearer ${buyerToken}`);
+
+        expect(response.status).toBe(200);
+        expect(response.body).toHaveProperty('orders');
+        expect(Array.isArray(response.body.orders)).toBe(true);
+        expect(response.body).toHaveProperty('pagination');
+      });
+
+      it('should support pagination', async () => {
+        const response = await request(app)
+          .get('/buyer/procurement/history?page=1&limit=10')
+          .set('Authorization', `Bearer ${buyerToken}`);
+
+        expect(response.status).toBe(200);
+        expect(response.body.pagination).toHaveProperty('page', 1);
+        expect(response.body.pagination).toHaveProperty('limit', 10);
+      });
+    });
+  });
+});

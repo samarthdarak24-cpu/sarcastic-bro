@@ -1,0 +1,576 @@
+import request from "supertest";
+import app from "../src/app";
+import path from "path";
+import fs from "fs";
+
+/**
+ * Integration Tests for AI Module
+ * Tests quality scan, price prediction, and AI chat functionality
+ * Requirements: 29 - Complete testing coverage for AI integration
+ */
+
+describe("AI Module Integration Tests", () => {
+  let farmerToken: string;
+  let buyerToken: string;
+  let testProductId: string;
+
+  // Setup: Create test users and product
+  beforeAll(async () => {
+    // Create farmer user
+    const farmerRes = await request(app)
+      .post("/auth/register")
+      .send({
+        name: "AI Test Farmer",
+        email: `ai-farmer-${Date.now()}@example.com`,
+        password: "Test@12345",
+        role: "FARMER",
+        district: "Pune",
+        state: "Maharashtra",
+      });
+    farmerToken = farmerRes.body.data.tokens.accessToken;
+
+    // Create buyer user
+    const buyerRes = await request(app)
+      .post("/auth/register")
+      .send({
+        name: "AI Test Buyer",
+        email: `ai-buyer-${Date.now()}@example.com`,
+        password: "Test@12345",
+        role: "BUYER",
+        district: "Mumbai",
+        state: "Maharashtra",
+      });
+    buyerToken = buyerRes.body.data.tokens.accessToken;
+
+    // Create test product
+    const productRes = await request(app)
+      .post("/products")
+      .set("Authorization", `Bearer ${farmerToken}`)
+      .send({
+        name: "Test Tomato",
+        category: "Vegetables",
+        price: 25,
+        unit: "kg",
+        quantity: 1000,
+        district: "Pune",
+        state: "Maharashtra",
+      });
+    testProductId = productRes.body.data.id;
+  });
+
+  describe("Quality Scan Tests", () => {
+    it("should analyze quality with image upload", async () => {
+      // Create a test image file
+      const testImagePath = path.join(__dirname, "fixtures", "test-crop.jpg");
+      
+      // If test image doesn't exist, create a minimal valid JPEG
+      if (!fs.existsSync(path.dirname(testImagePath))) {
+        fs.mkdirSync(path.dirname(testImagePath), { recursive: true });
+      }
+      
+      if (!fs.existsSync(testImagePath)) {
+        // Create minimal JPEG header (valid but empty image)
+        const minimalJpeg = Buffer.from([
+          0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10, 0x4A, 0x46,
+          0x49, 0x46, 0x00, 0x01, 0x01, 0x00, 0x00, 0x01,
+          0x00, 0x01, 0x00, 0x00, 0xFF, 0xD9
+        ]);
+        fs.writeFileSync(testImagePath, minimalJpeg);
+      }
+
+      const res = await request(app)
+        .post("/ai/quality-scan")
+        .set("Authorization", `Bearer ${farmerToken}`)
+        .attach("image", testImagePath)
+        .field("product_type", "Vegetable")
+        .field("product_name", "Tomato");
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data).toHaveProperty("grade");
+      expect(res.body.data).toHaveProperty("score");
+      expect(res.body.data).toHaveProperty("confidence");
+      expect(res.body.data).toHaveProperty("defects");
+      expect(res.body.data).toHaveProperty("recommendations");
+      
+      // Validate grade is one of the expected values
+      expect(["A+", "A", "B", "C", "D"]).toContain(res.body.data.grade);
+      
+      // Validate score is a number between 0 and 100
+      expect(res.body.data.score).toBeGreaterThanOrEqual(0);
+      expect(res.body.data.score).toBeLessThanOrEqual(100);
+      
+      // Validate confidence is a number between 0 and 1
+      expect(res.body.data.confidence).toBeGreaterThanOrEqual(0);
+      expect(res.body.data.confidence).toBeLessThanOrEqual(1);
+    }, 30000); // 30 second timeout for AI processing
+
+    it("should reject quality scan without authentication", async () => {
+      const res = await request(app)
+        .post("/ai/quality-scan")
+        .field("product_type", "Vegetable")
+        .field("product_name", "Tomato");
+
+      expect(res.status).toBe(401);
+    });
+
+    it("should reject quality scan without required fields", async () => {
+      const res = await request(app)
+        .post("/ai/quality-scan")
+        .set("Authorization", `Bearer ${farmerToken}`)
+        .field("product_type", "Vegetable");
+      // Missing product_name
+
+      expect(res.status).toBeGreaterThanOrEqual(400);
+      expect(res.status).toBeLessThan(500);
+    });
+
+    it("should handle quality scan with product association", async () => {
+      const testImagePath = path.join(__dirname, "fixtures", "test-crop.jpg");
+
+      const res = await request(app)
+        .post("/ai/quality-scan")
+        .set("Authorization", `Bearer ${farmerToken}`)
+        .attach("image", testImagePath)
+        .field("product_type", "Vegetable")
+        .field("product_name", "Tomato")
+        .field("productId", testProductId);
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data).toHaveProperty("scanId");
+      
+      // Verify product was updated with quality grade
+      const productRes = await request(app)
+        .get(`/products/${testProductId}`)
+        .set("Authorization", `Bearer ${farmerToken}`);
+      
+      expect(productRes.body.data.qualityGrade).toBeTruthy();
+      expect(productRes.body.data.qualityScore).toBeGreaterThanOrEqual(0);
+    }, 30000);
+  });
+
+  describe("Price Prediction Tests", () => {
+    it("should get price advice with valid inputs", async () => {
+      const res = await request(app)
+        .post("/ai/price-advice")
+        .set("Authorization", `Bearer ${farmerToken}`)
+        .send({
+          productName: "Tomato",
+          quantity: 100,
+          location: "Pune",
+        });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data).toHaveProperty("recommendedPrice");
+      expect(res.body.data).toHaveProperty("minPrice");
+      expect(res.body.data).toHaveProperty("maxPrice");
+      expect(res.body.data).toHaveProperty("confidence");
+      expect(res.body.data).toHaveProperty("marketSentiment");
+      expect(res.body.data).toHaveProperty("demandLevel");
+      
+      // Validate price relationships
+      expect(res.body.data.minPrice).toBeLessThanOrEqual(res.body.data.recommendedPrice);
+      expect(res.body.data.recommendedPrice).toBeLessThanOrEqual(res.body.data.maxPrice);
+      
+      // Validate confidence is reasonable
+      expect(res.body.data.confidence).toBeGreaterThanOrEqual(0);
+      expect(res.body.data.confidence).toBeLessThanOrEqual(100);
+      
+      // Validate market sentiment is valid
+      expect(["Bullish", "Bearish", "Neutral"]).toContain(res.body.data.marketSentiment);
+    });
+
+    it("should get price advice for different products", async () => {
+      const products = ["Wheat", "Onion", "Potato"];
+      
+      for (const product of products) {
+        const res = await request(app)
+          .post("/ai/price-advice")
+          .set("Authorization", `Bearer ${farmerToken}`)
+          .send({
+            productName: product,
+            quantity: 500,
+          });
+
+        expect(res.status).toBe(200);
+        expect(res.body.success).toBe(true);
+        expect(res.body.data.recommendedPrice).toBeGreaterThan(0);
+      }
+    });
+
+    it("should cache price advice results", async () => {
+      const requestData = {
+        productName: "Tomato",
+        quantity: 100,
+      };
+
+      // First request
+      const res1 = await request(app)
+        .post("/ai/price-advice")
+        .set("Authorization", `Bearer ${farmerToken}`)
+        .send(requestData);
+
+      const firstResponse = res1.body.data;
+
+      // Second request (should be cached)
+      const res2 = await request(app)
+        .post("/ai/price-advice")
+        .set("Authorization", `Bearer ${farmerToken}`)
+        .send(requestData);
+
+      const secondResponse = res2.body.data;
+
+      // Cached responses should be identical
+      expect(firstResponse.recommendedPrice).toBe(secondResponse.recommendedPrice);
+      expect(firstResponse.confidence).toBe(secondResponse.confidence);
+    });
+
+    it("should reject price advice without authentication", async () => {
+      const res = await request(app)
+        .post("/ai/price-advice")
+        .send({
+          productName: "Tomato",
+          quantity: 100,
+        });
+
+      expect(res.status).toBe(401);
+    });
+  });
+
+  describe("AI Chat Tests", () => {
+    it("should handle crop recommendation query", async () => {
+      const res = await request(app)
+        .post("/ai/unified-insights")
+        .set("Authorization", `Bearer ${farmerToken}`)
+        .send({
+          query: "What crops should I grow this season?",
+          userType: "FARMER",
+        });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data).toHaveProperty("answer");
+      expect(res.body.data).toHaveProperty("recommendations");
+      expect(res.body.data).toHaveProperty("insights");
+      
+      // Validate answer is not empty
+      expect(res.body.data.answer.length).toBeGreaterThan(0);
+      
+      // Validate recommendations is an array
+      expect(Array.isArray(res.body.data.recommendations)).toBe(true);
+      
+      // Validate insights structure
+      expect(res.body.data.insights).toHaveProperty("priceTrend");
+      expect(res.body.data.insights).toHaveProperty("demandLevel");
+      expect(res.body.data.insights).toHaveProperty("risk");
+    });
+
+    it("should handle price query", async () => {
+      const res = await request(app)
+        .post("/ai/unified-insights")
+        .set("Authorization", `Bearer ${farmerToken}`)
+        .send({
+          query: "What price should I sell my tomatoes at?",
+          userType: "FARMER",
+        });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.answer).toContain("price");
+      expect(res.body.data.insights.priceTrend).toBeTruthy();
+    });
+
+    it("should handle procurement query for buyers", async () => {
+      const res = await request(app)
+        .post("/ai/unified-insights")
+        .set("Authorization", `Bearer ${buyerToken}`)
+        .send({
+          query: "Where can I buy wheat in bulk?",
+          userType: "BUYER",
+        });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.answer).toBeTruthy();
+      expect(Array.isArray(res.body.data.recommendations)).toBe(true);
+    });
+
+    it("should handle general query", async () => {
+      const res = await request(app)
+        .post("/ai/unified-insights")
+        .set("Authorization", `Bearer ${farmerToken}`)
+        .send({
+          query: "Hello, what can you help me with?",
+          userType: "FARMER",
+        });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.answer).toContain("Intelligence");
+    });
+
+    it("should reject AI chat without authentication", async () => {
+      const res = await request(app)
+        .post("/ai/unified-insights")
+        .send({
+          query: "What crops should I grow?",
+          userType: "FARMER",
+        });
+
+      expect(res.status).toBe(401);
+    });
+
+    it("should handle different user types appropriately", async () => {
+      // Farmer query
+      const farmerRes = await request(app)
+        .post("/ai/unified-insights")
+        .set("Authorization", `Bearer ${farmerToken}`)
+        .send({
+          query: "What price should I set?",
+          userType: "FARMER",
+        });
+
+      // Buyer query
+      const buyerRes = await request(app)
+        .post("/ai/unified-insights")
+        .set("Authorization", `Bearer ${buyerToken}`)
+        .send({
+          query: "What price should I set?",
+          userType: "BUYER",
+        });
+
+      expect(farmerRes.status).toBe(200);
+      expect(buyerRes.status).toBe(200);
+      
+      // Both should get valid responses
+      expect(farmerRes.body.data.answer).toBeTruthy();
+      expect(buyerRes.body.data.answer).toBeTruthy();
+    });
+  });
+
+  describe("Procurement Recommendations Tests", () => {
+    it("should get procurement recommendations with location", async () => {
+      const res = await request(app)
+        .post("/ai/procurement-recommendations")
+        .set("Authorization", `Bearer ${buyerToken}`)
+        .send({
+          productName: "Tomato",
+          quantity: 500,
+          buyerLat: 18.5204,
+          buyerLng: 73.8567,
+        });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data).toHaveProperty("bestSuppliers");
+      expect(res.body.data).toHaveProperty("suggestedTiming");
+      
+      // Validate suppliers array
+      expect(Array.isArray(res.body.data.bestSuppliers)).toBe(true);
+      
+      if (res.body.data.bestSuppliers.length > 0) {
+        const supplier = res.body.data.bestSuppliers[0];
+        expect(supplier).toHaveProperty("farmerId");
+        expect(supplier).toHaveProperty("farmerName");
+        expect(supplier).toHaveProperty("price");
+        expect(supplier).toHaveProperty("reputation");
+        expect(supplier).toHaveProperty("distance");
+        expect(supplier).toHaveProperty("finalScore");
+        expect(supplier).toHaveProperty("deliveryEstimate");
+        
+        // Validate score is between 0 and 100
+        expect(supplier.finalScore).toBeGreaterThanOrEqual(0);
+        expect(supplier.finalScore).toBeLessThanOrEqual(100);
+      }
+    });
+
+    it("should get procurement recommendations without location", async () => {
+      const res = await request(app)
+        .post("/ai/procurement-recommendations")
+        .set("Authorization", `Bearer ${buyerToken}`)
+        .send({
+          productName: "Wheat",
+          quantity: 1000,
+        });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data).toHaveProperty("bestSuppliers");
+      expect(res.body.data).toHaveProperty("suggestedTiming");
+    });
+
+    it("should cache procurement recommendations", async () => {
+      const requestData = {
+        productName: "Tomato",
+        quantity: 500,
+        buyerLat: 18.5204,
+        buyerLng: 73.8567,
+      };
+
+      // First request
+      const res1 = await request(app)
+        .post("/ai/procurement-recommendations")
+        .set("Authorization", `Bearer ${buyerToken}`)
+        .send(requestData);
+
+      // Second request (should be cached)
+      const res2 = await request(app)
+        .post("/ai/procurement-recommendations")
+        .set("Authorization", `Bearer ${buyerToken}`)
+        .send(requestData);
+
+      expect(res1.status).toBe(200);
+      expect(res2.status).toBe(200);
+      
+      // Results should be consistent
+      expect(res1.body.data.suggestedTiming).toBe(res2.body.data.suggestedTiming);
+    });
+  });
+
+  describe("Crop Recommendations Tests", () => {
+    it("should get crop recommendations with valid parameters", async () => {
+      const res = await request(app)
+        .get("/ai/crop-recommendations")
+        .set("Authorization", `Bearer ${farmerToken}`)
+        .query({
+          soilType: "alluvial",
+          previousCrops: "Wheat,Rice",
+          season: "kharif",
+        });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(Array.isArray(res.body.data)).toBe(true);
+      
+      if (res.body.data.length > 0) {
+        const recommendation = res.body.data[0];
+        expect(recommendation).toHaveProperty("crop");
+        expect(recommendation).toHaveProperty("demandScore");
+        expect(recommendation).toHaveProperty("avgPrice");
+        expect(recommendation).toHaveProperty("season");
+        expect(recommendation).toHaveProperty("why");
+      }
+    });
+
+    it("should handle different soil types", async () => {
+      const soilTypes = ["alluvial", "black", "red", "laterite"];
+      
+      for (const soilType of soilTypes) {
+        const res = await request(app)
+          .get("/ai/crop-recommendations")
+          .set("Authorization", `Bearer ${farmerToken}`)
+          .query({
+            soilType,
+            previousCrops: "Wheat",
+            season: "kharif",
+          });
+
+        expect(res.status).toBe(200);
+        expect(res.body.success).toBe(true);
+      }
+    });
+
+    it("should handle different seasons", async () => {
+      const seasons = ["kharif", "rabi", "zaid"];
+      
+      for (const season of seasons) {
+        const res = await request(app)
+          .get("/ai/crop-recommendations")
+          .set("Authorization", `Bearer ${farmerToken}`)
+          .query({
+            soilType: "alluvial",
+            previousCrops: "Wheat",
+            season,
+          });
+
+        expect(res.status).toBe(200);
+        expect(res.body.success).toBe(true);
+      }
+    });
+  });
+
+  describe("Error Handling Tests", () => {
+    it("should handle AI service unavailability gracefully", async () => {
+      // This test assumes AI service might be down
+      // The API should return a proper error response
+      const res = await request(app)
+        .post("/ai/quality-scan")
+        .set("Authorization", `Bearer ${farmerToken}`)
+        .field("product_type", "Vegetable")
+        .field("product_name", "Tomato")
+        .field("image_url", "https://invalid-url.com/image.jpg");
+
+      // Should either succeed or fail gracefully with proper error
+      if (res.status !== 200) {
+        expect(res.status).toBeGreaterThanOrEqual(400);
+        expect(res.body).toHaveProperty("success");
+        expect(res.body.success).toBe(false);
+      }
+    });
+
+    it("should validate required fields for price advice", async () => {
+      const res = await request(app)
+        .post("/ai/price-advice")
+        .set("Authorization", `Bearer ${farmerToken}`)
+        .send({
+          // Missing productName
+          quantity: 100,
+        });
+
+      expect(res.status).toBeGreaterThanOrEqual(400);
+    });
+
+    it("should validate required fields for unified insights", async () => {
+      const res = await request(app)
+        .post("/ai/unified-insights")
+        .set("Authorization", `Bearer ${farmerToken}`)
+        .send({
+          // Missing query
+          userType: "FARMER",
+        });
+
+      expect(res.status).toBeGreaterThanOrEqual(400);
+    });
+  });
+
+  describe("Performance Tests", () => {
+    it("should respond to price advice within acceptable time", async () => {
+      const startTime = Date.now();
+      
+      const res = await request(app)
+        .post("/ai/price-advice")
+        .set("Authorization", `Bearer ${farmerToken}`)
+        .send({
+          productName: "Tomato",
+          quantity: 100,
+        });
+
+      const endTime = Date.now();
+      const responseTime = endTime - startTime;
+
+      expect(res.status).toBe(200);
+      expect(responseTime).toBeLessThan(5000); // Should respond within 5 seconds
+    });
+
+    it("should handle concurrent requests", async () => {
+      const requests = Array(5).fill(null).map(() =>
+        request(app)
+          .post("/ai/price-advice")
+          .set("Authorization", `Bearer ${farmerToken}`)
+          .send({
+            productName: "Tomato",
+            quantity: 100,
+          })
+      );
+
+      const responses = await Promise.all(requests);
+
+      responses.forEach(res => {
+        expect(res.status).toBe(200);
+        expect(res.body.success).toBe(true);
+      });
+    });
+  });
+});

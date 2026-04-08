@@ -1,0 +1,7 @@
+# Whisper AI Requirements
+openai-whisper
+torch
+torchaudio
+ffmpeg-python
+pydub
+soundfile

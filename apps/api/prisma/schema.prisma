@@ -83,6 +83,8 @@ model User {
   ratingsGivenOnChain    OnChainRating[] @relation("RatingRater")
   ratingsReceivedOnChain OnChainRating[] @relation("RatingTarget")
   insurancePolicies   InsurancePolicy[] @relation("FarmerInsurance")
+  negotiationsAsBuyer Negotiation[]    @relation("NegotiationBuyer")
+  negotiationsAsSeller Negotiation[]   @relation("NegotiationSeller")
 
   @@index([email])
   @@index([role])
@@ -168,6 +170,10 @@ model Order {
   shippedAt     DateTime?
   deliveredAt   DateTime?
   cancelledAt   DateTime?
+  expectedDeliveryDate DateTime?
+  qualityScore  Float?
+  rating        Int?
+  disputeReason String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -430,6 +436,54 @@ model ChatMessage {
   @@index([createdAt])
 }
 
+// ─── MESSAGE ANALYTICS (Sentiment Analysis) ────────────────────────────
+
+model MessageAnalytics {
+  id              String   @id @default(uuid())
+  messageId       String
+  sentiment       String   @default("neutral") // positive | neutral | negative
+  sentimentScore  Float    // 0-1
+  keywords        String?  // JSON array of keywords
+  language        String   @default("en")
+  confidence      Float    // Confidence score (0-1)
+  metadata        String?  // JSON: additional analysis data
+  analyzedAt      DateTime @default(now())
+  createdAt       DateTime @default(now())
+
+  @@index([messageId])
+  @@index([sentiment])
+  @@index([createdAt])
+}
+
+// ─── NEGOTIATION (Deal Tracking) ──────────────────────────────────────
+
+model Negotiation {
+  id              String   @id @default(uuid())
+  buyerId         String
+  sellerId        String
+  productId       String
+  quantity        Float
+  unit            String   // kg | piece | bag | etc
+  initialPrice    Float
+  currentPrice    Float
+  status          String   @default("draft") // draft | in-progress | near-closing | closed | rejected
+  progress        Int      @default(0) // 0-100 percentage
+  messages        String?  // JSON array of negotiation messages
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  buyer   User @relation("NegotiationBuyer", fields: [buyerId], references: [id])
+  seller  User @relation("NegotiationSeller", fields: [sellerId], references: [id])
+
+  @@index([buyerId])
+  @@index([sellerId])
+  @@index([productId])
+  @@index([status])
+  @@index([progress])
+  @@index([createdAt])
+}
+
 // ─── QUALITY GRADE (AI Results) ────────────────────────────────────────
 
 model QualityGrade {
@@ -533,6 +587,38 @@ model Payment {
   @@index([sellerId])
   @@index([status])
   @@index([transactionId])
+}
+
+// ─── TRANSACTION (AgriPay Center) ──────────────────────────────────────
+
+model Transaction {
+  id              String   @id @default(uuid())
+  userId          String
+  type            String   // RECEIVED | SENT | PENDING | REFUND
+  amount          Float
+  fromParty       String   // Name of sender
+  toParty         String   // Name of receiver
+  status          String   @default("PENDING") // COMPLETED | PENDING | FAILED | PROCESSING
+  method          String   // UPI | BANK_TRANSFER | NEFT | RTGS | CARD | WALLET
+  category        String   // PRODUCT_SALE | PURCHASE | LOGISTICS | EQUIPMENT | EXPORT
+  reference       String   @unique // Transaction reference number
+  description     String?
+  orderId         String?
+  paymentId       String?
+  razorpayOrderId String?
+  razorpayPaymentId String?
+  razorpaySignature String?
+  metadata        String?  // JSON: additional data
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([userId])
+  @@index([type])
+  @@index([status])
+  @@index([reference])
+  @@index([createdAt])
+  @@index([userId, status])
+  @@index([userId, type])
 }
 
 // ─── AUDIT LOG ─────────────────────────────────────────────────────────
@@ -740,4 +826,252 @@ model InsuranceClaim {
 
   @@index([policyId])
   @@index([status])
+}
+
+// ─── PRICE ALERT (Price Intelligence) ────────────────────────────────────
+
+model PriceAlert {
+  id          String   @id @default(uuid())
+  userId      String
+  category    String
+  targetPrice Float
+  condition   String   // ABOVE | BELOW
+  district    String?
+  state       String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+  @@index([category])
+  @@index([isActive])
+}
+
+// ─── SUPPLIER (Buyer Dashboard) ────────────────────────────────────────
+
+model Supplier {
+  id              String   @id @default(uuid())
+  userId          String   @unique // Links to User with role FARMER
+  businessName    String
+  description     String?
+  certifications  String?  // JSON array
+  specialties     String?  // JSON array
+  minOrderQty     Float?
+  maxOrderQty     Float?
+  leadTime        Int?     // days
+  rating          Float    @default(5.0)
+  totalOrders     Int      @default(0)
+  responseTime    Int      @default(24) // hours
+  verificationStatus String @default("PENDING") // PENDING | VERIFIED | REJECTED
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  bulkProducts    BulkProduct[]
+
+  @@index([userId])
+  @@index([rating])
+  @@index([isActive])
+}
+
+// ─── BULK PRODUCT (Buyer Dashboard) ────────────────────────────────────
+
+model BulkProduct {
+  id              String   @id @default(uuid())
+  supplierId      String
+  name            String
+  category        String
+  description     String?
+  minQuantity     Float
+  maxQuantity     Float
+  unit            String   @default("kg")
+  pricePerUnit    Float
+  qualityGrade    String?
+  certifications  String?  // JSON array
+  imageUrls       String?  // JSON array
+  district        String
+  state           String
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  supplier        Supplier @relation(fields: [supplierId], references: [id])
+  preBookings     PreBooking[]
+  bulkTrades      BulkTrade[]
+
+  @@index([supplierId])
+  @@index([category])
+  @@index([district])
+  @@index([isActive])
+}
+
+// ─── BUYER REPUTATION (Buyer Dashboard) ────────────────────────────────
+
+model BuyerReputation {
+  id                  String   @id @default(uuid())
+  userId              String   @unique
+  score               Float    @default(100.0)
+  totalPurchases      Int      @default(0)
+  onTimePayments      Int      @default(0)
+  latePayments        Int      @default(0)
+  disputes            Int      @default(0)
+  averageOrderValue   Float    @default(0)
+  trustScore          Float    @default(5.0)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  history             ReputationHistory[]
+
+  @@index([userId])
+  @@index([score])
+}
+
+// ─── REPUTATION HISTORY (Buyer Dashboard) ──────────────────────────────
+
+model ReputationHistory {
+  id              String   @id @default(uuid())
+  reputationId    String
+  action          String   // PURCHASE | PAYMENT | DISPUTE | REVIEW
+  scoreBefore     Float
+  scoreAfter      Float
+  change          Float
+  reason          String?
+  metadata        String?  // JSON
+  createdAt       DateTime @default(now())
+
+  reputation      BuyerReputation @relation(fields: [reputationId], references: [id])
+
+  @@index([reputationId])
+  @@index([createdAt])
+}
+
+// ─── PRE-BOOKING (Buyer Dashboard) ─────────────────────────────────────
+
+model PreBooking {
+  id              String   @id @default(uuid())
+  buyerId         String
+  bulkProductId   String
+  quantity        Float
+  pricePerUnit    Float
+  totalPrice      Float
+  targetDate      DateTime
+  status          String   @default("PENDING") // PENDING | CONFIRMED | CANCELLED | COMPLETED
+  notes           String?
+  confirmedAt     DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  bulkProduct     BulkProduct @relation(fields: [bulkProductId], references: [id])
+
+  @@index([buyerId])
+  @@index([bulkProductId])
+  @@index([status])
+}
+
+// ─── BID (Buyer Dashboard) ─────────────────────────────────────────────
+
+model Bid {
+  id              String   @id @default(uuid())
+  buyerId         String
+  productId       String
+  quantity        Float
+  pricePerUnit    Float
+  totalPrice      Float
+  validUntil      DateTime
+  status          String   @default("PENDING") // PENDING | ACCEPTED | REJECTED | COUNTER | EXPIRED
+  counterOfferPrice Float?
+  aiRecommendation String? // JSON
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([buyerId])
+  @@index([productId])
+  @@index([status])
+  @@index([validUntil])
+}
+
+// ─── ORDER TRACKING (Buyer Dashboard) ──────────────────────────────────
+
+model OrderTracking {
+  id              String   @id @default(uuid())
+  orderId         String
+  status          String   // PLACED | CONFIRMED | PACKED | SHIPPED | IN_TRANSIT | DELIVERED
+  location        String?
+  lat             Float?
+  lng             Float?
+  notes           String?
+  estimatedTime   DateTime?
+  actualTime      DateTime?
+  createdAt       DateTime @default(now())
+
+  @@index([orderId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// ─── BULK TRADE (Buyer Dashboard) ──────────────────────────────────────
+
+model BulkTrade {
+  id              String   @id @default(uuid())
+  buyerId         String
+  bulkProductId   String
+  quantity        Float
+  pricePerUnit    Float
+  totalPrice      Float
+  status          String   @default("PENDING") // PENDING | MATCHED | IN_PROGRESS | COMPLETED | CANCELLED
+  matchedSuppliers String? // JSON array of supplier IDs
+  deliveryDate    DateTime?
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  bulkProduct     BulkProduct @relation(fields: [bulkProductId], references: [id])
+
+  @@index([buyerId])
+  @@index([bulkProductId])
+  @@index([status])
+}
+
+// ─── BLOCKCHAIN TRANSACTION (Buyer Dashboard) ──────────────────────────
+
+model BlockchainTransaction {
+  id              String   @id @default(uuid())
+  userId          String
+  txHash          String   @unique
+  type            String   // PAYMENT | ESCROW | RATING | TRACE
+  amount          Float?
+  fromAddress     String?
+  toAddress       String?
+  status          String   @default("PENDING") // PENDING | CONFIRMED | FAILED
+  blockNumber     Int?
+  gasUsed         Float?
+  metadata        String?  // JSON
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([userId])
+  @@index([txHash])
+  @@index([type])
+  @@index([status])
+}
+
+// ─── SECURITY EVENT (Buyer Dashboard) ──────────────────────────────────
+
+model SecurityEvent {
+  id              String   @id @default(uuid())
+  userId          String
+  eventType       String   // LOGIN | LOGOUT | PASSWORD_CHANGE | SUSPICIOUS_ACTIVITY | SESSION_EXPIRED
+  ipAddress       String?
+  userAgent       String?
+  location        String?
+  riskLevel       String   @default("LOW") // LOW | MEDIUM | HIGH | CRITICAL
+  blocked         Boolean  @default(false)
+  metadata        String?  // JSON
+  createdAt       DateTime @default(now())
+
+  @@index([userId])
+  @@index([eventType])
+  @@index([riskLevel])
+  @@index([createdAt])
 }

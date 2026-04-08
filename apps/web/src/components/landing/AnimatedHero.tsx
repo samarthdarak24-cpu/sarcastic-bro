@@ -1,13 +1,15 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { useTranslation } from "react-i18next";
 import Link from "next/link";
 import { ArrowRight, Sparkles } from "lucide-react";
 import { GradientButton } from "../ui/GradientButton";
 import { AnimatedCounter } from "../ui/AnimatedCounter";
 
 export function AnimatedHero() {
-  const words = ["Sell", "Smarter.", "Buy", "Better."];
+  const { t } = useTranslation();
+  const words = t("landing.animated_hero.words", { returnObjects: true }) as string[];
   
   return (
     <section className="relative min-h-screen flex items-center overflow-hidden bg-[#0f172a]">
@@ -61,7 +63,7 @@ export function AnimatedHero() {
           >
             <span className="inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-400 bg-emerald-400/10 border border-emerald-400/20 px-4 py-2 rounded-full mb-8 backdrop-blur-xl">
               <Sparkles size={12} className="animate-pulse" />
-              AI-Powered AgTech Platform
+              {t("landing.animated_hero.badge")}
             </span>
           </motion.div>
 
@@ -89,8 +91,7 @@ export function AnimatedHero() {
             transition={{ duration: 0.8, delay: 1 }}
             className="text-[18px] text-white/50 leading-relaxed mb-12 max-w-2xl mx-auto"
           >
-            AI-powered marketplace connecting farmers directly with buyers.
-            <br />No middlemen. Fair prices. Real-time logistics.
+            {t("landing.animated_hero.subtext")}
           </motion.p>
 
           {/* CTA Buttons */}
@@ -102,12 +103,12 @@ export function AnimatedHero() {
           >
             <Link href="/auth/register">
               <GradientButton icon={<ArrowRight size={18} />}>
-                Get Started Free
+                {t("landing.animated_hero.cta1")}
               </GradientButton>
             </Link>
             <Link href="#demo">
               <GradientButton variant="secondary">
-                Watch Demo
+                {t("landing.animated_hero.cta2")}
               </GradientButton>
             </Link>
           </motion.div>
@@ -120,13 +121,13 @@ export function AnimatedHero() {
             className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-4xl mx-auto"
           >
             {[
-              { value: 450000, suffix: "+", label: "Farmers" },
-              { value: 750, suffix: "+", label: "Districts" },
-              { value: 98, suffix: "%", label: "Quality Score" },
-              { value: 150, suffix: "Cr+", label: "Value Traded" },
+              { value: 450000, suffix: "+", label: t("landing.animated_hero.s1") },
+              { value: 750, suffix: "+", label: t("landing.animated_hero.s2") },
+              { value: 98, suffix: "%", label: t("landing.animated_hero.s3") },
+              { value: 150, suffix: "Cr+", label: t("landing.animated_hero.s4") },
             ].map((stat, i) => (
               <motion.div
-                key={stat.label}
+                key={i}
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.5, delay: 1.7 + i * 0.1 }}

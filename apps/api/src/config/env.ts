@@ -10,6 +10,7 @@ const envSchema = z.object({
   PORT: z.coerce.number().int().positive().default(4000),
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   DATABASE_URL: z.string().min(1).default("file:./dev.db"),
+  REDIS_URL: z.string().url().optional(),
   JWT_ACCESS_SECRET: z.string().min(16).default(DEFAULT_ACCESS_SECRET),
   JWT_REFRESH_SECRET: z.string().min(16).default(DEFAULT_REFRESH_SECRET),
   JWT_ACCESS_EXPIRY: z.string().min(2).default("15m"),
@@ -19,6 +20,8 @@ const envSchema = z.object({
   CORS_ORIGIN: z.string().min(1).default("http://localhost:3000"),
   ELASTICSEARCH_URL: z.string().optional(),
   AI_SERVICE_URL: z.string().url().default("http://localhost:8000"),
+  OLLAMA_URL: z.string().url().default("http://localhost:11434"),
+  OLLAMA_MODEL: z.string().default("phi"),
 });
 
 const parsed = envSchema.parse(process.env);

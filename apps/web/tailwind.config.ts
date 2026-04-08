@@ -71,6 +71,7 @@ const config: Config = {
         "dot-pulse": "dotPulse 1.4s ease-in-out infinite",
         "badge-ping": "badgePing 1.5s cubic-bezier(0, 0, 0.2, 1) infinite",
         "success-pop": "successPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards",
+        "ticker": "ticker 30s linear infinite",
       },
       keyframes: {
         fadeIn: {
@@ -139,6 +140,10 @@ const config: Config = {
           "0%": { transform: "scale(0)", opacity: "0" },
           "60%": { transform: "scale(1.2)" },
           "100%": { transform: "scale(1)", opacity: "1" },
+        },
+        ticker: {
+          "0%": { transform: "translateX(0)" },
+          "100%": { transform: "translateX(-50%)" },
         },
       },
     },

@@ -53,6 +53,11 @@ export class OrderController {
     return sendPaginated(res, result.orders, result.total, result.page, result.limit);
   }
 
+  static async getStats(req: Request, res: Response) {
+    const stats = await OrderService.getStats(req.user!.userId, req.user!.role);
+    return sendSuccess(res, stats);
+  }
+
   static async getById(req: Request, res: Response) {
     const order = await OrderService.getById(req.params.id, req.user!.userId);
     return sendSuccess(res, order);
@@ -81,8 +86,8 @@ export class OrderController {
     
     // Trigger reputation update for both parties
     if (status === 'DELIVERED' || status === 'CANCELLED') {
-      await UserService.updateReputationScore(order.buyerId);
-      await UserService.updateReputationScore(order.farmerId);
+      await UserService.updateReputationScore(order.buyerId, 5);
+      await UserService.updateReputationScore(order.farmerId, 5);
     }
 
     return sendSuccess(res, order, "Order status updated");
@@ -110,9 +115,23 @@ export class OrderController {
     }
     
     // Trigger reputation update for both parties on cancellation
-    await UserService.updateReputationScore(order.buyerId);
-    await UserService.updateReputationScore(order.farmerId);
+    await UserService.updateReputationScore(order.buyerId, 5);
+    await UserService.updateReputationScore(order.farmerId, 5);
 
     return sendSuccess(res, order, "Order cancelled");
+  }
+
+  static async bulkStatusUpdate(req: Request, res: Response) {
+    const { orderIds, status } = req.body;
+    if (!Array.isArray(orderIds) || !status) {
+      return sendSuccess(res, { error: "Invalid format" });
+    }
+    const results = await OrderService.bulkStatusUpdate(req.user!.userId, orderIds, status);
+    return sendSuccess(res, results, "Bulk status update completed");
+  }
+
+  static async getHistory(req: Request, res: Response) {
+    const history = await OrderService.getHistory(req.params.id, req.user!.userId);
+    return sendSuccess(res, history);
   }
 }

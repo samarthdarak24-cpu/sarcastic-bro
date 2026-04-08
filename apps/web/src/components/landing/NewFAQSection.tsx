@@ -2,32 +2,34 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 export function NewFAQSection() {
+  const { t } = useTranslation();
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   const faqs = [
     {
-      q: "How does AI quality grading work?",
-      a: "Our AI analyzes crop images to assign grades (A+, A, B, C) with 98.5% accuracy.",
+      q: t("landing.faq.q1"),
+      a: t("landing.faq.a1"),
       icon: "🤖",
       color: "#a855f7"
     },
     {
-      q: "Is FarmGuard free to use?",
-      a: "Yes! Registration is free. We charge only 2-3% commission on successful transactions.",
+      q: t("landing.faq.q2"),
+      a: t("landing.faq.a2"),
       icon: "💰",
       color: "#22c55e"
     },
     {
-      q: "How do I get paid?",
-      a: "Payments are processed within 24-48 hours through our secure AgriPay system.",
+      q: t("landing.faq.q3"),
+      a: t("landing.faq.a3"),
       icon: "💳",
       color: "#0ea5e9"
     },
     {
-      q: "What crops are supported?",
-      a: "We support 50+ crops including vegetables, fruits, grains, and pulses.",
+      q: t("landing.faq.q4"),
+      a: t("landing.faq.a4"),
       icon: "🌾",
       color: "#f59e0b"
     },
@@ -45,11 +47,11 @@ export function NewFAQSection() {
             className="lg:w-1/3"
           >
             <div className="inline-block px-4 py-1.5 bg-green-100 text-green-700 rounded-full text-xs font-bold mb-4 uppercase tracking-widest">
-              Digital Assistant
+              {t("landing.faq.badge")}
             </div>
             <h2 className="text-4xl font-black text-[#1e293b] mb-6 leading-tight">
-              Got Questions?<br/>
-              <span className="text-green-500">Ask FarmBot.</span>
+              {t("landing.faq.title")}<br/>
+              <span className="text-green-500">{t("landing.faq.ask_farmbot")}</span>
             </h2>
             
             <div className="glass-effect p-6 rounded-3xl border-2 border-green-500/20 shadow-2xl relative overflow-hidden group">
@@ -57,12 +59,12 @@ export function NewFAQSection() {
               <div className="relative flex items-center gap-4">
                 <div className="text-5xl animate-bounce-slow">🤖</div>
                 <div>
-                  <div className="text-sm font-bold text-[#1e293b]">FarmBot AI</div>
-                  <div className="text-[10px] text-[#64748b]">Online & Ready to help</div>
+                  <div className="text-sm font-bold text-[#1e293b]">{t("landing.faq.bot_name")}</div>
+                  <div className="text-[10px] text-[#64748b]">{t("landing.faq.bot_status")}</div>
                 </div>
               </div>
               <div className="mt-4 p-3 bg-white/50 rounded-2xl text-xs text-slate-600 italic">
-                "I can help you understand our AI grading, payment cycles, and marketplace policies instantly!"
+                "{t("landing.faq.bot_message")}"
               </div>
             </div>
           </motion.div>
@@ -124,13 +126,13 @@ export function NewFAQSection() {
           className="mt-12 pt-8 border-t border-slate-200 flex flex-wrap justify-between items-center gap-6"
         >
           <div className="flex items-center gap-2 text-slate-400 text-sm">
-            <span>Still have questions?</span>
-            <button className="font-bold text-green-600 hover:underline">Contact Support →</button>
+            <span>{t("landing.faq.still_questions")}</span>
+            <button className="font-bold text-green-600 hover:underline">{t("landing.faq.contact_support")} →</button>
           </div>
           <div className="flex gap-4">
-            {['Privacy Policy', 'Terms of Service', 'Cookie Policy'].map(link => (
-              <span key={link} className="text-[10px] text-slate-400 hover:text-slate-600 cursor-pointer">{link}</span>
-            ))}
+            <span className="text-[10px] text-slate-400 hover:text-slate-600 cursor-pointer">{t("common.privacy")}</span>
+            <span className="text-[10px] text-slate-400 hover:text-slate-600 cursor-pointer">{t("common.terms")}</span>
+            <span className="text-[10px] text-slate-400 hover:text-slate-600 cursor-pointer">{t("common.cookies")}</span>
           </div>
         </motion.div>
       </div>

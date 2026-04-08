@@ -1,58 +1,518 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { Truck, Clock, CheckCircle, AlertTriangle, RefreshCw } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  Truck,
+  Clock,
+  CheckCircle,
+  AlertTriangle,
+  RefreshCw,
+  Package,
+  MapPin,
+  Phone,
+  Mail,
+  Navigation,
+  TrendingUp,
+  DollarSign,
+  Calendar,
+  User,
+  FileText,
+  Download,
+  Search,
+  Filter,
+  BarChart3,
+  ThermometerSun,
+  Droplets,
+  Box,
+  ArrowRight,
+  ExternalLink,
+  Star,
+  Shield,
+  Zap,
+} from 'lucide-react';
+import { staggerContainer, staggerItem } from '@/lib/animations';
+
+interface ShipmentItem {
+  id: string;
+  productName: string;
+  quantity: number;
+  unit: string;
+  weight: number;
+}
+
+interface TimelineEvent {
+  id: string;
+  timestamp: string;
+  location: string;
+  status: string;
+  description: string;
+}
 
 interface Shipment {
   id: string;
+  shipmentNumber: string;
+  orderId: string;
+  status: 'PENDING' | 'IN_TRANSIT' | 'DELIVERED' | 'DELAYED' | 'CANCELLED';
   origin: string;
   destination: string;
-  status: 'pending' | 'in_transit' | 'delivered' | 'delayed';
-  progress: number;
-  eta: string;
   carrier: string;
-  weight: string;
+  trackingNumber: string;
+  estimatedDelivery: string;
+  actualDelivery?: string;
+  currentLocation?: string;
+  distance: number;
+  weight: number;
+  temperature?: number;
+  humidity?: number;
   cost: number;
+  items: ShipmentItem[];
+  timeline: TimelineEvent[];
+  createdAt: string;
+  dispatchedAt?: string;
+  deliveredAt?: string;
+  carrierContact?: string;
+  carrierEmail?: string;
+  priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
+  rating?: number;
 }
 
 export function LogisticsManager() {
-  const [filter, setFilter] = useState<string>('all');
-  const [loading, setLoading] = useState(true);
-  const [shipments, setShipments] = useState<Shipment[]>([]);
+  const [filter, setFilter] = useState<string>('ALL');
+  const [loading, setLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const [selectedShipment, setSelectedShipment] = useState<Shipment | null>(null);
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const [toastType, setToastType] = useState<'success' | 'error' | 'info'>('success');
 
-  useEffect(() => {
-    loadShipments();
-  }, [filter]);
+  // Enhanced Realistic Dummy Data
+  const [shipments] = useState<Shipment[]>([
+    {
+      id: 'SHP-001',
+      shipmentNumber: 'SHP-001',
+      orderId: 'ORD-2024-001',
+      status: 'IN_TRANSIT',
+      origin: 'Nashik Farm, Maharashtra',
+      destination: 'Mumbai Market, Maharashtra',
+      carrier: 'BlueDart Express',
+      trackingNumber: 'BD123456789IN',
+      estimatedDelivery: '2024-04-06T18:00:00',
+      currentLocation: 'Thane Junction',
+      distance: 185,
+      weight: 1200,
+      temperature: 22,
+      humidity: 65,
+      cost: 8500,
+      priority: 'HIGH',
+      rating: 4.5,
+      carrierContact: '+91 98765 43210',
+      carrierEmail: 'support@bluedart.com',
+      items: [
+        { id: 'ITM-001', productName: 'Wheat', quantity: 500, unit: 'kg', weight: 500 },
+        { id: 'ITM-002', productName: 'Rice', quantity: 700, unit: 'kg', weight: 700 },
+      ],
+      timeline: [
+        { id: 'TL-001', timestamp: '2024-04-06T08:00:00', location: 'Nashik Farm', status: 'PICKED_UP', description: 'Package picked up from origin' },
+        { id: 'TL-002', timestamp: '2024-04-06T10:30:00', location: 'Nashik Hub', status: 'IN_TRANSIT', description: 'Departed from Nashik sorting facility' },
+        { id: 'TL-003', timestamp: '2024-04-06T14:00:00', location: 'Thane Junction', status: 'IN_TRANSIT', description: 'Package in transit - Thane checkpoint' },
+      ],
+      createdAt: '2024-04-06T07:00:00',
+      dispatchedAt: '2024-04-06T08:00:00',
+    },
+    {
+      id: 'SHP-002',
+      shipmentNumber: 'SHP-002',
+      orderId: 'ORD-2024-002',
+      status: 'PENDING',
+      origin: 'Pune Warehouse, Maharashtra',
+      destination: 'Delhi Hub, Delhi',
+      carrier: 'Rivigo Logistics',
+      trackingNumber: 'RV987654321IN',
+      estimatedDelivery: '2024-04-08T12:00:00',
+      distance: 1450,
+      weight: 2500,
+      temperature: 18,
+      humidity: 55,
+      cost: 15000,
+      priority: 'MEDIUM',
+      carrierContact: '+91 87654 32109',
+      carrierEmail: 'care@rivigo.com',
+      items: [
+        { id: 'ITM-003', productName: 'Tomatoes', quantity: 1000, unit: 'kg', weight: 1000 },
+        { id: 'ITM-004', productName: 'Onions', quantity: 1500, unit: 'kg', weight: 1500 },
+      ],
+      timeline: [
+        { id: 'TL-004', timestamp: '2024-04-06T06:00:00', location: 'Pune Warehouse', status: 'PENDING', description: 'Shipment created - awaiting pickup' },
+      ],
+      createdAt: '2024-04-06T06:00:00',
+    },
+    {
+      id: 'SHP-003',
+      shipmentNumber: 'SHP-003',
+      orderId: 'ORD-2024-003',
+      status: 'DELIVERED',
+      origin: 'Bangalore Center, Karnataka',
+      destination: 'Chennai Port, Tamil Nadu',
+      carrier: 'Snowman Logistics',
+      trackingNumber: 'SM456789123IN',
+      estimatedDelivery: '2024-04-05T16:00:00',
+      actualDelivery: '2024-04-05T15:30:00',
+      distance: 350,
+      weight: 800,
+      temperature: 4,
+      humidity: 85,
+      cost: 6200,
+      priority: 'URGENT',
+      rating: 5.0,
+      carrierContact: '+91 76543 21098',
+      carrierEmail: 'support@snowman.com',
+      items: [
+        { id: 'ITM-005', productName: 'Grapes', quantity: 400, unit: 'kg', weight: 400 },
+        { id: 'ITM-006', productName: 'Strawberries', quantity: 400, unit: 'kg', weight: 400 },
+      ],
+      timeline: [
+        { id: 'TL-005', timestamp: '2024-04-05T08:00:00', location: 'Bangalore Center', status: 'PICKED_UP', description: 'Cold storage pickup completed' },
+        { id: 'TL-006', timestamp: '2024-04-05T10:00:00', location: 'Hosur Checkpoint', status: 'IN_TRANSIT', description: 'Temperature maintained at 4°C' },
+        { id: 'TL-007', timestamp: '2024-04-05T13:00:00', location: 'Chennai Outskirts', status: 'OUT_FOR_DELIVERY', description: 'Out for final delivery' },
+        { id: 'TL-008', timestamp: '2024-04-05T15:30:00', location: 'Chennai Port', status: 'DELIVERED', description: 'Successfully delivered and signed' },
+      ],
+      createdAt: '2024-04-05T07:00:00',
+      dispatchedAt: '2024-04-05T08:00:00',
+      deliveredAt: '2024-04-05T15:30:00',
+    },
+    {
+      id: 'SHP-004',
+      shipmentNumber: 'SHP-004',
+      orderId: 'ORD-2024-004',
+      status: 'DELAYED',
+      origin: 'Hyderabad Hub, Telangana',
+      destination: 'Kolkata Market, West Bengal',
+      carrier: 'Delhivery',
+      trackingNumber: 'DL789123456IN',
+      estimatedDelivery: '2024-04-07T10:00:00',
+      currentLocation: 'Nagpur Junction - Delayed',
+      distance: 1500,
+      weight: 1500,
+      temperature: 25,
+      humidity: 70,
+      cost: 11000,
+      priority: 'LOW',
+      rating: 3.0,
+      carrierContact: '+91 65432 10987',
+      carrierEmail: 'help@delhivery.com',
+      items: [
+        { id: 'ITM-007', productName: 'Potatoes', quantity: 800, unit: 'kg', weight: 800 },
+        { id: 'ITM-008', productName: 'Carrots', quantity: 700, unit: 'kg', weight: 700 },
+      ],
+      timeline: [
+        { id: 'TL-009', timestamp: '2024-04-05T14:00:00', location: 'Hyderabad Hub', status: 'PICKED_UP', description: 'Package collected from warehouse' },
+        { id: 'TL-010', timestamp: '2024-04-06T02:00:00', location: 'Nagpur Junction', status: 'DELAYED', description: 'Delayed due to vehicle breakdown' },
+      ],
+      createdAt: '2024-04-05T13:00:00',
+      dispatchedAt: '2024-04-05T14:00:00',
+    },
+    {
+      id: 'SHP-005',
+      shipmentNumber: 'SHP-005',
+      orderId: 'ORD-2024-005',
+      status: 'IN_TRANSIT',
+      origin: 'Jaipur Farm, Rajasthan',
+      destination: 'Ahmedabad Market, Gujarat',
+      carrier: 'VRL Logistics',
+      trackingNumber: 'VRL321654987IN',
+      estimatedDelivery: '2024-04-06T20:00:00',
+      currentLocation: 'Udaipur Checkpoint',
+      distance: 620,
+      weight: 1800,
+      temperature: 28,
+      humidity: 45,
+      cost: 9800,
+      priority: 'MEDIUM',
+      rating: 4.0,
+      carrierContact: '+91 54321 09876',
+      carrierEmail: 'info@vrllogistics.com',
+      items: [
+        { id: 'ITM-009', productName: 'Mustard', quantity: 900, unit: 'kg', weight: 900 },
+        { id: 'ITM-010', productName: 'Cumin', quantity: 900, unit: 'kg', weight: 900 },
+      ],
+      timeline: [
+        { id: 'TL-011', timestamp: '2024-04-06T06:00:00', location: 'Jaipur Farm', status: 'PICKED_UP', description: 'Spices shipment collected' },
+        { id: 'TL-012', timestamp: '2024-04-06T12:00:00', location: 'Udaipur Checkpoint', status: 'IN_TRANSIT', description: 'Quality check passed' },
+      ],
+      createdAt: '2024-04-06T05:00:00',
+      dispatchedAt: '2024-04-06T06:00:00',
+    },
+    {
+      id: 'SHP-006',
+      shipmentNumber: 'SHP-006',
+      orderId: 'ORD-2024-006',
+      status: 'DELIVERED',
+      origin: 'Lucknow Warehouse, Uttar Pradesh',
+      destination: 'Patna Market, Bihar',
+      carrier: 'TCI Express',
+      trackingNumber: 'TCI654987321IN',
+      estimatedDelivery: '2024-04-04T14:00:00',
+      actualDelivery: '2024-04-04T13:45:00',
+      distance: 520,
+      weight: 950,
+      cost: 7200,
+      priority: 'HIGH',
+      rating: 4.8,
+      carrierContact: '+91 43210 98765',
+      carrierEmail: 'support@tciexpress.in',
+      items: [
+        { id: 'ITM-011', productName: 'Lentils', quantity: 500, unit: 'kg', weight: 500 },
+        { id: 'ITM-012', productName: 'Chickpeas', quantity: 450, unit: 'kg', weight: 450 },
+      ],
+      timeline: [
+        { id: 'TL-013', timestamp: '2024-04-04T07:00:00', location: 'Lucknow Warehouse', status: 'PICKED_UP', description: 'Pulses shipment initiated' },
+        { id: 'TL-014', timestamp: '2024-04-04T11:00:00', location: 'Varanasi Hub', status: 'IN_TRANSIT', description: 'Midway checkpoint cleared' },
+        { id: 'TL-015', timestamp: '2024-04-04T13:45:00', location: 'Patna Market', status: 'DELIVERED', description: 'Delivered ahead of schedule' },
+      ],
+      createdAt: '2024-04-04T06:00:00',
+      dispatchedAt: '2024-04-04T07:00:00',
+      deliveredAt: '2024-04-04T13:45:00',
+    },
+    {
+      id: 'SHP-007',
+      shipmentNumber: 'SHP-007',
+      orderId: 'ORD-2024-007',
+      status: 'PENDING',
+      origin: 'Chandigarh Hub, Punjab',
+      destination: 'Shimla Market, Himachal Pradesh',
+      carrier: 'DTDC Courier',
+      trackingNumber: 'DTDC987321654IN',
+      estimatedDelivery: '2024-04-07T16:00:00',
+      distance: 115,
+      weight: 600,
+      temperature: 15,
+      humidity: 60,
+      cost: 4500,
+      priority: 'LOW',
+      carrierContact: '+91 32109 87654',
+      carrierEmail: 'care@dtdc.com',
+      items: [
+        { id: 'ITM-013', productName: 'Apples', quantity: 600, unit: 'kg', weight: 600 },
+      ],
+      timeline: [
+        { id: 'TL-016', timestamp: '2024-04-06T10:00:00', location: 'Chandigarh Hub', status: 'PENDING', description: 'Awaiting vehicle assignment' },
+      ],
+      createdAt: '2024-04-06T09:00:00',
+    },
+    {
+      id: 'SHP-008',
+      shipmentNumber: 'SHP-008',
+      orderId: 'ORD-2024-008',
+      status: 'IN_TRANSIT',
+      origin: 'Indore Center, Madhya Pradesh',
+      destination: 'Bhopal Market, Madhya Pradesh',
+      carrier: 'Gati KWE',
+      trackingNumber: 'GATI123789456IN',
+      estimatedDelivery: '2024-04-06T17:00:00',
+      currentLocation: 'Dewas Junction',
+      distance: 195,
+      weight: 1100,
+      temperature: 24,
+      humidity: 50,
+      cost: 5800,
+      priority: 'MEDIUM',
+      rating: 4.2,
+      carrierContact: '+91 21098 76543',
+      carrierEmail: 'support@gati.com',
+      items: [
+        { id: 'ITM-014', productName: 'Soybeans', quantity: 1100, unit: 'kg', weight: 1100 },
+      ],
+      timeline: [
+        { id: 'TL-017', timestamp: '2024-04-06T09:00:00', location: 'Indore Center', status: 'PICKED_UP', description: 'Soybean shipment collected' },
+        { id: 'TL-018', timestamp: '2024-04-06T13:00:00', location: 'Dewas Junction', status: 'IN_TRANSIT', description: 'Halfway to destination' },
+      ],
+      createdAt: '2024-04-06T08:00:00',
+      dispatchedAt: '2024-04-06T09:00:00',
+    },
+    {
+      id: 'SHP-009',
+      shipmentNumber: 'SHP-009',
+      orderId: 'ORD-2024-009',
+      status: 'DELIVERED',
+      origin: 'Coimbatore Farm, Tamil Nadu',
+      destination: 'Kochi Port, Kerala',
+      carrier: 'Professional Couriers',
+      trackingNumber: 'PC456123789IN',
+      estimatedDelivery: '2024-04-03T18:00:00',
+      actualDelivery: '2024-04-03T17:20:00',
+      distance: 210,
+      weight: 750,
+      temperature: 20,
+      humidity: 75,
+      cost: 5500,
+      priority: 'HIGH',
+      rating: 4.7,
+      carrierContact: '+91 10987 65432',
+      carrierEmail: 'info@professionalcouriers.in',
+      items: [
+        { id: 'ITM-015', productName: 'Coconuts', quantity: 750, unit: 'kg', weight: 750 },
+      ],
+      timeline: [
+        { id: 'TL-019', timestamp: '2024-04-03T10:00:00', location: 'Coimbatore Farm', status: 'PICKED_UP', description: 'Coconut shipment started' },
+        { id: 'TL-020', timestamp: '2024-04-03T14:00:00', location: 'Palakkad Border', status: 'IN_TRANSIT', description: 'State border crossed' },
+        { id: 'TL-021', timestamp: '2024-04-03T17:20:00', location: 'Kochi Port', status: 'DELIVERED', description: 'Export shipment delivered' },
+      ],
+      createdAt: '2024-04-03T09:00:00',
+      dispatchedAt: '2024-04-03T10:00:00',
+      deliveredAt: '2024-04-03T17:20:00',
+    },
+    {
+      id: 'SHP-010',
+      shipmentNumber: 'SHP-010',
+      orderId: 'ORD-2024-010',
+      status: 'IN_TRANSIT',
+      origin: 'Amritsar Hub, Punjab',
+      destination: 'Jammu Market, Jammu & Kashmir',
+      carrier: 'Safexpress',
+      trackingNumber: 'SFX789456123IN',
+      estimatedDelivery: '2024-04-06T19:00:00',
+      currentLocation: 'Pathankot Checkpoint',
+      distance: 230,
+      weight: 1300,
+      temperature: 12,
+      humidity: 55,
+      cost: 7800,
+      priority: 'URGENT',
+      rating: 4.6,
+      carrierContact: '+91 09876 54321',
+      carrierEmail: 'care@safexpress.com',
+      items: [
+        { id: 'ITM-016', productName: 'Basmati Rice', quantity: 1300, unit: 'kg', weight: 1300 },
+      ],
+      timeline: [
+        { id: 'TL-022', timestamp: '2024-04-06T08:00:00', location: 'Amritsar Hub', status: 'PICKED_UP', description: 'Premium rice shipment initiated' },
+        { id: 'TL-023', timestamp: '2024-04-06T14:00:00', location: 'Pathankot Checkpoint', status: 'IN_TRANSIT', description: 'Security clearance completed' },
+      ],
+      createdAt: '2024-04-06T07:00:00',
+      dispatchedAt: '2024-04-06T08:00:00',
+    },
+  ]);
 
-  const loadShipments = async () => {
-    setLoading(true);
-    setTimeout(() => {
-      setShipments([
-        { id: 'SHP-001', origin: 'Nashik Farm', destination: 'Mumbai Market', status: 'in_transit', progress: 65, eta: '2 hours', carrier: 'BlueDart', weight: '1200 kg', cost: 8500 },
-        { id: 'SHP-002', origin: 'Pune Warehouse', destination: 'Delhi Hub', status: 'pending', progress: 10, eta: '8 hours', carrier: 'Rivigo', weight: '2500 kg', cost: 15000 },
-        { id: 'SHP-003', origin: 'Bangalore Center', destination: 'Chennai Port', status: 'delivered', progress: 100, eta: 'Completed', carrier: 'Snowman', weight: '800 kg', cost: 6200 },
-        { id: 'SHP-004', origin: 'Hyderabad Hub', destination: 'Kolkata Market', status: 'delayed', progress: 45, eta: '12 hours', carrier: 'Delhivery', weight: '1500 kg', cost: 11000 },
-      ]);
-      setLoading(false);
-    }, 500);
-  };
+  const statusCounts = useMemo(() => ({
+    ALL: shipments.length,
+    PENDING: shipments.filter(s => s.status === 'PENDING').length,
+    IN_TRANSIT: shipments.filter(s => s.status === 'IN_TRANSIT').length,
+    DELIVERED: shipments.filter(s => s.status === 'DELIVERED').length,
+    DELAYED: shipments.filter(s => s.status === 'DELAYED').length,
+  }), [shipments]);
 
-  const statusCounts = {
-    in_transit: shipments.filter(s => s.status === 'in_transit').length,
-    pending: shipments.filter(s => s.status === 'pending').length,
-    delivered: shipments.filter(s => s.status === 'delivered').length,
-    delayed: shipments.filter(s => s.status === 'delayed').length,
-  };
+  const filteredShipments = useMemo(() => {
+    let filtered = shipments;
+    
+    if (filter !== 'ALL') {
+      filtered = filtered.filter(s => s.status === filter);
+    }
+    
+    if (searchQuery) {
+      filtered = filtered.filter(s =>
+        s.shipmentNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        s.trackingNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        s.carrier.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        s.origin.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        s.destination.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+    
+    return filtered;
+  }, [shipments, filter, searchQuery]);
+
+  const stats = useMemo(() => {
+    const totalCost = shipments.reduce((sum, s) => sum + s.cost, 0);
+    const totalDistance = shipments.reduce((sum, s) => sum + s.distance, 0);
+    const totalWeight = shipments.reduce((sum, s) => sum + s.weight, 0);
+    const deliveredCount = shipments.filter(s => s.status === 'DELIVERED').length;
+    const onTimeRate = shipments.length > 0 ? ((deliveredCount / shipments.length) * 100).toFixed(1) : '0';
+    
+    return {
+      totalCost,
+      totalDistance,
+      totalWeight,
+      onTimeRate,
+    };
+  }, [shipments]);
 
   const getStatusColor = (status: string) => {
     const colors = {
-      pending: 'bg-yellow-500',
-      in_transit: 'bg-blue-500',
-      delivered: 'bg-green-500',
-      delayed: 'bg-red-500'
+      PENDING: 'bg-yellow-500',
+      IN_TRANSIT: 'bg-blue-500',
+      DELIVERED: 'bg-green-500',
+      DELAYED: 'bg-red-500',
+      CANCELLED: 'bg-gray-500',
     };
     return colors[status as keyof typeof colors] || 'bg-gray-500';
+  };
+
+  const getStatusBadgeColor = (status: string) => {
+    const colors = {
+      PENDING: 'bg-yellow-100 text-yellow-700 border-yellow-300',
+      IN_TRANSIT: 'bg-blue-100 text-blue-700 border-blue-300',
+      DELIVERED: 'bg-green-100 text-green-700 border-green-300',
+      DELAYED: 'bg-red-100 text-red-700 border-red-300',
+      CANCELLED: 'bg-gray-100 text-gray-700 border-gray-300',
+    };
+    return colors[status as keyof typeof colors] || 'bg-gray-100 text-gray-700 border-gray-300';
+  };
+
+  const getPriorityColor = (priority: string) => {
+    const colors = {
+      LOW: 'text-slate-500',
+      MEDIUM: 'text-blue-600',
+      HIGH: 'text-orange-600',
+      URGENT: 'text-red-600',
+    };
+    return colors[priority as keyof typeof colors] || 'text-slate-500';
+  };
+
+  const getProgress = (shipment: Shipment) => {
+    if (shipment.status === 'DELIVERED') return 100;
+    if (shipment.status === 'PENDING') return 10;
+    if (shipment.status === 'DELAYED') return 45;
+    if (shipment.status === 'IN_TRANSIT') return 65;
+    return 0;
+  };
+
+  const handleRefresh = () => {
+    setLoading(true);
+    setTimeout(() => {
+      setLoading(false);
+      showToastMessage('Shipments refreshed successfully', 'success');
+    }, 1500);
+  };
+
+  const showToastMessage = (message: string, type: 'success' | 'error' | 'info') => {
+    setToastMessage(message);
+    setToastType(type);
+    setShowToast(true);
+    setTimeout(() => setShowToast(false), 3000);
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleString('en-IN', {
+      day: '2-digit',
+      month: 'short',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
+  const getTimeRemaining = (estimatedDelivery: string) => {
+    const now = new Date();
+    const eta = new Date(estimatedDelivery);
+    const diff = eta.getTime() - now.getTime();
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    
+    if (hours < 0) return 'Overdue';
+    if (hours < 1) return 'Less than 1 hour';
+    if (hours < 24) return `${hours} hours`;
+    const days = Math.floor(hours / 24);
+    return `${days} day${days > 1 ? 's' : ''}`;
   };
 
   return (
@@ -64,28 +524,28 @@ export function LogisticsManager() {
         <div className="status-badges">
           <div className="badge in-transit">
             <Truck size={14} />
-            <span>{statusCounts.in_transit}</span>
+            <span>{statusCounts.IN_TRANSIT}</span>
           </div>
           
           <div className="badge pending">
             <Clock size={14} />
-            <span>{statusCounts.pending}</span>
+            <span>{statusCounts.PENDING}</span>
           </div>
           
           <div className="badge delivered">
             <CheckCircle size={14} />
-            <span>{statusCounts.delivered}</span>
+            <span>{statusCounts.DELIVERED}</span>
           </div>
           
           <div className="badge delayed">
             <AlertTriangle size={14} />
-            <span>{statusCounts.delayed}</span>
+            <span>{statusCounts.DELAYED}</span>
           </div>
         </div>
 
         <button 
           className="refresh-icon" 
-          onClick={loadShipments}
+          onClick={handleRefresh}
           disabled={loading}
           aria-label="Refresh"
         >
@@ -94,13 +554,13 @@ export function LogisticsManager() {
       </div>
 
       <div className="filter-tabs">
-        {['all', 'pending', 'in_transit', 'delivered', 'delayed'].map(tab => (
+        {['ALL', 'PENDING', 'IN_TRANSIT', 'DELIVERED', 'DELAYED'].map(tab => (
           <button
             key={tab}
             onClick={() => setFilter(tab)}
             className={`filter-tab ${filter === tab ? 'active' : ''}`}
           >
-            {tab.toUpperCase().replace('_', ' ')}
+            {tab.replace('_', ' ')}
           </button>
         ))}
       </div>
@@ -109,19 +569,19 @@ export function LogisticsManager() {
         <div className="shipments-list">
           {loading ? (
             <div className="loading-state">Loading shipments...</div>
-          ) : shipments.length === 0 ? (
+          ) : filteredShipments.length === 0 ? (
             <div className="empty-state">
               <p>No shipments found</p>
             </div>
           ) : (
-            shipments.map(shipment => (
+            filteredShipments.map(shipment => (
               <div
                 key={shipment.id}
                 onClick={() => setSelectedShipment(shipment)}
                 className={`shipment-item ${selectedShipment?.id === shipment.id ? 'selected' : ''}`}
               >
                 <div className="shipment-header">
-                  <h4>{shipment.id}</h4>
+                  <h4>{shipment.shipmentNumber}</h4>
                   <span className={`status-badge ${getStatusColor(shipment.status)}`}>
                     {shipment.status.replace('_', ' ')}
                   </span>
@@ -129,9 +589,9 @@ export function LogisticsManager() {
                 <p className="shipment-route">{shipment.origin} → {shipment.destination}</p>
                 <p className="shipment-carrier">Carrier: {shipment.carrier}</p>
                 <div className="progress-bar">
-                  <div className="progress-fill" style={{ width: `${shipment.progress}%` }}></div>
+                  <div className="progress-fill" style={{ width: `${getProgress(shipment)}%` }}></div>
                 </div>
-                <p className="shipment-eta">ETA: {shipment.eta}</p>
+                <p className="shipment-eta">ETA: {getTimeRemaining(shipment.estimatedDelivery)}</p>
               </div>
             ))
           )}
@@ -141,7 +601,7 @@ export function LogisticsManager() {
           {selectedShipment ? (
             <>
               <div className="details-header">
-                <h3>Shipment {selectedShipment.id}</h3>
+                <h3>Shipment {selectedShipment.shipmentNumber}</h3>
                 <span className={`status-badge ${getStatusColor(selectedShipment.status)}`}>
                   {selectedShipment.status.replace('_', ' ')}
                 </span>
@@ -161,8 +621,12 @@ export function LogisticsManager() {
                   <span className="value">{selectedShipment.carrier}</span>
                 </div>
                 <div className="info-row">
+                  <span className="label">Tracking:</span>
+                  <span className="value">{selectedShipment.trackingNumber}</span>
+                </div>
+                <div className="info-row">
                   <span className="label">Weight:</span>
-                  <span className="value">{selectedShipment.weight}</span>
+                  <span className="value">{selectedShipment.weight} kg</span>
                 </div>
                 <div className="info-row">
                   <span className="label">Cost:</span>
@@ -170,11 +634,11 @@ export function LogisticsManager() {
                 </div>
                 <div className="info-row">
                   <span className="label">ETA:</span>
-                  <span className="value">{selectedShipment.eta}</span>
+                  <span className="value">{formatDate(selectedShipment.estimatedDelivery)}</span>
                 </div>
                 <div className="info-row">
                   <span className="label">Progress:</span>
-                  <span className="value">{selectedShipment.progress}%</span>
+                  <span className="value">{getProgress(selectedShipment)}%</span>
                 </div>
               </div>
 

@@ -69,8 +69,10 @@ export function DashboardShell({
                 {subtitle}
               </p>
             </div>
-            <div className="soft-float rounded-[24px] bg-[var(--card-strong)] px-4 py-3 text-sm text-[var(--text-secondary)]">
-              Fresh frontend rebuild in progress
+            <div className="flex items-center gap-4">
+              <div className="soft-float hidden rounded-[24px] bg-[var(--card-strong)] px-4 py-3 text-sm text-[var(--text-secondary)] md:block">
+                Fresh frontend rebuild in progress
+              </div>
             </div>
           </header>
           <div className="pt-8">{children}</div>

@@ -1,9 +1,11 @@
 /* ========================================================================
-   Proposal Service — Business logic for proposals
+   Proposal Service — Business logic for proposals with Redis caching
    ======================================================================== */
 
 import prisma from "../../prisma/client";
 import { ApiError } from "../../utils/ApiError";
+import { redis } from "../../services/redis.service";
+import { getSocketService } from "../../services/socketService";
 
 interface SendProposalInput {
   productId: string;
@@ -15,6 +17,8 @@ interface SendProposalInput {
 }
 
 export class ProposalService {
+  private static readonly CACHE_TTL = 180; // 3 minutes
+
   static async sendProposal(senderId: string, data: SendProposalInput) {
     // Verify product exists
     const product = await prisma.product.findUnique({
@@ -52,9 +56,13 @@ export class ProposalService {
       include: {
         sender: { select: { id: true, name: true } },
         receiver: { select: { id: true, name: true } },
-        product: { select: { id: true, name: true } },
+        product: { select: { id: true, name: true, unit: true } },
       },
     });
+
+    // Invalidate caches
+    await redis.delPattern(`proposals:*:${senderId}`);
+    await redis.delPattern(`proposals:*:${data.receiverId}`);
 
     // Notify receiver
     await prisma.notification.create({
@@ -67,6 +75,18 @@ export class ProposalService {
       },
     });
 
+    // Real-time notification
+    try {
+      const socketService = getSocketService();
+      socketService.emitProposalUpdate(data.receiverId, {
+        proposalId: proposal.id,
+        status: 'PENDING',
+        message: `New proposal from ${proposal.sender.name}`,
+      });
+    } catch (err) {
+      console.warn('[Socket] Proposal notification failed:', err);
+    }
+
     return proposal;
   }
 
@@ -78,6 +98,15 @@ export class ProposalService {
 
     const where = options.role === "sent" ? { senderId: userId } : { receiverId: userId };
 
+    // Generate cache key
+    const cacheKey = `proposals:${options.role}:${userId}:${options.page}:${options.limit}`;
+
+    // Try cache first
+    const cached = await redis.get<{ proposals: any[]; total: number }>(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
     const [proposals, total] = await Promise.all([
       prisma.proposal.findMany({
         where,
@@ -87,16 +116,32 @@ export class ProposalService {
         include: {
           sender: { select: { id: true, name: true, avatarUrl: true } },
           receiver: { select: { id: true, name: true, avatarUrl: true } },
-          product: { select: { id: true, name: true } },
+          product: { select: { id: true, name: true, unit: true } },
         },
       }),
       prisma.proposal.count({ where }),
     ]);
 
-    return { proposals, total };
+    const result = { proposals, total };
+
+    // Cache the result
+    await redis.set(cacheKey, result, this.CACHE_TTL);
+
+    return result;
   }
 
   static async getProposal(proposalId: string, userId: string) {
+    // Try cache first
+    const cacheKey = `proposal:${proposalId}`;
+    const cached = await redis.get<any>(cacheKey);
+    if (cached) {
+      // Verify access
+      if (cached.senderId !== userId && cached.receiverId !== userId) {
+        throw ApiError.forbidden("No access to this proposal");
+      }
+      return cached;
+    }
+
     const proposal = await prisma.proposal.findUnique({
       where: { id: proposalId },
       include: {
@@ -114,12 +159,18 @@ export class ProposalService {
       throw ApiError.forbidden("No access to this proposal");
     }
 
+    // Cache the proposal
+    await redis.set(cacheKey, proposal, this.CACHE_TTL);
+
     return proposal;
   }
 
   static async acceptProposal(proposalId: string, userId: string) {
     const proposal = await prisma.proposal.findUnique({
       where: { id: proposalId },
+      include: {
+        product: { select: { name: true, unit: true } },
+      },
     });
 
     if (!proposal) {
@@ -134,15 +185,38 @@ export class ProposalService {
       throw ApiError.badRequest(`Cannot accept proposal with status: ${proposal.status}`);
     }
 
-    const updated = await prisma.proposal.update({
-      where: { id: proposalId },
-      data: { status: "ACCEPTED" },
-      include: {
-        sender: { select: { id: true, name: true } },
-        receiver: { select: { id: true, name: true } },
-        product: { select: { name: true, unit: true } },
-      },
+    // Create order and update proposal atomically
+    const result = await prisma.$transaction(async (tx) => {
+      const updated = await tx.proposal.update({
+        where: { id: proposalId },
+        data: { status: "ACCEPTED" },
+        include: {
+          sender: { select: { id: true, name: true } },
+          receiver: { select: { id: true, name: true } },
+          product: { select: { name: true, unit: true } },
+        },
+      });
+
+      // Create order from accepted proposal
+      const order = await tx.order.create({
+        data: {
+          orderNumber: `ORD-${Date.now().toString(36).toUpperCase()}`,
+          buyerId: proposal.receiverId,
+          farmerId: proposal.senderId,
+          productId: proposal.productId,
+          quantity: proposal.quantity,
+          totalPrice: proposal.totalPrice,
+          status: 'PENDING',
+        },
+      });
+
+      return { proposal: updated, order };
     });
+
+    // Invalidate caches
+    await redis.del(`proposal:${proposalId}`);
+    await redis.delPattern(`proposals:*:${proposal.senderId}`);
+    await redis.delPattern(`proposals:*:${proposal.receiverId}`);
 
     // Create notification for sender
     await prisma.notification.create({
@@ -150,12 +224,24 @@ export class ProposalService {
         userId: proposal.senderId,
         type: "PROPOSAL",
         title: "Proposal Accepted",
-        message: `${updated.receiver.name} accepted your proposal`,
-        metadata: JSON.stringify({ proposalId }),
+        message: `${result.proposal.receiver.name} accepted your proposal`,
+        metadata: JSON.stringify({ proposalId, orderId: result.order.id }),
       },
     });
 
-    return updated;
+    // Real-time notification
+    try {
+      const socketService = getSocketService();
+      socketService.emitProposalUpdate(proposal.senderId, {
+        proposalId,
+        status: 'ACCEPTED',
+        message: 'Your proposal was accepted!',
+      });
+    } catch (err) {
+      console.warn('[Socket] Proposal acceptance notification failed:', err);
+    }
+
+    return result;
   }
 
   static async rejectProposal(proposalId: string, userId: string) {
@@ -174,7 +260,15 @@ export class ProposalService {
     const updated = await prisma.proposal.update({
       where: { id: proposalId },
       data: { status: "REJECTED" },
+      include: {
+        receiver: { select: { name: true } },
+      },
     });
+
+    // Invalidate caches
+    await redis.del(`proposal:${proposalId}`);
+    await redis.delPattern(`proposals:*:${proposal.senderId}`);
+    await redis.delPattern(`proposals:*:${proposal.receiverId}`);
 
     // Notify sender
     await prisma.notification.create({
@@ -182,10 +276,22 @@ export class ProposalService {
         userId: proposal.senderId,
         type: "PROPOSAL",
         title: "Proposal Rejected",
-        message: "Your proposal was rejected",
+        message: `${updated.receiver.name} rejected your proposal`,
         metadata: JSON.stringify({ proposalId }),
       },
     });
+
+    // Real-time notification
+    try {
+      const socketService = getSocketService();
+      socketService.emitProposalUpdate(proposal.senderId, {
+        proposalId,
+        status: 'REJECTED',
+        message: 'Your proposal was rejected',
+      });
+    } catch (err) {
+      console.warn('[Socket] Proposal rejection notification failed:', err);
+    }
 
     return updated;
   }
@@ -214,10 +320,15 @@ export class ProposalService {
         status: "COUNTER",
       },
       include: {
-        sender: { select: { name: true } },
-        receiver: { select: { name: true } },
+        sender: { select: { id: true, name: true } },
+        receiver: { select: { id: true, name: true } },
       },
     });
+
+    // Invalidate caches
+    await redis.del(`proposal:${proposalId}`);
+    await redis.delPattern(`proposals:*:${proposal.senderId}`);
+    await redis.delPattern(`proposals:*:${proposal.receiverId}`);
 
     // Notify sender
     await prisma.notification.create({
@@ -225,10 +336,22 @@ export class ProposalService {
         userId: proposal.senderId,
         type: "PROPOSAL",
         title: "Counter Offer Received",
-        message: `${updated.receiver.name} sent a counter offer`,
+        message: `${updated.receiver.name} sent a counter offer: ₹${data.pricePerUnit} per unit`,
         metadata: JSON.stringify({ proposalId }),
       },
     });
+
+    // Real-time notification
+    try {
+      const socketService = getSocketService();
+      socketService.emitProposalUpdate(proposal.senderId, {
+        proposalId,
+        status: 'COUNTER',
+        message: `Counter offer: ₹${data.pricePerUnit} per unit`,
+      });
+    } catch (err) {
+      console.warn('[Socket] Counter offer notification failed:', err);
+    }
 
     return updated;
   }

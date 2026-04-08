@@ -1,0 +1,257 @@
+import request from 'supertest';
+import app from '../../app';
+import prisma from '../../prisma/client';
+
+describe('Buyer API Integration Tests', () => {
+  let authToken: string;
+  let buyerId: string;
+
+  beforeAll(async () => {
+    // Create test buyer user
+    const response = await request(app)
+      .post('/auth/register')
+      .send({
+        email: 'testbuyer@example.com',
+        password: 'Test123!@#',
+        name: 'Test Buyer',
+        role: 'BUYER',
+        phone: '9876543210',
+        state: 'Maharashtra',
+        district: 'Mumbai'
+      });
+
+    authToken = response.body.token;
+    buyerId = response.body.user.id;
+  });
+
+  afterAll(async () => {
+    // Cleanup test data
+    await prisma.user.deleteMany({
+      where: { email: 'testbuyer@example.com' }
+    });
+    await prisma.$disconnect();
+  });
+
+  describe('Supplier APIs', () => {
+    it('should get suppliers list', async () => {
+      const response = await request(app)
+        .get('/buyer/suppliers')
+        .set('Authorization', `Bearer ${authToken}`)
+        .expect(200);
+
+      expect(response.body).toHaveProperty('suppliers');
+      expect(response.body).toHaveProperty('pagination');
+      expect(Array.isArray(response.body.suppliers)).toBe(true);
+    });
+
+    it('should filter suppliers by district', async () => {
+      const response = await request(app)
+        .get('/buyer/suppliers?district=Pune')
+        .set('Authorization', `Bearer ${authToken}`)
+        .expect(200);
+
+      expect(response.body.suppliers).toBeDefined();
+    });
+
+    it('should return 401 without auth token', async () => {
+      await request(app)
+        .get('/buyer/suppliers')
+        .expect(401);
+    });
+  });
+
+  describe('Bid APIs', () => {
+    let bidId: string;
+
+    it('should create a new bid', async () => {
+      const response = await request(app)
+        .post('/buyer/bids')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({
+          productId: 'test-product-id',
+          quantity: 100,
+          pricePerUnit: 450,
+          validUntil: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+          notes: 'Test bid'
+        })
+        .expect(201);
+
+      expect(response.body).toHaveProperty('bid');
+      expect(response.body.bid).toHaveProperty('id');
+      bidId = response.body.bid.id;
+    });
+
+    it('should get bids list', async () => {
+      const response = await request(app)
+        .get('/buyer/bids')
+        .set('Authorization', `Bearer ${authToken}`)
+        .expect(200);
+
+      expect(response.body).toHaveProperty('bids');
+      expect(Array.isArray(response.body.bids)).toBe(true);
+    });
+
+    it('should get bid by id', async () => {
+      if (!bidId) return;
+
+      const response = await request(app)
+        .get(`/buyer/bids/${bidId}`)
+        .set('Authorization', `Bearer ${authToken}`)
+        .expect(200);
+
+      expect(response.body).toHaveProperty('bid');
+      expect(response.body.bid.id).toBe(bidId);
+    });
+
+    it('should update bid', async () => {
+      if (!bidId) return;
+
+      const response = await request(app)
+        .put(`/buyer/bids/${bidId}`)
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({
+          pricePerUnit: 460
+        })
+        .expect(200);
+
+      expect(response.body.bid.pricePerUnit).toBe(460);
+    });
+  });
+
+  describe('Pre-Booking APIs', () => {
+    it('should get pre-bookings list', async () => {
+      const response = await request(app)
+        .get('/buyer/pre-bookings')
+        .set('Authorization', `Bearer ${authToken}`)
+        .expect(200);
+
+      expect(response.body).toHaveProperty('preBookings');
+      expect(Array.isArray(response.body.preBookings)).toBe(true);
+    });
+
+    it('should create pre-booking', async () => {
+      const response = await request(app)
+        .post('/buyer/pre-bookings')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({
+          bulkProductId: 'test-product-id',
+          quantity: 500,
+          pricePerUnit: 450,
+          targetDate: new Date('2024-12-01'),
+          notes: 'Test pre-booking'
+        })
+        .expect(201);
+
+      expect(response.body).toHaveProperty('preBooking');
+    });
+  });
+
+  describe('Order Tracking APIs', () => {
+    it('should get orders list', async () => {
+      const response = await request(app)
+        .get('/buyer/orders')
+        .set('Authorization', `Bearer ${authToken}`)
+        .expect(200);
+
+      expect(response.body).toHaveProperty('orders');
+      expect(Array.isArray(response.body.orders)).toBe(true);
+    });
+  });
+
+  describe('Escrow APIs', () => {
+    it('should get escrow orders', async () => {
+      const response = await request(app)
+        .get('/buyer/escrow')
+        .set('Authorization', `Bearer ${authToken}`)
+        .expect(200);
+
+      expect(response.body).toHaveProperty('escrows');
+      expect(Array.isArray(response.body.escrows)).toBe(true);
+    });
+  });
+
+  describe('Blockchain APIs', () => {
+    it('should get blockchain transactions', async () => {
+      const response = await request(app)
+        .get('/buyer/blockchain/transactions')
+        .set('Authorization', `Bearer ${authToken}`)
+        .expect(200);
+
+      expect(response.body).toHaveProperty('transactions');
+      expect(Array.isArray(response.body.transactions)).toBe(true);
+    });
+  });
+
+  describe('Analytics APIs', () => {
+    it('should get behavior analytics', async () => {
+      const response = await request(app)
+        .get('/buyer/analytics/behavior?days=30')
+        .set('Authorization', `Bearer ${authToken}`)
+        .expect(200);
+
+      expect(response.body).toHaveProperty('analytics');
+    });
+
+    it('should get insights', async () => {
+      const response = await request(app)
+        .get('/buyer/analytics/insights')
+        .set('Authorization', `Bearer ${authToken}`)
+        .expect(200);
+
+      expect(response.body).toHaveProperty('insights');
+      expect(Array.isArray(response.body.insights)).toBe(true);
+    });
+  });
+
+  describe('Security APIs', () => {
+    it('should get security status', async () => {
+      const response = await request(app)
+        .get('/buyer/security/status')
+        .set('Authorization', `Bearer ${authToken}`)
+        .expect(200);
+
+      expect(response.body).toHaveProperty('status');
+    });
+
+    it('should get security events', async () => {
+      const response = await request(app)
+        .get('/buyer/security/events')
+        .set('Authorization', `Bearer ${authToken}`)
+        .expect(200);
+
+      expect(response.body).toHaveProperty('events');
+      expect(Array.isArray(response.body.events)).toBe(true);
+    });
+
+    it('should get sessions', async () => {
+      const response = await request(app)
+        .get('/buyer/security/sessions')
+        .set('Authorization', `Bearer ${authToken}`)
+        .expect(200);
+
+      expect(response.body).toHaveProperty('sessions');
+      expect(Array.isArray(response.body.sessions)).toBe(true);
+    });
+  });
+
+  describe('Reputation APIs', () => {
+    it('should get reputation', async () => {
+      const response = await request(app)
+        .get('/buyer/reputation')
+        .set('Authorization', `Bearer ${authToken}`)
+        .expect(200);
+
+      expect(response.body).toHaveProperty('reputation');
+    });
+
+    it('should get reputation history', async () => {
+      const response = await request(app)
+        .get('/buyer/reputation/history')
+        .set('Authorization', `Bearer ${authToken}`)
+        .expect(200);
+
+      expect(response.body).toHaveProperty('history');
+      expect(Array.isArray(response.body.history)).toBe(true);
+    });
+  });
+});

@@ -283,7 +283,7 @@ export function TenderParticipation() {
   ];
 
   const tabs = [
-    { id: 'overview', label: 'Overview', icon: BarChart3 },
+    { id: 'overview', label: 'Tender Overview', icon: BarChart3 },
     { id: 'marketplace', label: 'Marketplace', icon: Globe },
     { id: 'mybids', label: 'My Bids', icon: FileText },
     { id: 'won', label: 'Won Tenders', icon: Award },
@@ -349,7 +349,7 @@ export function TenderParticipation() {
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex items-center gap-2 px-5 py-3 rounded-xl font-black text-xs uppercase whitespace-nowrap transition-all ${
                   activeTab === tab.id
-                    ? 'bg-brand-primary text-white shadow-lg scale-105'
+                    ? 'bg-emerald-600 text-white shadow-lg scale-105'
                     : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
                 }`}
               >

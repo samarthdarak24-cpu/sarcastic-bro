@@ -26,12 +26,12 @@ export class AIController {
         const socketService = getSocketService();
         const userId = (req as any).user?.id;
         if (userId) {
-          socketService.emitQualityScanResult(userId, {
-            productName: product_name,
+          socketService.emitQualityScanComplete(userId, {
+            scanId: `scan-${Date.now()}`,
+            productId: `product-${Date.now()}`,
             grade: result.grade,
             score: result.score,
             defects: result.defects,
-            timestamp: new Date()
           });
         }
       } catch (err) {

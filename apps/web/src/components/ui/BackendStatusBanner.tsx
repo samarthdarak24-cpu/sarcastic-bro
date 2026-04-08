@@ -39,10 +39,10 @@ export default function BackendStatusBanner() {
           </div>
           <div className="ml-3 flex-1">
             <p className="text-sm text-yellow-700 font-medium">
-              Backend API is not running - Using mock authentication
+              ⚠️ Backend API is offline - Automatic fallback to mock authentication enabled
             </p>
             <p className="mt-1 text-xs text-yellow-600">
-              To use real database authentication, start the backend server:
+              You can still login with demo credentials. To use real database:
             </p>
             <div className="mt-2 bg-yellow-100 rounded px-3 py-2">
               <code className="text-xs text-yellow-800">
@@ -52,6 +52,14 @@ export default function BackendStatusBanner() {
             <p className="mt-2 text-xs text-yellow-600">
               Or double-click: <span className="font-semibold">start-backend.bat</span>
             </p>
+            <div className="mt-3 flex items-center gap-2">
+              <button
+                onClick={checkBackendStatus}
+                className="text-xs bg-yellow-200 hover:bg-yellow-300 text-yellow-800 px-3 py-1 rounded transition-colors"
+              >
+                🔄 Retry Connection
+              </button>
+            </div>
           </div>
           <button
             onClick={() => setShowBanner(false)}

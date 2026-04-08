@@ -3,17 +3,33 @@ import { io, Socket } from "socket.io-client";
 const SOCKET_URL = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || "http://localhost:3001";
 
 let socket: Socket | null = null;
+const getAuthFromStorage = (): { token?: string; userId?: string } => {
+  if (typeof window === 'undefined') return {};
+
+  try {
+    const token = localStorage.getItem('token') || undefined;
+    const userRaw = localStorage.getItem('user');
+    const userId = userRaw ? JSON.parse(userRaw)?.id : undefined;
+    if (token) return { token, userId };
+  } catch {}
+
+  // Backward compatibility with older auth store format
+  try {
+    const raw = localStorage.getItem('auth-storage');
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    return {
+      token: parsed?.state?.token,
+      userId: parsed?.state?.user?.id
+    };
+  } catch {
+    return {};
+  }
+};
 
 export const getSocket = (): Socket => {
   if (!socket || !socket.connected) {
-    // Get token safely without calling hooks outside React
-    let token: string | undefined;
-    try {
-      if (typeof window !== 'undefined') {
-        const raw = localStorage.getItem('auth-storage');
-        if (raw) token = JSON.parse(raw)?.state?.token;
-      }
-    } catch {}
+    const { token, userId } = getAuthFromStorage();
 
     socket = io(SOCKET_URL, {
       auth: { token },
@@ -26,16 +42,8 @@ export const getSocket = (): Socket => {
 
     socket.on("connect", () => {
       console.log("[Socket] ✅ Connected:", socket?.id);
-      // Auto-join user room
-      try {
-        if (typeof window !== 'undefined') {
-          const raw = localStorage.getItem('auth-storage');
-          if (raw) {
-            const userId = JSON.parse(raw)?.state?.user?.id;
-            if (userId) socket?.emit('join-user-room', userId);
-          }
-        }
-      } catch {}
+      // Optional explicit join for compatibility with older event handlers.
+      if (userId) socket?.emit('join-user-room', userId);
     });
 
     socket.on("disconnect", (reason) => {
@@ -43,8 +51,10 @@ export const getSocket = (): Socket => {
     });
 
     socket.on("connect_error", (err) => {
-      console.warn("[Socket] Connection error:", err.message);
-      // Don't throw error, just log it
+      // Silently handle connection errors - this is normal when not authenticated
+      if (err.message !== 'websocket error') {
+        console.warn("[Socket] Connection error:", err.message);
+      }
     });
 
     socket.on("error", (err) => {

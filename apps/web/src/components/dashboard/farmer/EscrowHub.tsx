@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   ShieldCheck, 
@@ -40,35 +40,33 @@ export function EscrowHub() {
     { id: 'refund-management', icon: TrendingUp, label: 'Refund Manager', color: 'pink' },
     { id: 'compliance-tracking', icon: Award, label: 'Compliance Tracking', color: 'amber' }
   ];
-  const mockEscrowTransactions = [
-    { 
-      id: "ESC-9218", 
-      buyer: "Global Foods Corp", 
-      amount: "₹4,25,000", 
-      status: "Held in Escrow",
-      releaseCondition: "Delivery Confirmation",
-      date: "Nov 04, 2024",
-      urgent: true
-    },
-    { 
-      id: "ESC-8152", 
-      buyer: "Eco-Harvest Markets", 
-      amount: "₹1,28,000", 
-      status: "Released",
-      releaseCondition: "Quality Inspection Pass",
-      date: "Nov 01, 2024",
-      urgent: false
-    },
-    { 
-      id: "ESC-7421", 
-      buyer: "Pioneer Agri-Trade", 
-      amount: "₹92,000", 
-      status: "Pending Deposit",
-      releaseCondition: "Contract Signing",
-      date: "Oct 28, 2024",
-      urgent: false
-    }
-  ];
+  const [escrows, setEscrows] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchEscrow = async () => {
+      try {
+        const response = await fetch('http://localhost:8000/api/v1/trust/escrow/MY_ORDER');
+        const data = await response.json();
+        setEscrows([{
+          id: data.order_id,
+          buyer: "Global Foods Corp",
+          amount: `₹${data.amount.toLocaleString()}`,
+          status: data.status,
+          releaseCondition: "Delivery Confirmation",
+          date: new Date(data.last_updated).toLocaleDateString(),
+          urgent: data.status.includes('Locked')
+        }]);
+      } catch (error) {
+        console.error('Escrow fetch error:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchEscrow();
+    const interval = setInterval(fetchEscrow, 5000); // 5s sync
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-emerald-50 to-teal-50 p-6">
@@ -181,7 +179,7 @@ export function EscrowHub() {
                   className="space-y-4"
                 >
                   <div className="space-y-6">
-                    {mockEscrowTransactions.map((tx, i) => (
+                    {escrows.map((tx: any, i: number) => (
                       <motion.div
                         key={tx.id}
                         initial={{ opacity: 0, x: -20 }}

@@ -1,98 +1,179 @@
-import api from './api';
+import axios from 'axios';
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 
 export interface Shipment {
   id: string;
+  shipmentNumber: string;
   orderId: string;
-  trackingNumber: string;
-  carrier: string;
-  status: 'PENDING' | 'PICKED_UP' | 'IN_TRANSIT' | 'OUT_FOR_DELIVERY' | 'DELIVERED' | 'FAILED';
+  status: 'PENDING' | 'IN_TRANSIT' | 'DELIVERED' | 'DELAYED' | 'CANCELLED';
   origin: string;
   destination: string;
-  estimatedDelivery?: string;
+  carrier: string;
+  trackingNumber: string;
+  estimatedDelivery: string;
   actualDelivery?: string;
-  updates: ShipmentUpdate[];
+  currentLocation?: string;
+  distance: number;
+  weight: number;
+  temperature?: number;
+  humidity?: number;
+  items: ShipmentItem[];
+  timeline: TimelineEvent[];
   createdAt: string;
+  updatedAt: string;
+  dispatchedAt?: string;
+  deliveredAt?: string;
 }
 
-export interface ShipmentUpdate {
+export interface ShipmentItem {
+  id: string;
+  productName: string;
+  quantity: number;
+  unit: string;
+  weight: number;
+}
+
+export interface TimelineEvent {
+  id: string;
   timestamp: string;
-  status: string;
   location: string;
-  message: string;
+  status: string;
+  description: string;
 }
 
-export const logisticsService = {
-  // Get all shipments
-  async getAll(): Promise<{ shipments: Shipment[] }> {
-    const response = await api.get('/logistics');
-    return response.data.data || response.data;
-  },
+export interface LogisticsStats {
+  totalShipments: number;
+  pendingShipments: number;
+  inTransitShipments: number;
+  deliveredShipments: number;
+  delayedShipments: number;
+  onTimeDeliveryRate: number;
+  avgDeliveryTime: number;
+  totalDistance: number;
+}
 
-  // Get all shipments (alias)
-  async getShipments(): Promise<Shipment[]> {
-    const response = await api.get('/logistics');
-    return response.data;
-  },
-
-  // Get single shipment
-  async getShipment(id: string): Promise<Shipment> {
-    const response = await api.get(`/logistics/${id}`);
-    return response.data;
-  },
-
-  // Track shipment by tracking number
-  async trackShipment(trackingNumber: string): Promise<Shipment> {
-    const response = await api.get(`/logistics/track/${trackingNumber}`);
-    return response.data;
-  },
-
-  // Create shipment
-  async create(data: {
-    orderId: string;
-    provider?: string;
-    carrier?: string;
-    fromLocation?: string;
-    toLocation?: string;
-    origin?: string;
-    destination?: string;
-    temperature?: string;
-    humidity?: string;
-  }): Promise<Shipment> {
-    const response = await api.post('/logistics', {
-      orderId: data.orderId,
-      carrier: data.provider || data.carrier || 'BlueDart Express',
-      origin: data.fromLocation || data.origin || 'Farm Location',
-      destination: data.toLocation || data.destination || 'Buyer Location',
-      temperature: data.temperature,
-      humidity: data.humidity
-    });
-    return response.data.data || response.data;
-  },
-
-  // Create shipment (alias)
-  async createShipment(data: {
-    orderId: string;
-    carrier: string;
-    origin: string;
-    destination: string;
-  }): Promise<Shipment> {
-    const response = await api.post('/logistics', data);
-    return response.data;
-  },
-
-  // Update shipment status
-  async updateShipmentStatus(id: string, data: {
-    status: Shipment['status'];
-    location: string;
-    message: string;
-  }): Promise<Shipment> {
-    const response = await api.patch(`/logistics/${id}/status`, data);
-    return response.data;
-  },
-
-  // Get logistics analytics
-  async getLogisticsAnalytics(): Promise<any> {
-    const response = await api.get('/logistics/analytics');
-    return response.data;
+class LogisticsService {
+  private getAuthHeaders() {
+    const token = localStorage.getItem('token');
+    return {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    };
   }
-};
+
+  async getAllShipments(filter?: { status?: string }): Promise<Shipment[]> {
+    try {
+      const params = new URLSearchParams();
+      if (filter?.status) params.append('status', filter.status);
+
+      const response = await axios.get(
+        `${API_BASE_URL}/logistics/shipments?${params.toString()}`,
+        this.getAuthHeaders()
+      );
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching shipments:', error);
+      throw error;
+    }
+  }
+
+  async getShipmentById(id: string): Promise<Shipment> {
+    try {
+      const response = await axios.get(
+        `${API_BASE_URL}/logistics/shipments/${id}`,
+        this.getAuthHeaders()
+      );
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching shipment:', error);
+      throw error;
+    }
+  }
+
+  async createShipment(shipment: Partial<Shipment>): Promise<Shipment> {
+    try {
+      const response = await axios.post(
+        `${API_BASE_URL}/logistics/shipments`,
+        shipment,
+        this.getAuthHeaders()
+      );
+      return response.data;
+    } catch (error) {
+      console.error('Error creating shipment:', error);
+      throw error;
+    }
+  }
+
+  async updateShipment(id: string, updates: Partial<Shipment>): Promise<Shipment> {
+    try {
+      const response = await axios.put(
+        `${API_BASE_URL}/logistics/shipments/${id}`,
+        updates,
+        this.getAuthHeaders()
+      );
+      return response.data;
+    } catch (error) {
+      console.error('Error updating shipment:', error);
+      throw error;
+    }
+  }
+
+  async updateShipmentStatus(id: string, status: Shipment['status'], location?: string): Promise<Shipment> {
+    try {
+      const response = await axios.post(
+        `${API_BASE_URL}/logistics/shipments/${id}/status`,
+        { status, location },
+        this.getAuthHeaders()
+      );
+      return response.data;
+    } catch (error) {
+      console.error('Error updating shipment status:', error);
+      throw error;
+    }
+  }
+
+  async trackShipment(trackingNumber: string): Promise<Shipment> {
+    try {
+      const response = await axios.get(
+        `${API_BASE_URL}/logistics/track/${trackingNumber}`,
+        this.getAuthHeaders()
+      );
+      return response.data;
+    } catch (error) {
+      console.error('Error tracking shipment:', error);
+      throw error;
+    }
+  }
+
+  async getLogisticsStats(): Promise<LogisticsStats> {
+    try {
+      const response = await axios.get(
+        `${API_BASE_URL}/logistics/stats`,
+        this.getAuthHeaders()
+      );
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching logistics stats:', error);
+      throw error;
+    }
+  }
+
+  async cancelShipment(id: string, reason: string): Promise<Shipment> {
+    try {
+      const response = await axios.post(
+        `${API_BASE_URL}/logistics/shipments/${id}/cancel`,
+        { reason },
+        this.getAuthHeaders()
+      );
+      return response.data;
+    } catch (error) {
+      console.error('Error canceling shipment:', error);
+      throw error;
+    }
+  }
+}
+
+export const logisticsService = new LogisticsService();

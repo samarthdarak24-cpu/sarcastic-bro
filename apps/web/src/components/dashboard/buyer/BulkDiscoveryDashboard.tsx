@@ -9,6 +9,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { AreaChart, Area, ResponsiveContainer, Tooltip } from 'recharts';
 import { aggregationService } from '@/services/aggregationService';
+import { buyerEscrowService } from '@/services/buyerEscrowService';
 import toast from 'react-hot-toast';
 
 interface BulkLot {
@@ -47,6 +48,8 @@ export default function BulkDiscoveryDashboard() {
 
   useEffect(() => {
     loadBulkLots();
+    const timer = setInterval(loadBulkLots, 5000); // 5s Real-time sync
+    return () => clearInterval(timer);
   }, [selectedFilters]);
 
   const loadBulkLots = async () => {
@@ -66,6 +69,24 @@ export default function BulkDiscoveryDashboard() {
     } catch (error) {
       console.error('Error loading bulk lots:', error);
       toast.error('Failed to load bulk lots');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePlaceOrder = async (lot: any) => {
+    try {
+      setLoading(true);
+      await buyerEscrowService.createEscrow({
+        order_id: 'MY_ORDER',
+        farmer_id: 'FARMER_A',
+        amount: lot.totalQuantity * lot.pricePerKg
+      } as any);
+      toast.success('Funds Locked in Escrow! Farmer notified.');
+      setSelectedLot(null);
+    } catch (error) {
+      console.error('Order error:', error);
+      toast.error('Failed to initiate escrow');
     } finally {
       setLoading(false);
     }
@@ -331,7 +352,7 @@ export default function BulkDiscoveryDashboard() {
             <div className="mb-6">
               <div className="text-sm font-bold text-slate-700 mb-3">Top Contributors</div>
               <div className="space-y-2">
-                {(lot.topFarmers || []).slice(0, 2).map((farmer, idx) => (
+                {(lot.topFarmers || []).slice(0, 2).map((farmer: any, idx: number) => (
                   <div key={idx} className="flex items-center justify-between text-sm">
                     <span className="text-slate-600 font-medium">{farmer.name}</span>
                     <span className="text-slate-900 font-bold">{farmer.contribution}%</span>
@@ -412,7 +433,10 @@ export default function BulkDiscoveryDashboard() {
                 </div>
               </div>
 
-              <button className="w-full h-14 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-xl font-bold text-white text-lg hover:shadow-lg hover:shadow-emerald-500/30 transition-all">
+              <button 
+                onClick={() => handlePlaceOrder(selectedLot)}
+                className="w-full h-14 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-xl font-bold text-white text-lg hover:shadow-lg hover:shadow-emerald-500/30 transition-all"
+              >
                 Place Order for ₹{(selectedLot.totalQuantity * selectedLot.pricePerKg).toLocaleString()}
               </button>
             </motion.div>

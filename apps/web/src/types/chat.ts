@@ -18,7 +18,9 @@ export interface QuickAction {
   label: string;
   query: string;
   icon?: string;
-  category?: 'price' | 'quality' | 'market' | 'help';
+  category?: 'price' | 'quality' | 'market' | 'help' | 'order';
+  action?: 'navigate' | 'message' | 'callback';
+  payload?: any;
 }
 
 export interface ChatSession {

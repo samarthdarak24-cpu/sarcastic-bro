@@ -1,60 +1,118 @@
-import { Request, Response } from "express";
+/* ========================================================================
+   Review Controller — HTTP handlers for reviews and ratings
+   ======================================================================== */
+
+import type { Request, Response } from "express";
 import { ReviewService } from "./review.service";
-import { sendCreated, sendSuccess, sendPaginated } from "../../utils/response";
+import { sendSuccess, sendCreated } from "../../utils/response";
+
+export interface AuthRequest extends Request {
+  user?: {
+    userId: string;
+    email: string;
+    role: string;
+  };
+}
 
 export class ReviewController {
-  static async createReview(req: Request, res: Response) {
-    const { targetId, productId, rating, comment } = req.body;
-    const review = await ReviewService.createReview(req.user!.userId, {
-      targetId,
-      productId,
-      rating,
-      comment,
-    });
-    return sendCreated(res, review, "Review published");
+  /**
+   * POST /reviews
+   * Create a new review
+   */
+  static async createReview(req: AuthRequest, res: Response) {
+    try {
+      const { targetId, productId, rating, comment } = req.body;
+      const authorId = req.user?.userId;
+
+      if (!authorId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+
+      if (!rating || rating < 1 || rating > 5) {
+        return res.status(400).json({ error: "Rating must be between 1 and 5" });
+      }
+
+      const review = await ReviewService.createReview({
+        authorId,
+        targetId,
+        productId,
+        rating,
+        comment,
+      });
+
+      return sendCreated(res, review, "Review created successfully");
+    } catch (error: any) {
+      return res.status(400).json({ error: error.message });
+    }
   }
 
-  static async getReviews(req: Request, res: Response) {
-    const { userId, page = "1", limit = "20" } = req.query;
-    const result = await ReviewService.getReviews(userId as string, {
-      page: Number(page),
-      limit: Number(limit),
-    });
-    return sendPaginated(res, result.reviews, result.total, Number(page), Number(limit));
+  /**
+   * GET /reviews/user/:userId
+   * Get reviews for a user
+   */
+  static async getReviews(req: AuthRequest, res: Response) {
+    try {
+      const { userId } = req.params;
+
+      const reviews = await ReviewService.getReviews(userId);
+      return sendSuccess(res, reviews, "Reviews retrieved");
+    } catch (error: any) {
+      return res.status(400).json({ error: error.message });
+    }
   }
 
-  static async getProductReviews(req: Request, res: Response) {
-    const { page = "1", limit = "20" } = req.query;
-    const result = await ReviewService.getProductReviews(req.params.productId, {
-      page: Number(page),
-      limit: Number(limit),
-    });
-    return sendPaginated(res, result.reviews, result.total, Number(page), Number(limit));
+  /**
+   * GET /reviews/product/:productId
+   * Get reviews for a product
+   */
+  static async getProductReviews(req: AuthRequest, res: Response) {
+    try {
+      const { productId } = req.params;
+
+      const reviews = await ReviewService.getProductReviews(productId);
+      return sendSuccess(res, reviews, "Product reviews retrieved");
+    } catch (error: any) {
+      return res.status(400).json({ error: error.message });
+    }
   }
 
-  static async updateReview(req: Request, res: Response) {
-    const { rating, comment } = req.body;
-    const review = await ReviewService.updateReview(req.params.reviewId, req.user!.userId, {
-      rating,
-      comment,
-    });
-    return sendSuccess(res, review, "Review updated");
+  /**
+   * PATCH /reviews/:reviewId
+   * Update a review
+   */
+  static async updateReview(req: AuthRequest, res: Response) {
+    try {
+      const { reviewId } = req.params;
+      const authorId = req.user?.userId;
+
+      if (!authorId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+
+      const review = await ReviewService.updateReview(reviewId, authorId, req.body);
+      return sendSuccess(res, review, "Review updated");
+    } catch (error: any) {
+      return res.status(400).json({ error: error.message });
+    }
   }
 
-  static async deleteReview(req: Request, res: Response) {
-    await ReviewService.deleteReview(req.params.reviewId, req.user!.userId);
-    return sendSuccess(res, null, "Review deleted");
-  }
+  /**
+   * DELETE /reviews/:reviewId
+   * Delete a review
+   */
+  static async deleteReview(req: AuthRequest, res: Response) {
+    try {
+      const { reviewId } = req.params;
+      const authorId = req.user?.userId;
 
-  static async addReview(req: Request, res: Response) {
-    const { productId } = req.params;
-    const data = req.body;
-    const review = await ReviewService.createReview(req.user!.userId, {
-      targetId: data.targetId,
-      productId,
-      rating: data.rating,
-      comment: data.comment,
-    });
-    return sendCreated(res, review, "Review added successfully");
+      if (!authorId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+
+      await ReviewService.deleteReview(reviewId, authorId);
+      return sendSuccess(res, null, "Review deleted");
+    } catch (error: any) {
+      return res.status(400).json({ error: error.message });
+    }
   }
 }

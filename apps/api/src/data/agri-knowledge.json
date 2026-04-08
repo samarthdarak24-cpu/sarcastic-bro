@@ -1,0 +1,36 @@
+{
+  "crops": {
+    "wheat": {
+      "season": "Rabi",
+      "sowing_month": "October-December",
+      "harvest_month": "February-May",
+      "temp_range": "10-25°C",
+      "major_producers": ["Uttar Pradesh", "Punjab", "Haryana"],
+      "price_range_per_quintal": "₹2100 - ₹2500"
+    },
+    "rice": {
+      "season": "Kharif",
+      "sowing_month": "June-July",
+      "harvest_month": "November-December",
+      "temp_range": "20-35°C",
+      "major_producers": ["West Bengal", "Uttar Pradesh", "Punjab"],
+      "price_range_per_quintal": "₹2200 - ₹2800"
+    },
+    "tomato": {
+      "season": "Year-round",
+      "shelf_life": "7-10 days",
+      "diseases": ["Early Blight", "Late Blight", "Fusarium Wilt"],
+      "price_volatility": "High"
+    }
+  },
+  "export_regions": {
+    "europe": ["Organic Grapes", "Mangoes", "Onions"],
+    "middle_east": ["Basmati Rice", "Mutton", "Processed Vegetables"],
+    "southeast_asia": ["Maize", "Cotton", "Spices"]
+  },
+  "platform_tools": {
+    "PriceAdvisor": "Predicts future mandi prices using historical trends.",
+    "QualityScan": "AI-based grading of produce via image uploads.",
+    "BlockchainTrace": "End-to-end traceability for export compliance."
+  }
+}

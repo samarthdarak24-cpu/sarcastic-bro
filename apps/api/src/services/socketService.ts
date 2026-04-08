@@ -204,6 +204,187 @@ export class SocketService {
   }
 
   /**
+   * Emit bid update (buyer-specific)
+   */
+  emitBidUpdate(userId: string, data: {
+    bidId: string;
+    status: string;
+    counterOfferPrice?: number;
+    message?: string;
+  }) {
+    this.io.to(`user:${userId}`).emit('bid:update', {
+      ...data,
+      timestamp: new Date()
+    });
+    console.log(`[Socket] Bid update sent to user:${userId}`, data);
+  }
+
+  /**
+   * Emit counter offer (buyer-specific)
+   */
+  emitCounterOffer(userId: string, data: {
+    bidId: string;
+    counterOfferPrice: number;
+    message?: string;
+  }) {
+    this.io.to(`user:${userId}`).emit('bid:counter-offer', {
+      ...data,
+      timestamp: new Date()
+    });
+    console.log(`[Socket] Counter offer sent to user:${userId}`, data);
+  }
+
+  /**
+   * Emit order location update (buyer-specific)
+   */
+  emitOrderLocationUpdate(userId: string, data: {
+    orderId: string;
+    location: string;
+    lat?: number;
+    lng?: number;
+    status: string;
+  }) {
+    this.io.to(`user:${userId}`).emit('order:location-update', {
+      ...data,
+      timestamp: new Date()
+    });
+    console.log(`[Socket] Order location update sent to user:${userId}`, data);
+  }
+
+  /**
+   * Emit pre-booking accepted (buyer-specific)
+   */
+  emitPreBookingAccepted(userId: string, data: {
+    preBookingId: string;
+    productName: string;
+    quantity: number;
+    targetDate: Date;
+  }) {
+    this.io.to(`user:${userId}`).emit('pre-booking:accepted', {
+      ...data,
+      timestamp: new Date()
+    });
+    console.log(`[Socket] Pre-booking accepted sent to user:${userId}`, data);
+  }
+
+  /**
+   * Emit chat response (buyer-specific)
+   */
+  emitChatResponse(userId: string, data: {
+    message: string;
+    context?: any;
+  }) {
+    this.io.to(`user:${userId}`).emit('chat:response', {
+      ...data,
+      timestamp: new Date()
+    });
+    console.log(`[Socket] Chat response sent to user:${userId}`);
+  }
+
+  /**
+   * Emit reputation score change (buyer-specific)
+   */
+  emitReputationChange(userId: string, data: {
+    oldScore: number;
+    newScore: number;
+    change: number;
+    reason: string;
+  }) {
+    this.io.to(`user:${userId}`).emit('reputation:change', {
+      ...data,
+      timestamp: new Date()
+    });
+    console.log(`[Socket] Reputation change sent to user:${userId}`, data);
+  }
+
+  /**
+   * Emit blockchain transaction confirmed (buyer-specific)
+   */
+  emitBlockchainTxConfirmed(userId: string, data: {
+    txId: string;
+    txHash: string;
+    type: string;
+    blockNumber: number;
+  }) {
+    this.io.to(`user:${userId}`).emit('blockchain:tx-confirmed', {
+      ...data,
+      timestamp: new Date()
+    });
+    console.log(`[Socket] Blockchain tx confirmed sent to user:${userId}`, data);
+  }
+
+  /**
+   * Emit bulk trade matched (buyer-specific)
+   */
+  emitBulkTradeMatched(userId: string, data: {
+    tradeId: string;
+    supplierIds: string[];
+    productName: string;
+    quantity: number;
+  }) {
+    this.io.to(`user:${userId}`).emit('bulk-trade:matched', {
+      ...data,
+      timestamp: new Date()
+    });
+    console.log(`[Socket] Bulk trade matched sent to user:${userId}`, data);
+  }
+
+  /**
+   * Emit to specific user
+   */
+  emitToUser(userId: string, event: string, data: any) {
+    this.io.to(`user:${userId}`).emit(event, {
+      ...data,
+      timestamp: new Date()
+    });
+    console.log(`[Socket] Event ${event} sent to user:${userId}`, data);
+  }
+
+  /**
+   * Emit AI chat chunk for streaming
+   */
+  emitAIChatChunk(userId: string, data: {
+    sessionId: string;
+    content: string;
+    type: 'content' | 'metadata' | 'done' | 'error';
+    metadata?: any;
+  }) {
+    this.io.to(`user:${userId}`).emit('ai-chat-chunk', {
+      ...data,
+      timestamp: new Date()
+    });
+  }
+
+  /**
+   * Emit AI chat response completion
+   */
+  emitAIChatResponse(userId: string, data: {
+    sessionId: string;
+    response: string;
+    suggestions?: string[];
+    metadata?: any;
+  }) {
+    this.io.to(`user:${userId}`).emit('ai-chat-response', {
+      ...data,
+      timestamp: new Date()
+    });
+    console.log(`[Socket] AI chat response sent to user:${userId}`);
+  }
+
+  /**
+   * Emit conversation cleared event
+   */
+  emitConversationCleared(userId: string, data: {
+    sessionId: string;
+  }) {
+    this.io.to(`user:${userId}`).emit('conversation-cleared', {
+      ...data,
+      timestamp: new Date()
+    });
+    console.log(`[Socket] Conversation cleared for user:${userId}`, data);
+  }
+
+  /**
    * Broadcast system announcement
    */
   broadcastAnnouncement(data: {

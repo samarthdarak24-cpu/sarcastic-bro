@@ -12,10 +12,14 @@ const router = Router();
 
 router.use(authMiddleware);
 
-// Order endpoints
+// Order endpoints — static paths MUST come before /:id
+router.get("/stats",        asyncHandler(OrderController.getStats));
+router.post("/bulk-status", asyncHandler(OrderController.bulkStatusUpdate));
+
 router.post("/",           asyncHandler(OrderController.create));
 router.get("/",            asyncHandler(OrderController.getAll));
 router.get("/:id",         asyncHandler(OrderController.getById));
+router.get("/:id/history", asyncHandler(OrderController.getHistory));
 router.patch("/:id/status", asyncHandler(OrderController.updateStatus));
 router.delete("/:id",      asyncHandler(OrderController.cancel));
 

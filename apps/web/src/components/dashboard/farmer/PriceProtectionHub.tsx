@@ -18,7 +18,7 @@ export function PriceProtectionHub() {
   const [refreshing, setRefreshing] = useState(false);
 
   const tabs = [
-    { id: 'overview', label: 'Overview', icon: Activity },
+    { id: 'overview', label: 'Policy Overview', icon: Activity },
     { id: 'create-policy', label: 'New Policy', icon: Plus },
     { id: 'active-policies', label: 'Active', icon: ShieldCheck },
     { id: 'claims', label: 'Claims', icon: DollarSign },
@@ -91,7 +91,7 @@ export function PriceProtectionHub() {
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex items-center gap-2 px-5 py-3 rounded-xl font-black text-xs uppercase whitespace-nowrap transition-all ${
                   activeTab === tab.id
-                    ? 'bg-brand-primary text-white shadow-lg scale-105'
+                    ? 'bg-emerald-600 text-white shadow-lg scale-105'
                     : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
                 }`}
               >
@@ -282,7 +282,7 @@ export function PriceProtectionHub() {
                           </div>
                           <div className="text-right">
                             <p className="text-4xl font-black text-green-600 mb-2">₹{claim.amount.toLocaleString()}</p>
-                            <Badge tone={claim.status === 'PAID' ? 'brand' : 'default'}>
+                            <Badge tone={claim.status === 'PAID' ? 'brand' : 'ink'}>
                               {claim.status}
                             </Badge>
                           </div>
@@ -419,7 +419,7 @@ export function PriceProtectionHub() {
                         </div>
                         <div className="text-right">
                           <p className="text-xl font-black text-slate-900 mb-1">₹{item.coverage.toLocaleString()}</p>
-                          <Badge tone="default">{item.status}</Badge>
+                          <Badge tone="ink">{item.status}</Badge>
                         </div>
                       </div>
                     ))}

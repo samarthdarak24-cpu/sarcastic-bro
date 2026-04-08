@@ -103,7 +103,9 @@ export function EasyMode() {
             <p className="mt-12 font-black text-6xl text-neut-900 tracking-tighter z-10 transition-all">
                {isListening ? "Listening..." : language === 'Hindi' ? "बोलने के लिए दबाएं" : "Hold to Speak"}
             </p>
-            <p className="text-neut-300 font-black mt-6 z-10 uppercase tracking-[0.4em] text-xs">ODOP Voice AI Layer 1.0</p>
+            <p className="text-neut-300 font-black mt-6 z-10 uppercase tracking-[0.4em] text-xs">
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 via-green-300 to-teal-400 animate-pulse">FarmGuard</span> Voice AI Layer 1.0
+            </p>
          </div>
 
          {/* ⚡ Strategic Accessibility Grid */}

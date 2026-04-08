@@ -1,10 +1,15 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { ChatMessage, QuickAction } from '@/types/chat';
-import { chatWidgetService, StreamChunk } from '@/services/chatWidgetService';
+import { chatWidgetService } from '@/services/chatWidgetService';
+import { useTextToSpeech } from '@/hooks/useTextToSpeech';
+import { useChatWidgetStore } from '@/store/chatWidgetStore';
+import { useProactiveNotifications } from '@/hooks/useProactiveNotifications';
 import FloatingButton from './FloatingButton';
 import ChatPanel from './ChatPanel';
+import ProactiveNotification from './ProactiveNotification';
 
 interface ChatWidgetProps {
   initialExpanded?: boolean;
@@ -15,19 +20,59 @@ interface ChatWidgetProps {
 
 export default function ChatWidget({
   initialExpanded = false,
+  enableProactiveNotifications = true,
   position = 'bottom-right',
 }: ChatWidgetProps) {
-  const [isExpanded, setIsExpanded] = useState(initialExpanded);
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const router = useRouter();
+  // Zustand store
+  const {
+    isExpanded: storeExpanded,
+    messages: storeMessages,
+    unreadCount,
+    preferences,
+    setExpanded,
+    addMessage,
+    clearHistory,
+    setPreferences,
+  } = useChatWidgetStore();
+
   const [isLoading, setIsLoading] = useState(false);
   const [quickActions, setQuickActions] = useState<QuickAction[]>([]);
-  const [unreadCount] = useState(0);
   const [showSlowConnectionWarning, setShowSlowConnectionWarning] = useState(false);
   const [streamingMessage, setStreamingMessage] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [errorState, setErrorState] = useState<{type: string; message: string} | null>(null);
+  const [language, setLanguage] = useState<'en' | 'hi' | 'mr'>(preferences.preferredLanguage);
+  const [voiceEnabled, setVoiceEnabled] = useState(preferences.soundEnabled);
   
   const slowConnectionTimerRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Proactive notifications
+  const { notification, dismissNotification } = useProactiveNotifications({
+    enabled: enableProactiveNotifications,
+  });
+  
+  // Text-to-Speech hook
+  const { speak, stop, isSpeaking, isSupported: ttsSupported } = useTextToSpeech({
+    language,
+    rate: 1.0,
+    pitch: 1.0,
+    volume: 1.0,
+  });
+
+  // Sync language preference
+  useEffect(() => {
+    if (language !== preferences.preferredLanguage) {
+      setPreferences({ preferredLanguage: language });
+    }
+  }, [language, preferences.preferredLanguage, setPreferences]);
+
+  // Sync voice preference
+  useEffect(() => {
+    if (voiceEnabled !== preferences.soundEnabled) {
+      setPreferences({ soundEnabled: voiceEnabled });
+    }
+  }, [voiceEnabled, preferences.soundEnabled, setPreferences]);
 
   useEffect(() => {
     const checkAuth = (): void => {
@@ -41,7 +86,43 @@ export default function ChatWidget({
   }, []);
 
   const toggleExpanded = (): void => {
-    setIsExpanded(!isExpanded);
+    setExpanded(!storeExpanded);
+    // Stop speaking when closing chat
+    if (storeExpanded && isSpeaking) {
+      stop();
+    }
+  };
+  
+  const toggleVoice = (): void => {
+    setVoiceEnabled(!voiceEnabled);
+    // Stop speaking if disabling voice
+    if (voiceEnabled && isSpeaking) {
+      stop();
+    }
+  };
+
+  const handleClearHistory = (): void => {
+    clearHistory();
+    if (isSpeaking) {
+      stop();
+    }
+  };
+
+  const handleAcceptNotification = (): void => {
+    setExpanded(true);
+    if (notification?.context) {
+      handleSendMessage(notification.context);
+    }
+  };
+
+  const handleActionClick = (action: QuickAction): void => {
+    if (action.action === 'navigate' && action.payload) {
+      router.push(action.payload);
+      return;
+    }
+    
+    // Default: send the query as a message
+    handleSendMessage(action.query);
   };
 
   const handleSendMessage = async (text: string): Promise<void> => {
@@ -54,7 +135,7 @@ export default function ChatWidget({
       timestamp: new Date(),
     };
 
-    setMessages((prev) => [...prev, userMessage]);
+    addMessage(userMessage);
     setIsLoading(true);
     setShowSlowConnectionWarning(false);
     setStreamingMessage('');
@@ -74,6 +155,7 @@ export default function ChatWidget({
         userType: user?.role as 'FARMER' | 'BUYER' | undefined,
         location: (user?.district || user?.state) as string | undefined,
         currentPage: typeof window !== 'undefined' ? window.location.pathname : undefined,
+        language,
       };
 
       let fullResponse = '';
@@ -83,7 +165,7 @@ export default function ChatWidget({
       try {
         for await (const chunk of chatWidgetService.sendMessageStream({
           message: text,
-          conversationHistory: messages,
+          conversationHistory: storeMessages,
           userContext,
         })) {
           if (chunk.type === 'metadata') {
@@ -110,13 +192,14 @@ export default function ChatWidget({
 
       // Use fallback if no response or error occurred
       if (!fullResponse || hasError) {
-        const fallback = chatWidgetService.getIntelligentFallback(text, userContext);
+        const fallback = await chatWidgetService.getIntelligentFallback(text, userContext);
         fullResponse = fallback.response;
         metadata = {
           intent: fallback.intent,
           confidence: fallback.confidence,
           suggestions: fallback.suggestions,
-        };
+          actions: fallback.actions,
+        } as any;
         setErrorState(null); // Clear error since fallback works
       }
 
@@ -132,10 +215,17 @@ export default function ChatWidget({
         },
       };
 
-      setMessages((prev) => [...prev, assistantMessage]);
+      addMessage(assistantMessage);
       
-      if (metadata.suggestions && metadata.suggestions.length > 0) {
-        setQuickActions(metadata.suggestions.map((s, i) => ({
+      // Speak the response if voice is enabled
+      if (voiceEnabled && ttsSupported && fullResponse) {
+        speak(fullResponse);
+      }
+      
+      if (metadata.actions && metadata.actions.length > 0) {
+        setQuickActions(metadata.actions);
+      } else if (metadata.suggestions && metadata.suggestions.length > 0) {
+        setQuickActions(metadata.suggestions.map((s: string, i: number) => ({
           id: `action-${i}`,
           label: s,
           query: s,
@@ -152,9 +242,10 @@ export default function ChatWidget({
         name: user?.name as string | undefined,
         userType: user?.role as 'FARMER' | 'BUYER' | undefined,
         location: (user?.district || user?.state) as string | undefined,
+        language,
       };
       
-      const fallback = chatWidgetService.getIntelligentFallback(text, userContext);
+      const fallback = await chatWidgetService.getIntelligentFallback(text, userContext);
       
       const errorMessage: ChatMessage = {
         id: (Date.now() + 1).toString(),
@@ -168,10 +259,17 @@ export default function ChatWidget({
         },
       };
       
-      setMessages((prev) => [...prev, errorMessage]);
+      addMessage(errorMessage);
       
-      if (fallback.suggestions && fallback.suggestions.length > 0) {
-        setQuickActions(fallback.suggestions.map((s, i) => ({
+      // Speak the fallback response if voice is enabled
+      if (voiceEnabled && ttsSupported && fallback.response) {
+        speak(fallback.response);
+      }
+      
+      if (fallback.actions && fallback.actions.length > 0) {
+        setQuickActions(fallback.actions);
+      } else if (fallback.suggestions && fallback.suggestions.length > 0) {
+        setQuickActions(fallback.suggestions.map((s: string, i: number) => ({
           id: `action-${i}`,
           label: s,
           query: s,
@@ -193,23 +291,40 @@ export default function ChatWidget({
 
   return (
     <>
+      {notification && (
+        <ProactiveNotification
+          message={notification.message}
+          onDismiss={dismissNotification}
+          onAccept={handleAcceptNotification}
+        />
+      )}
+      
       <FloatingButton
         onClick={toggleExpanded}
         unreadCount={unreadCount}
-        isExpanded={isExpanded}
+        isExpanded={storeExpanded}
         position={position}
       />
-      {isExpanded && (
+      
+      {storeExpanded && (
         <ChatPanel
-          messages={messages}
+          messages={storeMessages}
           isLoading={isLoading}
           quickActions={quickActions}
           onSendMessage={handleSendMessage}
+          onActionClick={handleActionClick}
           onClose={toggleExpanded}
           userRole="FARMER"
           showSlowConnectionWarning={showSlowConnectionWarning}
           streamingMessage={streamingMessage}
           errorState={errorState}
+          language={language}
+          onLanguageChange={setLanguage}
+          voiceEnabled={voiceEnabled}
+          onToggleVoice={toggleVoice}
+          isSpeaking={isSpeaking}
+          ttsSupported={ttsSupported}
+          onClearHistory={handleClearHistory}
         />
       )}
     </>

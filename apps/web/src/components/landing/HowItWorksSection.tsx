@@ -1,17 +1,20 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { useTranslation } from "react-i18next";
 
 export function HowItWorksSection() {
+  const { t } = useTranslation();
+
   const steps = [
-    { icon: "📝", title: "Sign Up", desc: "Create account in 2 minutes", color: "#22c55e" },
-    { icon: "📦", title: "List Products", desc: "Add crops with AI grading", color: "#0ea5e9" },
-    { icon: "🤝", title: "Connect", desc: "Match with buyers instantly", color: "#f59e0b" },
-    { icon: "💰", title: "Get Paid", desc: "Secure blockchain payments", color: "#22c55e" },
+    { icon: "📝", title: t("landing.process.step1_title"), desc: t("landing.process.step1_desc"), color: "#22c55e" },
+    { icon: "Box", title: t("landing.process.step2_title"), desc: t("landing.process.step2_desc"), color: "#0ea5e9" },
+    { icon: "🤝", title: t("landing.process.step3_title"), desc: t("landing.process.step3_desc"), color: "#f59e0b" },
+    { icon: "💰", title: t("landing.process.step4_title"), desc: t("landing.process.step4_desc"), color: "#22c55e" },
   ];
 
   return (
-    <section className="py-20 bg-white relative">
+    <section id="how-it-works" className="py-20 bg-white relative">
       <div className="max-w-6xl mx-auto px-6">
         {/* Section Heading */}
         <motion.div
@@ -28,14 +31,14 @@ export function HowItWorksSection() {
             className="inline-block mb-4"
           >
             <div className="px-4 py-2 bg-blue-100 text-blue-700 rounded-full text-sm font-bold">
-              🚀 Simple Process
+              🚀 {t("landing.process.badge")}
             </div>
           </motion.div>
           <h2 className="text-4xl md:text-5xl font-black text-gray-900 mb-4">
-            How It Works
+            {t("landing.process.title")}
           </h2>
           <p className="text-lg text-gray-600">
-            Start selling in 4 easy steps
+            {t("landing.process.subtitle")}
           </p>
         </motion.div>
 
@@ -82,7 +85,7 @@ export function HowItWorksSection() {
                     }}
                     className="text-6xl mb-4"
                   >
-                    {step.icon}
+                    {step.icon === "Box" ? "📦" : step.icon}
                   </motion.div>
 
                   {/* Title */}

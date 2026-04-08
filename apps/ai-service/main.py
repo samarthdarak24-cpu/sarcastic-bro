@@ -53,7 +53,26 @@ from models import (
     RotationResponse,
     TrustScoreRequest,
     TrustScoreResponse,
+    ChatMessage,
+    ContextAwareChatRequest,
+    ChatResponse,
 )
+
+# Import additional routers from app directory
+simple_chat_router = None
+trust_router = None
+
+try:
+    from app.routers import simple_chat_router
+    print("✅ simple_chat_router loaded")
+except Exception as e:
+    print(f"⚠️ simple_chat_router failed to import: {e}")
+
+try:
+    from app.routers import trust_router
+    print("✅ trust_router loaded")
+except Exception as e:
+    print(f"⚠️ trust_router failed to import: {e}")
 
 # Import services
 from services.quality_grade_service import QualityGradeService
@@ -65,6 +84,7 @@ from services.negotiation_service import NegotiationService
 from services.pricing_service import PricingService
 from services.soil_service import SoilService
 from services.trust_service import TrustService
+from services.chat_service import chat_service
 from services.inference_service import inference_engine
 
 
@@ -131,6 +151,12 @@ app.add_middleware(
 
 # Add GZIP compression middleware
 app.add_middleware(GZipMiddleware, minimum_size=1000)
+
+# Include additional routers
+if simple_chat_router:
+    app.include_router(simple_chat_router.router)
+if trust_router:
+    app.include_router(trust_router.router)
 
 
 # ============================================================================
@@ -703,6 +729,82 @@ async def get_trust_score(
 
 
 # ============================================================================
+# CONTEXT-AWARE AI CHAT ENDPOINTS
+# ============================================================================
+
+@app.post(
+    "/ai/chat/context-aware",
+    response_model=ChatResponse,
+    status_code=status.HTTP_200_OK,
+    tags=["AI Assistant"],
+    summary="Intelligent Context-Aware Chat",
+    description="Intelligent chat system with deep agricultural knowledge and context awareness.",
+)
+async def chat_context_aware(
+    request: ContextAwareChatRequest = Body(
+        ...,
+        example={
+            "message": "What is the best price for my wheat in Nashik?",
+            "user_type": "FARMER",
+            "user_context": {"location": "Nashik", "name": "Rajesh Kumar"},
+        },
+    ),
+):
+    """
+    Intelligent chat endpoint for all user types.
+    """
+    try:
+        logger.info(f"Context-aware chat started: {request.message[:50]}...")
+        
+        # Call the chat expert engine
+        response = await chat_service.get_response(request)
+        
+        logger.info(f"Chat response generated - Intent: {response.intent}")
+        return response
+    except Exception as e:
+        logger.error(f"Error in context-aware chat: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to generate AI response",
+        )
+
+
+@app.post(
+    "/ai/chat/stream",
+    tags=["AI Assistant"],
+    summary="Streaming AI Response",
+)
+async def chat_stream(
+    request: ContextAwareChatRequest = Body(...),
+):
+    """
+    Streaming AI response - simulated for now by returning the full response 
+    to maintain compatibility with the EventStream client.
+    """
+    from fastapi.responses import StreamingResponse
+    import json
+    import asyncio
+
+    async def event_generator():
+        try:
+            response = await chat_service.get_response(request)
+            # Break response into chunks to simulate 'typing'
+            chunk_size = 5
+            words = response.response.split()
+            
+            for i in range(0, len(words), chunk_size):
+                chunk_text = " ".join(words[i:i + chunk_size]) + " "
+                yield f"data: {json.dumps({'content': chunk_text})}\n\n"
+                await asyncio.sleep(0.05)
+                
+            yield f"data: {json.dumps({'suggestions': response.suggestions, 'intent': response.intent, 'done': True})}\n\n"
+        except Exception as e:
+            yield f"data: {json.dumps({'error': str(e)})}\n\n"
+
+    return StreamingResponse(event_generator(), media_type="text/event-stream")
+
+
+# ============================================================================
 # ROOT ENDPOINT
 # ============================================================================
 
@@ -737,6 +839,7 @@ async def root():
             "dynamic_pricing": "/ai/pricing/dynamic",
             "crop_rotation": "/ai/crop-rotation",
             "trust_score": "/ai/trust-score",
+            "chat_context": "/ai/chat/context-aware",
             "docs": "/docs",
             "redoc": "/redoc",
         },

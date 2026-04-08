@@ -1,67 +1,70 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { useTranslation } from "react-i18next";
 
 export function KeyFeaturesSection() {
+  const { t } = useTranslation();
+
   const features = [
     { 
       icon: "🤖", 
-      title: "AI Quality Grading",
-      description: "Instant crop analysis",
+      title: t("landing.features.f1_title"),
+      description: t("landing.features.f1_desc"),
       gradient: "from-emerald-500 to-green-600"
     },
     { 
       icon: "💬", 
-      title: "Real-time Chat",
-      description: "Connect instantly",
+      title: t("landing.features.f2_title"),
+      description: t("landing.features.f2_desc"),
       gradient: "from-blue-500 to-cyan-600"
     },
     { 
       icon: "⛓️", 
-      title: "Blockchain Verified",
-      description: "Transparent tracking",
+      title: t("landing.features.f3_title"),
+      description: t("landing.features.f3_desc"),
       gradient: "from-purple-500 to-indigo-600"
     },
     { 
       icon: "🚚", 
-      title: "Smart Logistics",
-      description: "Optimized delivery",
+      title: t("landing.features.f4_title"),
+      description: t("landing.features.f4_desc"),
       gradient: "from-orange-500 to-red-600"
     },
     { 
       icon: "📈", 
-      title: "Demand Forecast",
-      description: "Predict market trends",
+      title: t("landing.features.f5_title"),
+      description: t("landing.features.f5_desc"),
       gradient: "from-pink-500 to-rose-600"
     },
     { 
       icon: "🔒", 
-      title: "Secure Payments",
-      description: "Safe transactions",
+      title: t("landing.features.f6_title"),
+      description: t("landing.features.f6_desc"),
       gradient: "from-teal-500 to-cyan-600"
     },
     { 
       icon: "📊", 
-      title: "Analytics",
-      description: "Data-driven insights",
+      title: t("landing.features.f7_title"),
+      description: t("landing.features.f7_desc"),
       gradient: "from-violet-500 to-purple-600"
     },
     { 
       icon: "🌍", 
-      title: "Multilingual",
-      description: "Speak your language",
+      title: t("landing.features.f8_title"),
+      description: t("landing.features.f8_desc"),
       gradient: "from-sky-500 to-blue-600"
     },
     { 
       icon: "🏪", 
-      title: "Direct Marketplace",
-      description: "No middlemen",
+      title: t("landing.features.f9_title"),
+      description: t("landing.features.f9_desc"),
       gradient: "from-amber-500 to-orange-600"
     },
   ];
 
   return (
-    <section className="py-24 bg-gradient-to-b from-white via-slate-50 to-white relative overflow-hidden">
+    <section id="features" className="py-24 bg-gradient-to-b from-white via-slate-50 to-white relative overflow-hidden">
       {/* Subtle Background Pattern */}
       <div className="absolute inset-0 opacity-[0.03]">
         <div className="absolute inset-0" style={{
@@ -87,14 +90,14 @@ export function KeyFeaturesSection() {
             className="inline-block mb-6"
           >
             <span className="px-5 py-2 bg-gradient-to-r from-green-500 to-emerald-500 text-white text-sm font-bold rounded-full shadow-lg">
-              ✨ Powerful Features
+              ✨ {t("landing.features.badge")}
             </span>
           </motion.div>
           <h2 className="text-4xl md:text-5xl lg:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 mb-4">
-            Everything You Need
+            {t("landing.features.title")}
           </h2>
           <p className="text-lg md:text-xl text-slate-600 max-w-2xl mx-auto">
-            Built for modern agricultural commerce
+            {t("landing.features.subtitle")}
           </p>
         </motion.div>
 
@@ -102,7 +105,7 @@ export function KeyFeaturesSection() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {features.map((feature, index) => (
             <motion.div
-              key={feature.title}
+              key={index}
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}

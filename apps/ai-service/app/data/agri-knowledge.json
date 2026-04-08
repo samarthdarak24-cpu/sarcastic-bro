@@ -1,0 +1,90 @@
+[
+  {
+    "title": "Crop Rotation Principles",
+    "content": "Crop rotation involves growing different types of crops in the same area across different seasons or years. This practice helps break pest and disease cycles, improves soil fertility, and reduces the need for chemical inputs. A typical rotation might include legumes (nitrogen-fixing), cereals (heavy feeders), and root crops (soil breakers).",
+    "category": "farming_practices",
+    "crops": ["wheat", "corn", "soybeans", "potatoes", "rice"],
+    "benefits": ["pest_control", "soil_health", "nutrient_management"],
+    "season": "all_seasons"
+  },
+  {
+    "title": "Integrated Pest Management (IPM)",
+    "content": "IPM is an ecosystem-based strategy that focuses on long-term prevention of pests through biological control, habitat manipulation, modification of cultural practices, and use of resistant varieties. Pesticides are used only after monitoring indicates they are needed according to established guidelines.",
+    "category": "pest_management",
+    "methods": ["biological_control", "cultural_control", "mechanical_control", "chemical_control"],
+    "target_pests": ["aphids", "caterpillars", "beetles", "mites", "nematodes"],
+    "effectiveness": "high"
+  },
+  {
+    "title": "Soil pH Management",
+    "content": "Soil pH affects nutrient availability to plants. Most crops prefer slightly acidic to neutral pH (6.0-7.0). Acidic soils can be amended with lime, while alkaline soils may need sulfur or organic matter. Regular soil testing is essential for proper pH management.",
+    "category": "soil_management",
+    "optimal_ph": {"wheat": "6.0-7.5", "corn": "6.0-6.8", "soybeans": "6.0-7.0", "rice": "5.5-6.5"},
+    "amendments": {"acidic": ["lime", "wood_ash"], "alkaline": ["sulfur", "organic_matter"]},
+    "testing_frequency": "annually"
+  },
+  {
+    "title": "Water Management Techniques",
+    "content": "Efficient water management includes proper irrigation scheduling, mulching, and water conservation practices. Drip irrigation and sprinkler systems can improve water use efficiency. Monitoring soil moisture helps determine optimal irrigation timing.",
+    "category": "water_management",
+    "techniques": ["drip_irrigation", "sprinkler_irrigation", "mulching", "rainwater_harvesting"],
+    "crops": ["tomatoes", "peppers", "lettuce", "strawberries"],
+    "water_savings": "30-50%"
+  },
+  {
+    "title": "Organic Fertilizer Benefits",
+    "content": "Organic fertilizers improve soil structure, increase water retention, and provide slow-release nutrients. Common organic fertilizers include compost, manure, bone meal, and fish emulsion. They support beneficial soil microorganisms and long-term soil health.",
+    "category": "fertilization",
+    "types": ["compost", "manure", "bone_meal", "fish_emulsion", "kelp_meal"],
+    "nutrients": {"nitrogen": "slow_release", "phosphorus": "available", "potassium": "gradual"},
+    "application_rate": "varies_by_type"
+  },
+  {
+    "title": "Companion Planting Strategies",
+    "content": "Companion planting involves growing different plants together for mutual benefit. Some plants repel pests, others attract beneficial insects, and some improve soil nutrients. Classic examples include tomatoes with basil, corn with beans and squash (Three Sisters), and marigolds with vegetables.",
+    "category": "farming_practices",
+    "combinations": {
+      "tomatoes": ["basil", "marigolds", "peppers"],
+      "corn": ["beans", "squash"],
+      "carrots": ["onions", "chives"],
+      "lettuce": ["radishes", "herbs"]
+    },
+    "benefits": ["pest_control", "space_efficiency", "nutrient_sharing"]
+  },
+  {
+    "title": "Seasonal Planting Calendar",
+    "content": "Timing is crucial for successful crop production. Cool-season crops like lettuce, peas, and broccoli are planted in early spring or fall. Warm-season crops like tomatoes, peppers, and corn are planted after the last frost. Understanding your local climate zone is essential.",
+    "category": "planting_schedule",
+    "cool_season": ["lettuce", "peas", "broccoli", "spinach", "kale"],
+    "warm_season": ["tomatoes", "peppers", "corn", "beans", "squash"],
+    "planting_zones": "varies_by_location",
+    "frost_considerations": "critical"
+  },
+  {
+    "title": "Post-Harvest Handling",
+    "content": "Proper post-harvest handling maintains crop quality and extends shelf life. This includes proper harvesting timing, cleaning, cooling, and storage. Different crops have specific requirements for temperature, humidity, and storage duration.",
+    "category": "post_harvest",
+    "steps": ["harvesting", "cleaning", "cooling", "packaging", "storage"],
+    "storage_conditions": {
+      "leafy_greens": {"temp": "32-35°F", "humidity": "95-98%"},
+      "root_vegetables": {"temp": "32-40°F", "humidity": "90-95%"},
+      "fruits": {"temp": "varies", "humidity": "85-95%"}
+    }
+  },
+  {
+    "title": "Market Price Factors",
+    "content": "Agricultural commodity prices are influenced by supply and demand, weather conditions, global markets, transportation costs, and seasonal patterns. Understanding these factors helps farmers make better marketing decisions and timing for sales.",
+    "category": "market_insights",
+    "price_factors": ["supply_demand", "weather", "global_markets", "transportation", "seasonality"],
+    "marketing_strategies": ["direct_sales", "farmers_markets", "CSA", "wholesale", "processing"],
+    "timing_importance": "high"
+  },
+  {
+    "title": "Sustainable Farming Practices",
+    "content": "Sustainable agriculture focuses on producing food while protecting the environment, supporting farmers, and strengthening communities. Key practices include cover cropping, reduced tillage, integrated pest management, and biodiversity conservation.",
+    "category": "sustainability",
+    "practices": ["cover_cropping", "reduced_tillage", "biodiversity", "water_conservation", "soil_health"],
+    "environmental_benefits": ["carbon_sequestration", "erosion_control", "water_quality", "wildlife_habitat"],
+    "economic_benefits": ["reduced_inputs", "premium_markets", "long_term_productivity"]
+  }
+]

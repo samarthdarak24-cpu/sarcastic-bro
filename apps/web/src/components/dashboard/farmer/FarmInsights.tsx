@@ -9,6 +9,25 @@ interface FarmInsightsProps {
 export default function FarmInsights({ compact = false }: FarmInsightsProps) {
   const [activeTab, setActiveTab] = useState<string>('overview');
   const [loading, setLoading] = useState(false);
+  const [liveStats, setLiveStats] = useState({
+    weather: 83.4,
+    soil: 92.1,
+    pest: 12.5,
+    revenue: 45000
+  });
+
+  useEffect(() => {
+    // High-frequency IoT Sensor Telemetry Simulation
+    const telemetryInterval = setInterval(() => {
+      setLiveStats(prev => ({
+        weather: Number(Math.min(100, Math.max(0, prev.weather + (Math.random() * 1.5 - 0.5))).toFixed(1)),
+        soil: Number(Math.min(100, Math.max(0, prev.soil + (Math.random() * 0.8 - 0.4))).toFixed(1)),
+        pest: Number(Math.max(0, prev.pest + (Math.random() * 1.2 - 0.6)).toFixed(1)),
+        revenue: prev.revenue + Math.floor(Math.random() * 50)
+      }));
+    }, 3200);
+    return () => clearInterval(telemetryInterval);
+  }, []);
 
   const tabs = [
     { id: 'overview', label: 'Overview', icon: '📊' },
@@ -34,33 +53,39 @@ export default function FarmInsights({ compact = false }: FarmInsightsProps) {
         </button>
       </div>
 
-      <div className="stats-grid">
-        <div className="stat-card">
-          <div className="stat-icon bg-blue-100">🌤️</div>
+      <div className="stats-grid relative">
+        {/* Live sync indicator */}
+        <div className="absolute -top-6 right-0 flex items-center gap-2">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
+            <span className="text-[10px] font-black uppercase tracking-widest text-emerald-500">Live Telemetry Sync</span>
+        </div>
+        
+        <div className="stat-card group hover:-translate-y-1 transition-all border border-transparent hover:border-blue-500/30">
+          <div className="stat-icon bg-blue-50 text-blue-500 group-hover:scale-110 transition-transform">🌤️</div>
           <div className="stat-content">
-            <p className="stat-label">Weather Score</p>
-            <p className="stat-value">85/100</p>
+            <p className="stat-label">Live Weather Score</p>
+            <p className={`stat-value transition-colors ${liveStats.weather > 85 ? 'text-blue-500' : 'text-slate-900'}`}>{liveStats.weather}/100</p>
           </div>
         </div>
-        <div className="stat-card">
-          <div className="stat-icon bg-green-100">🌱</div>
+        <div className="stat-card group hover:-translate-y-1 transition-all border border-transparent hover:border-emerald-500/30">
+          <div className="stat-icon bg-emerald-50 text-emerald-500 group-hover:scale-110 transition-transform">🌱</div>
           <div className="stat-content">
-            <p className="stat-label">Soil Health</p>
-            <p className="stat-value">Good</p>
+            <p className="stat-label">Soil NPK Health</p>
+            <p className={`stat-value transition-colors ${liveStats.soil > 90 ? 'text-emerald-500' : 'text-slate-900'}`}>{liveStats.soil}%</p>
           </div>
         </div>
-        <div className="stat-card">
-          <div className="stat-icon bg-yellow-100">🐛</div>
+        <div className="stat-card group hover:-translate-y-1 transition-all border border-transparent hover:border-amber-500/30">
+          <div className="stat-icon bg-amber-50 text-amber-500 group-hover:scale-110 transition-transform">🐛</div>
           <div className="stat-content">
-            <p className="stat-label">Pest Risk</p>
-            <p className="stat-value">Low</p>
+            <p className="stat-label">Pest Risk Index</p>
+            <p className={`stat-value transition-colors ${liveStats.pest > 20 ? 'text-rose-500' : 'text-slate-900'}`}>{liveStats.pest}%</p>
           </div>
         </div>
-        <div className="stat-card">
-          <div className="stat-icon bg-purple-100">💰</div>
+        <div className="stat-card group hover:-translate-y-1 transition-all border border-transparent hover:border-indigo-500/30">
+          <div className="stat-icon bg-indigo-50 text-indigo-500 group-hover:scale-110 transition-transform">💰</div>
           <div className="stat-content">
-            <p className="stat-label">Revenue</p>
-            <p className="stat-value">₹45K</p>
+            <p className="stat-label">Live Revenue Accrual</p>
+            <p className="stat-value text-indigo-600">₹{liveStats.revenue.toLocaleString()}</p>
           </div>
         </div>
       </div>

@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Search, Filter, Star, MapPin, TrendingUp, Package, CheckCircle, Clock, Zap, Target, Award, Shield, ShoppingCart } from "lucide-react";
 import { productService } from "@/services/productService";
 import { orderService } from "@/services/orderService";
-import { usePriceUpdates } from "@/hooks/useSocket";
+import { usePriceUpdates, useProductCreated } from "@/hooks/useSocket";
 import { useRealtimeStore } from "@/store/realtimeStore";
 import toast from "react-hot-toast";
 
@@ -54,6 +54,13 @@ export function SourcingSpace() {
     ));
   });
 
+  useProductCreated((data) => {
+    toast.success(`New product available: ${data.name}!`, {
+      icon: '📦',
+    });
+    loadProducts(); // Refresh list to show the new product
+  });
+
   const loadProducts = async () => {
     try {
       setLoading(true);
@@ -80,9 +87,9 @@ export function SourcingSpace() {
       await orderService.createOrder({
         productId: selectedProduct.id,
         quantity: orderQuantity,
-        totalAmount: selectedProduct.price * orderQuantity,
-        deliveryAddress: "Default Address", // You can add address selection
+        shippingAddress: "Default Address", // You can add address selection
       });
+
 
       toast.success(`Order placed for ${selectedProduct.name}!`);
       setShowOrderModal(false);

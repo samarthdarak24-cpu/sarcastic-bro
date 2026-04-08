@@ -1,26 +1,17 @@
-/* ========================================================================
-   Proposal Routes — /proposals/*
-   ======================================================================== */
-
-import { Router } from "express";
-import { ProposalController } from "./proposal.controller";
-import { asyncHandler } from "../../utils/asyncHandler";
-import { authMiddleware } from "../../middleware/auth.middleware";
+import { Router, Request, Response } from 'express';
+import { ProposalController } from './proposal.controller';
+import { authMiddleware } from '../../middleware/auth.middleware';
 
 const router = Router();
 
+// Apply auth middleware to all routes
 router.use(authMiddleware);
 
-// Proposal endpoints
-router.post("/", asyncHandler(ProposalController.sendProposal));
-router.get("/", asyncHandler(ProposalController.getProposals));
-router.get("/:proposalId", asyncHandler(ProposalController.getProposal));
-router.patch("/:proposalId/accept", asyncHandler(ProposalController.acceptProposal));
-router.patch("/:proposalId/reject", asyncHandler(ProposalController.rejectProposal));
-router.post("/:proposalId/counter", asyncHandler(ProposalController.counterOffer));
-
-export default router;
-router.get("/",             asyncHandler(ProposalController.getAll));
-router.patch("/:id/respond", asyncHandler(ProposalController.respond));
+// Proposal routes
+router.post('/', ProposalController.create);
+router.get('/', ProposalController.getAll);
+router.get('/:id', ProposalController.getById);
+router.put('/:id', ProposalController.update);
+router.delete('/:id', ProposalController.delete);
 
 export default router;

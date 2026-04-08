@@ -1,0 +1,489 @@
+/* ========================================================================
+   Message and Chat System Integration Tests
+   Tests message sending, receiving, typing indicators, and read receipts
+   ======================================================================== */
+
+import request from "supertest";
+import app from "../src/app";
+
+describe("Message and Chat System", () => {
+  let farmerToken: string;
+  let buyerToken: string;
+  let farmerId: string;
+  let buyerId: string;
+  let messageId: string;
+  let conversationId: string;
+
+  // Setup: Create two users (farmer and buyer) for testing chat
+  beforeAll(async () => {
+    // Create farmer user
+    const farmerRes = await request(app)
+      .post("/auth/register")
+      .send({
+        name: "Test Farmer",
+        email: `farmer-chat-${Date.now()}@example.com`,
+        password: "Test@12345",
+        role: "FARMER",
+        district: "Pune",
+        state: "Maharashtra",
+      });
+    
+    expect(farmerRes.status).toBe(201);
+    farmerToken = farmerRes.body.data.tokens.accessToken;
+    farmerId = farmerRes.body.data.user.id;
+
+    // Create buyer user
+    const buyerRes = await request(app)
+      .post("/auth/register")
+      .send({
+        name: "Test Buyer",
+        email: `buyer-chat-${Date.now()}@example.com`,
+        password: "Test@12345",
+        role: "BUYER",
+        district: "Mumbai",
+        state: "Maharashtra",
+      });
+    
+    expect(buyerRes.status).toBe(201);
+    buyerToken = buyerRes.body.data.tokens.accessToken;
+    buyerId = buyerRes.body.data.user.id;
+  });
+
+  describe("Message Sending and Receiving", () => {
+    it("should send a text message from buyer to farmer", async () => {
+      const res = await request(app)
+        .post("/messages")
+        .set("Authorization", `Bearer ${buyerToken}`)
+        .send({
+          receiverId: farmerId,
+          content: "Hello! I'm interested in your products.",
+          type: "text",
+        });
+
+      expect(res.status).toBe(201);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data).toHaveProperty("id");
+      expect(res.body.data.content).toBe("Hello! I'm interested in your products.");
+      expect(res.body.data.type).toBe("text");
+      expect(res.body.data.senderId).toBe(buyerId);
+      expect(res.body.data.isRead).toBe(false);
+      
+      messageId = res.body.data.id;
+      conversationId = res.body.data.conversationId;
+    });
+
+    it("should send a reply from farmer to buyer", async () => {
+      const res = await request(app)
+        .post("/messages")
+        .set("Authorization", `Bearer ${farmerToken}`)
+        .send({
+          receiverId: buyerId,
+          content: "Thank you for your interest! What would you like to know?",
+          type: "text",
+        });
+
+      expect(res.status).toBe(201);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.senderId).toBe(farmerId);
+    });
+
+    it("should support image messages", async () => {
+      const res = await request(app)
+        .post("/messages")
+        .set("Authorization", `Bearer ${farmerToken}`)
+        .send({
+          receiverId: buyerId,
+          content: "Here's a photo of the product",
+          type: "image",
+          fileUrl: "https://example.com/product-image.jpg",
+        });
+
+      expect(res.status).toBe(201);
+      expect(res.body.data.type).toBe("image");
+      expect(res.body.data.fileUrl).toBe("https://example.com/product-image.jpg");
+    });
+
+    it("should support voice messages", async () => {
+      const res = await request(app)
+        .post("/messages")
+        .set("Authorization", `Bearer ${buyerToken}`)
+        .send({
+          receiverId: farmerId,
+          content: "Voice message transcription",
+          type: "voice",
+          fileUrl: "https://example.com/voice-message.mp3",
+        });
+
+      expect(res.status).toBe(201);
+      expect(res.body.data.type).toBe("voice");
+      expect(res.body.data.fileUrl).toBe("https://example.com/voice-message.mp3");
+    });
+
+    it("should reject message without receiverId", async () => {
+      const res = await request(app)
+        .post("/messages")
+        .set("Authorization", `Bearer ${buyerToken}`)
+        .send({
+          content: "This should fail",
+        });
+
+      expect(res.status).toBe(400);
+      expect(res.body.error).toContain("Receiver ID");
+    });
+
+    it("should reject message without content", async () => {
+      const res = await request(app)
+        .post("/messages")
+        .set("Authorization", `Bearer ${buyerToken}`)
+        .send({
+          receiverId: farmerId,
+        });
+
+      expect(res.status).toBe(400);
+      expect(res.body.error).toContain("content");
+    });
+
+    it("should reject anonymous message sending", async () => {
+      const res = await request(app)
+        .post("/messages")
+        .send({
+          receiverId: farmerId,
+          content: "This should fail",
+        });
+
+      expect(res.status).toBe(401);
+    });
+  });
+
+  describe("Conversation Management", () => {
+    it("should list conversations for buyer", async () => {
+      const res = await request(app)
+        .get("/messages/conversations")
+        .set("Authorization", `Bearer ${buyerToken}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(Array.isArray(res.body.data)).toBe(true);
+      expect(res.body.data.length).toBeGreaterThan(0);
+      
+      const conversation = res.body.data[0];
+      expect(conversation).toHaveProperty("conversationId");
+      expect(conversation).toHaveProperty("otherUser");
+      expect(conversation).toHaveProperty("lastMessage");
+      expect(conversation.otherUser.id).toBe(farmerId);
+    });
+
+    it("should list conversations for farmer", async () => {
+      const res = await request(app)
+        .get("/messages/conversations")
+        .set("Authorization", `Bearer ${farmerToken}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(Array.isArray(res.body.data)).toBe(true);
+      expect(res.body.data.length).toBeGreaterThan(0);
+      
+      const conversation = res.body.data[0];
+      expect(conversation.otherUser.id).toBe(buyerId);
+    });
+
+    it("should get conversation messages between buyer and farmer", async () => {
+      const res = await request(app)
+        .get(`/messages/conversation/${farmerId}`)
+        .set("Authorization", `Bearer ${buyerToken}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(Array.isArray(res.body.data)).toBe(true);
+      expect(res.body.data.length).toBeGreaterThan(0);
+      
+      const message = res.body.data[0];
+      expect(message).toHaveProperty("id");
+      expect(message).toHaveProperty("content");
+      expect(message).toHaveProperty("sender");
+    });
+
+    it("should support pagination with limit parameter", async () => {
+      const res = await request(app)
+        .get(`/messages/conversation/${farmerId}?limit=2`)
+        .set("Authorization", `Bearer ${buyerToken}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.length).toBeLessThanOrEqual(2);
+    });
+
+    it("should reject anonymous conversation access", async () => {
+      const res = await request(app)
+        .get("/messages/conversations");
+
+      expect(res.status).toBe(401);
+    });
+  });
+
+  describe("Read Receipts", () => {
+    it("should mark message as read", async () => {
+      const res = await request(app)
+        .put(`/messages/${messageId}/read`)
+        .set("Authorization", `Bearer ${farmerToken}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.message).toContain("marked as read");
+    });
+
+    it("should prevent sender from marking their own message as read", async () => {
+      // Buyer tries to mark their own message as read
+      const res = await request(app)
+        .put(`/messages/${messageId}/read`)
+        .set("Authorization", `Bearer ${buyerToken}`);
+
+      expect(res.status).toBe(500);
+      expect(res.body.error).toContain("Unauthorized");
+    });
+
+    it("should reject marking non-existent message as read", async () => {
+      const res = await request(app)
+        .put("/messages/non-existent-id/read")
+        .set("Authorization", `Bearer ${farmerToken}`);
+
+      expect(res.status).toBe(500);
+      expect(res.body.error).toContain("Message not found");
+    });
+  });
+
+  describe("Typing Indicators", () => {
+    it("should emit typing indicator", async () => {
+      const res = await request(app)
+        .post("/messages/typing")
+        .set("Authorization", `Bearer ${buyerToken}`)
+        .send({
+          conversationId: conversationId,
+          isTyping: true,
+        });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.message).toContain("Typing indicator sent");
+    });
+
+    it("should emit stop typing indicator", async () => {
+      const res = await request(app)
+        .post("/messages/typing")
+        .set("Authorization", `Bearer ${buyerToken}`)
+        .send({
+          conversationId: conversationId,
+          isTyping: false,
+        });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+    });
+
+    it("should reject typing indicator without conversationId", async () => {
+      const res = await request(app)
+        .post("/messages/typing")
+        .set("Authorization", `Bearer ${buyerToken}`)
+        .send({
+          isTyping: true,
+        });
+
+      expect(res.status).toBe(400);
+      expect(res.body.error).toContain("Conversation ID");
+    });
+
+    it("should reject typing indicator without isTyping boolean", async () => {
+      const res = await request(app)
+        .post("/messages/typing")
+        .set("Authorization", `Bearer ${buyerToken}`)
+        .send({
+          conversationId: conversationId,
+        });
+
+      expect(res.status).toBe(400);
+      expect(res.body.error).toContain("isTyping");
+    });
+  });
+
+  describe("Unread Count", () => {
+    it("should get unread message count for farmer", async () => {
+      const res = await request(app)
+        .get("/messages/unread-count")
+        .set("Authorization", `Bearer ${farmerToken}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data).toHaveProperty("unreadCount");
+      expect(typeof res.body.data.unreadCount).toBe("number");
+    });
+
+    it("should get unread message count for buyer", async () => {
+      const res = await request(app)
+        .get("/messages/unread-count")
+        .set("Authorization", `Bearer ${buyerToken}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data).toHaveProperty("unreadCount");
+    });
+
+    it("should reject anonymous unread count request", async () => {
+      const res = await request(app)
+        .get("/messages/unread-count");
+
+      expect(res.status).toBe(401);
+    });
+  });
+
+  describe("Message Search", () => {
+    it("should search messages by content", async () => {
+      const res = await request(app)
+        .get("/messages/search?q=interested")
+        .set("Authorization", `Bearer ${buyerToken}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(Array.isArray(res.body.data)).toBe(true);
+      
+      if (res.body.data.length > 0) {
+        const message = res.body.data[0];
+        expect(message).toHaveProperty("content");
+        expect(message.content.toLowerCase()).toContain("interested");
+      }
+    });
+
+    it("should search messages with limit parameter", async () => {
+      const res = await request(app)
+        .get("/messages/search?q=product&limit=5")
+        .set("Authorization", `Bearer ${farmerToken}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.length).toBeLessThanOrEqual(5);
+    });
+
+    it("should return empty array for non-matching search", async () => {
+      const res = await request(app)
+        .get("/messages/search?q=xyznonexistent123")
+        .set("Authorization", `Bearer ${buyerToken}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.data).toEqual([]);
+    });
+
+    it("should reject search without query parameter", async () => {
+      const res = await request(app)
+        .get("/messages/search")
+        .set("Authorization", `Bearer ${buyerToken}`);
+
+      expect(res.status).toBe(400);
+      expect(res.body.error).toContain("Search query");
+    });
+
+    it("should reject anonymous search", async () => {
+      const res = await request(app)
+        .get("/messages/search?q=test");
+
+      expect(res.status).toBe(401);
+    });
+  });
+
+  describe("Real-time Features", () => {
+    it("should create conversation automatically on first message", async () => {
+      // Create a new buyer for this test
+      const newBuyerRes = await request(app)
+        .post("/auth/register")
+        .send({
+          name: "New Buyer",
+          email: `newbuyer-${Date.now()}@example.com`,
+          password: "Test@12345",
+          role: "BUYER",
+        });
+      
+      const newBuyerToken = newBuyerRes.body.data.tokens.accessToken;
+      const newBuyerId = newBuyerRes.body.data.user.id;
+
+      // Send first message - should create conversation
+      const messageRes = await request(app)
+        .post("/messages")
+        .set("Authorization", `Bearer ${newBuyerToken}`)
+        .send({
+          receiverId: farmerId,
+          content: "First message to create conversation",
+        });
+
+      expect(messageRes.status).toBe(201);
+      expect(messageRes.body.data).toHaveProperty("conversationId");
+
+      // Verify conversation exists
+      const conversationsRes = await request(app)
+        .get("/messages/conversations")
+        .set("Authorization", `Bearer ${newBuyerToken}`);
+
+      expect(conversationsRes.status).toBe(200);
+      expect(conversationsRes.body.data.length).toBeGreaterThan(0);
+    });
+
+    it("should update conversation lastMessageAt on new message", async () => {
+      // Get current conversations
+      const beforeRes = await request(app)
+        .get("/messages/conversations")
+        .set("Authorization", `Bearer ${buyerToken}`);
+
+      const beforeTime = new Date(beforeRes.body.data[0].lastMessageAt);
+
+      // Wait a bit
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      // Send new message
+      await request(app)
+        .post("/messages")
+        .set("Authorization", `Bearer ${buyerToken}`)
+        .send({
+          receiverId: farmerId,
+          content: "Testing timestamp update",
+        });
+
+      // Get conversations again
+      const afterRes = await request(app)
+        .get("/messages/conversations")
+        .set("Authorization", `Bearer ${buyerToken}`);
+
+      const afterTime = new Date(afterRes.body.data[0].lastMessageAt);
+
+      expect(afterTime.getTime()).toBeGreaterThan(beforeTime.getTime());
+    });
+  });
+
+  describe("Error Handling", () => {
+    it("should handle invalid message ID gracefully", async () => {
+      const res = await request(app)
+        .put("/messages/invalid-id/read")
+        .set("Authorization", `Bearer ${farmerToken}`);
+
+      expect(res.status).toBe(500);
+      expect(res.body).toHaveProperty("error");
+    });
+
+    it("should handle invalid user ID in conversation endpoint", async () => {
+      const res = await request(app)
+        .get("/messages/conversation/invalid-user-id")
+        .set("Authorization", `Bearer ${buyerToken}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.data).toEqual([]);
+    });
+
+    it("should validate message type", async () => {
+      const res = await request(app)
+        .post("/messages")
+        .set("Authorization", `Bearer ${buyerToken}`)
+        .send({
+          receiverId: farmerId,
+          content: "Test message",
+          type: "invalid-type",
+        });
+
+      // Should still create message but default to 'text' or handle gracefully
+      expect([201, 400, 500]).toContain(res.status);
+    });
+  });
+});

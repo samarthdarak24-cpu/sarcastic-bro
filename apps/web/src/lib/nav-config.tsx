@@ -1,11 +1,9 @@
-import React from "react";
 import {
   LayoutDashboard,
   Package,
   Gavel,
   Truck,
   Search,
-  UserCircle,
   CreditCard,
   Target,
   MessageSquare,
@@ -19,10 +17,8 @@ import {
   Users,
   Award,
   Sparkles,
-  PieChart,
   Link2,
   Table,
-  Sprout,
   Shield,
   DollarSign,
   ShieldAlert,
@@ -33,59 +29,75 @@ import {
   Calendar,
   History,
   RotateCcw,
-  CheckCircle
+  CheckCircle,
+  Camera
 } from "lucide-react";
 
 // Use translation keys (nav.xxx) instead of hardcoded English labels
 // The DashboardLayout will resolve these via t(key)
 export const farmerNav = [
-  { label: "nav.farm_insights", href: "/farmer/dashboard", icon: <BarChart3 />, section: "Overview" },
-  { label: "nav.smart_product_hub", href: "/farmer/dashboard", icon: <Package />, section: "Inventory" },
-  { label: "nav.bulk_aggregation", href: "/farmer/dashboard", icon: <Layers />, section: "Bulk Aggregation" },
-  { label: "nav.market_intelligence", href: "/farmer/dashboard", icon: <Sparkles />, section: "Market Intelligence" },
-  { label: "nav.trust_identity", href: "/farmer/dashboard", icon: <Award />, section: "Reputation" },
-  { label: "nav.agripay_center", href: "/farmer/dashboard", icon: <CreditCard />, section: "Payments" },
-  { label: "nav.order_control", href: "/farmer/dashboard", icon: <ShoppingBag />, section: "Orders" },
-  { label: "nav.tender_bids", href: "/farmer/dashboard", icon: <Gavel />, section: "Tenders" },
-  { label: "nav.logistics_manager", href: "/farmer/dashboard", icon: <Truck />, section: "Logistics" },
-  { label: "nav.crop_advisor", href: "/farmer/dashboard", icon: <Sprout />, section: "Advisor" },
-  { label: "nav.ai_quality_shield", href: "/farmer/dashboard", icon: <ShieldCheck />, section: "Quality" },
-  { label: "nav.agrichat", href: "/farmer/dashboard", icon: <MessageSquare />, section: "Chat" },
-  { label: "nav.agri_intelligence", href: "/farmer/dashboard", icon: <Sparkles />, section: "AI Insights" },
-  { label: "nav.ai_price_advisor", href: "/farmer/dashboard", icon: <TrendingUp />, section: "Analytics" },
-  { label: "nav.price_protection", href: "/farmer/dashboard", icon: <Shield />, section: "Finance" },
-  { label: "nav.auto_sell_rules", href: "/farmer/dashboard", icon: <Zap />, section: "Smart Trading" },
-  { label: "nav.behavioral_insights", href: "/farmer/dashboard", icon: <Target />, section: "Behavioral" },
-  { label: "nav.blockchain_trace", href: "/farmer/dashboard", icon: <Link2 />, section: "Blockchain" },
-  { label: "nav.escrow_payments", href: "/farmer/dashboard", icon: <DollarSign />, section: "Escrow" },
-  { label: "nav.global_export_audit", href: "/farmer/dashboard", icon: <Globe />, section: "Export Audit" },
-  { label: "Dispute Center", href: "/farmer/dashboard", icon: <AlertCircle />, section: "Disputes" },
-  { label: "Smart Contracts", href: "/farmer/dashboard", icon: <FileText />, section: "Contracts" },
-  { label: "Payment Schedule", href: "/farmer/dashboard", icon: <Calendar />, section: "Schedule" },
-  { label: "Security Dashboard", href: "/farmer/dashboard", icon: <ShieldAlert />, section: "Security" },
-  { label: "Transaction History", href: "/farmer/dashboard", icon: <History />, section: "Transactions" },
-  { label: "Refund Manager", href: "/farmer/dashboard", icon: <RotateCcw />, section: "Refunds" },
-  { label: "Compliance Tracking", href: "/farmer/dashboard", icon: <CheckCircle />, section: "Compliance" },
+  // Overview & Command Center
+  { label: "Overview", href: "/farmer/dashboard", icon: <LayoutDashboard />, section: "Overview" },
+  
+  // Live Cockpit Dashboard
+  { label: "Live Cockpit", href: "/farmer/live", icon: <Zap />, section: "Live" },
+
+  // REAL AI Quality Scan (Direct Feature)
+  { label: "AI Quality Scan", href: "/farmer/quality-scan", icon: <Camera />, section: "Quality" },
+  
+  // AI & Intelligence Hub (Merged: AI Chat, Smart Product Hub, Farm Insights, Quality Detection)
+  { label: "AI Intelligence Hub", href: "/farmer/dashboard", icon: <Sparkles />, section: "AI Intelligence" },
+  
+  // Production & Supply Chain (Merged: Smart Product Hub, Crop Management, Inventory Management)
+  { label: "Production & Supply Chain", href: "/farmer/dashboard", icon: <Package />, section: "Production" },
+  
+  // Orders & Logistics (Merged: Order Control, Logistics Manager, Tender Participation)
+  { label: "Orders & Logistics", href: "/farmer/dashboard", icon: <Truck />, section: "Orders" },
+  
+  // Payments & Finance (Merged: AgriPay Center, Auto-Sell Rules, Financial Management)
+  { label: "Payments & Finance", href: "/farmer/dashboard", icon: <DollarSign />, section: "Finance" },
+  
+  // Tender & Bidding (Government tenders, contract farming, bulk sales)
+  { label: "Tender & Bidding", href: "/farmer/dashboard", icon: <Gavel />, section: "Bidding" },
+  
+  // Trust & Reputation (Merged: Trust Identity, Reputation Management, Verification)
+  { label: "Trust & Reputation", href: "/farmer/dashboard", icon: <Award />, section: "Trust" },
+  
+  // Security & Compliance (Merged: Blockchain Trace, Quality Compliance, Export Audit)
+  { label: "Security & Compliance", href: "/farmer/dashboard", icon: <ShieldAlert />, section: "Security" },
+  
+  // Communication
+  { label: "AgriChat Connect", href: "/farmer/dashboard", icon: <MessageSquare />, section: "Chat" },
 ];
 
 export const buyerNav = [
-  { label: "nav.cockpit", href: "/buyer/dashboard", icon: <LayoutDashboard />, section: "Cockpit Live" },
-  { label: "nav.bulk_marketplace", href: "/buyer/dashboard", icon: <Layers />, section: "Bulk Marketplace" },
-  { label: "nav.ai_procurement", href: "/buyer/dashboard", icon: <Sparkles />, section: "Procurement" },
-  { label: "nav.smart_sourcing", href: "/buyer/search", icon: <Search />, section: "Sourcing Space" },
-  { label: "nav.my_reputation", href: "/buyer/dashboard", icon: <Award />, section: "Reputation" },
-  { label: "nav.supplier_insights", href: "/buyer/dashboard", icon: <Users />, section: "Suppliers" },
-  { label: "nav.trust_reviews", href: "/buyer/dashboard", icon: <ShieldCheck />, section: "Reviews" },
-  { label: "nav.price_intelligence", href: "/buyer/dashboard", icon: <BarChart3 />, section: "Intelligence" },
-  { label: "nav.safe_lock_hub", href: "/buyer/dashboard", icon: <Lock />, section: "Pre-Booking" },
-  { label: "nav.negotiation_hub", href: "/buyer/dashboard", icon: <Gavel />, section: "Bidding" },
-  { label: "nav.agri_intelligence", href: "/buyer/dashboard", icon: <Sparkles />, section: "AI Insights" },
-  { label: "nav.agrichat", href: "/buyer/dashboard", icon: <MessageSquare />, section: "Chat" },
-  { label: "nav.order_tracker", href: "/buyer/dashboard", icon: <ShoppingBag />, section: "Tracking" },
-  { label: "nav.tracechain", href: "/buyer/dashboard", icon: <Link2 />, section: "Traceability" },
-  { label: "nav.blockchain_trace", href: "/buyer/dashboard", icon: <Shield />, section: "Blockchain" },
-  { label: "nav.escrow_payments", href: "/buyer/dashboard", icon: <DollarSign />, section: "Escrow" },
-  { label: "nav.security_hub", href: "/buyer/dashboard", icon: <ShieldAlert />, section: "Security" },
-  { label: "nav.bulk_trade_desk", href: "/buyer/dashboard", icon: <Table />, section: "Bulk Trade Desk" },
-  { label: "nav.cluster_intelligence", href: "/buyer/dashboard", icon: <Navigation />, section: "Cluster Intelligence" },
+  // Overview & Command Center
+  { label: "nav.overview", href: "/buyer/dashboard", icon: <LayoutDashboard />, section: "Overview" },
+  
+  // Live Cockpit Dashboard
+  { label: "Live Cockpit", href: "/buyer/live", icon: <Zap />, section: "Live" },
+  
+  // AI & Intelligence Hub (Merged: AI Chat, AI Procurement, Agri-Intelligence, Price Intelligence, Cluster Intelligence)
+  { label: "AI Intelligence Hub", href: "/buyer/dashboard", icon: <Sparkles />, section: "AI Intelligence" },
+  
+  // Sourcing & Procurement (Merged: Smart Sourcing, Bulk Marketplace, Bulk Trade Desk, Supplier Insights)
+  { label: "Sourcing & Procurement", href: "/buyer/dashboard", icon: <Search />, section: "Sourcing" },
+  
+  // Orders & Tracking (Merged: Order Tracker, TraceChain, Blockchain Trace)
+  { label: "Orders & Tracking", href: "/buyer/dashboard", icon: <Package />, section: "Orders" },
+  
+  // Payments & Finance (Merged: Escrow Payments, Safe-Lock Hub, Pre-Booking)
+  { label: "Payments & Finance", href: "/buyer/dashboard", icon: <DollarSign />, section: "Payments" },
+  
+  // Negotiation & Bidding
+  { label: "Negotiation & Bidding", href: "/buyer/dashboard", icon: <Gavel />, section: "Bidding" },
+  
+  // Trust & Reputation (Merged: My Reputation, Trust & Reviews, Supplier Insights)
+  { label: "Trust & Reputation", href: "/buyer/dashboard", icon: <Award />, section: "Trust" },
+  
+  // Security & Compliance (Merged: Security Hub, Blockchain verification)
+  { label: "Security & Compliance", href: "/buyer/dashboard", icon: <ShieldAlert />, section: "Security" },
+  
+  // Communication
+  { label: "AgriChat", href: "/buyer/dashboard", icon: <MessageSquare />, section: "Chat" },
 ];

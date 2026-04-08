@@ -1,47 +1,33 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Shield,
   Lock,
   Key,
-  Eye,
-  EyeOff,
   AlertTriangle,
   CheckCircle,
   XCircle,
   Smartphone,
   Laptop,
-  Globe,
-  Clock,
   Activity,
   Bell,
-  Settings,
   FileText,
   Download,
-  Upload,
-  Zap,
-  TrendingUp,
-  Users,
-  Database,
   Fingerprint,
   ShieldCheck,
   ShieldAlert,
-  ShieldOff,
-  Unlock,
   UserCheck,
-  UserX,
-  Wifi,
-  WifiOff,
   MapPin,
-  Calendar,
-  Hash,
+  Clock,
   Sparkles,
   BarChart3,
-  LineChart,
-  PieChart,
+  Globe,
 } from "lucide-react";
+import { buyerSecurityService } from "@/services/buyerSecurityService";
+import toast from "react-hot-toast";
+import { SkeletonCard } from "@/components/ui/SkeletonLoader";
 
 interface SecurityHubLiveProps {
   userRole: "FARMER" | "BUYER";
@@ -51,18 +37,62 @@ export function SecurityHubLive({ userRole }: SecurityHubLiveProps) {
   const [activeTab, setActiveTab] = useState<"overview" | "activity" | "devices" | "features">("overview");
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(true);
   const [biometricEnabled, setBiometricEnabled] = useState(true);
+  const [securityStatus, setSecurityStatus] = useState<any>(null);
+  const [securityEvents, setSecurityEvents] = useState<any[]>([]);
+  const [sessions, setSessions] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadSecurityData();
+  }, []);
+
+  const loadSecurityData = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('token') || '';
+      
+      const [status, eventsData, sessionsData] = await Promise.all([
+        buyerSecurityService.getSecurityStatus(token),
+        buyerSecurityService.getSecurityEvents({}, token),
+        buyerSecurityService.getSessions(token)
+      ]);
+
+      setSecurityStatus(status);
+      setSecurityEvents(eventsData.events || []);
+      setSessions(sessionsData.sessions || []);
+    } catch (error) {
+      console.error('Failed to load security data:', error);
+      toast.error('Failed to load security data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleTerminateSession = async (sessionId: string) => {
+    if (!confirm('Terminate this session?')) return;
+
+    try {
+      const token = localStorage.getItem('token') || '';
+      await buyerSecurityService.terminateSession(sessionId, token);
+      toast.success('Session terminated');
+      loadSecurityData();
+    } catch (error) {
+      console.error('Failed to terminate session:', error);
+      toast.error('Failed to terminate session');
+    }
+  };
 
   // Security Score Data
-  const securityScore = 92;
+  const securityScore = securityStatus?.score || 92;
   const scoreStatus = securityScore >= 80 ? "Excellent" : securityScore >= 60 ? "Good" : "Needs Improvement";
   const scoreColor = securityScore >= 80 ? "emerald" : securityScore >= 60 ? "amber" : "red";
 
   // Stats Data
   const stats = [
-    { label: "Active Protections", value: "8/10", icon: ShieldCheck, color: "emerald", trend: "All systems secure" },
-    { label: "Security Alerts", value: "2", icon: AlertTriangle, color: "amber", trend: "Requires attention" },
-    { label: "Blocked Attempts", value: "47", icon: ShieldAlert, color: "red", trend: "Last 30 days" },
-    { label: "Trusted Devices", value: "3", icon: Smartphone, color: "blue", trend: "Currently active" },
+    { label: "Active Protections", value: `${securityStatus?.activeProtections || 8}/10`, icon: ShieldCheck, color: "emerald", trend: "All systems secure" },
+    { label: "Security Alerts", value: (securityEvents.filter(e => e.severity === 'HIGH').length || 2).toString(), icon: AlertTriangle, color: "amber", trend: "Requires attention" },
+    { label: "Blocked Attempts", value: (securityEvents.filter(e => e.type === 'FAILED_LOGIN').length || 47).toString(), icon: ShieldAlert, color: "red", trend: "Last 30 days" },
+    { label: "Trusted Devices", value: sessions.length.toString(), icon: Smartphone, color: "blue", trend: "Currently active" },
   ];
 
   // 10 Accessible Sub-Features
@@ -150,92 +180,28 @@ export function SecurityHubLive({ userRole }: SecurityHubLiveProps) {
   ];
 
   // Recent Security Activity
-  const recentActivity = [
-    {
-      id: 1,
-      type: "success",
-      icon: CheckCircle,
-      title: "Successful Login",
-      description: "Login from Chrome on Windows",
-      location: "Mumbai, India",
-      time: "2 minutes ago",
-      severity: "low",
-    },
-    {
-      id: 2,
-      type: "warning",
-      icon: AlertTriangle,
-      title: "New Device Detected",
-      description: "Login attempt from unrecognized device",
-      location: "Delhi, India",
-      time: "1 hour ago",
-      severity: "medium",
-    },
-    {
-      id: 3,
-      type: "error",
-      icon: XCircle,
-      title: "Failed Login Attempt",
-      description: "Incorrect password entered 3 times",
-      location: "Unknown Location",
-      time: "3 hours ago",
-      severity: "high",
-    },
-    {
-      id: 4,
-      type: "success",
-      icon: UserCheck,
-      title: "Password Changed",
-      description: "Password successfully updated",
-      location: "Mumbai, India",
-      time: "2 days ago",
-      severity: "low",
-    },
-    {
-      id: 5,
-      type: "success",
-      icon: ShieldCheck,
-      title: "2FA Enabled",
-      description: "Two-factor authentication activated",
-      location: "Mumbai, India",
-      time: "5 days ago",
-      severity: "low",
-    },
-  ];
+  const recentActivity = securityEvents.slice(0, 5).map(event => ({
+    id: event.id,
+    type: event.type === 'LOGIN_SUCCESS' ? 'success' : event.type === 'FAILED_LOGIN' ? 'error' : 'warning',
+    icon: event.type === 'LOGIN_SUCCESS' ? CheckCircle : event.type === 'FAILED_LOGIN' ? XCircle : AlertTriangle,
+    title: event.type.replace('_', ' '),
+    description: event.description || 'Security event',
+    location: event.location || 'Unknown Location',
+    time: new Date(event.createdAt).toLocaleString(),
+    severity: event.severity?.toLowerCase() || 'low',
+  }));
 
   // Trusted Devices
-  const trustedDevices = [
-    {
-      id: 1,
-      name: "Chrome on Windows",
-      type: "desktop",
-      icon: Laptop,
-      location: "Mumbai, India",
-      lastActive: "Active now",
-      trusted: true,
-      current: true,
-    },
-    {
-      id: 2,
-      name: "Safari on iPhone",
-      type: "mobile",
-      icon: Smartphone,
-      location: "Mumbai, India",
-      lastActive: "2 hours ago",
-      trusted: true,
-      current: false,
-    },
-    {
-      id: 3,
-      name: "Firefox on MacOS",
-      type: "desktop",
-      icon: Laptop,
-      location: "Pune, India",
-      lastActive: "1 day ago",
-      trusted: true,
-      current: false,
-    },
-  ];
+  const trustedDevices = sessions.slice(0, 3).map((session, idx) => ({
+    id: session.id,
+    name: session.deviceName || `Device ${idx + 1}`,
+    type: session.deviceType || 'desktop',
+    icon: session.deviceType === 'mobile' ? Smartphone : Laptop,
+    location: session.location || 'Unknown',
+    lastActive: session.lastActive ? new Date(session.lastActive).toLocaleString() : 'Unknown',
+    trusted: true,
+    current: idx === 0,
+  }));
 
   // Security Recommendations
   const recommendations = [
@@ -350,8 +316,13 @@ export function SecurityHubLive({ userRole }: SecurityHubLiveProps) {
       </motion.div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat, idx) => (
+      {loading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[1, 2, 3, 4].map(i => <SkeletonCard key={i} />)}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {stats.map((stat, idx) => (
           <motion.div
             key={idx}
             initial={{ opacity: 0, y: 20 }}
@@ -370,6 +341,7 @@ export function SecurityHubLive({ userRole }: SecurityHubLiveProps) {
           </motion.div>
         ))}
       </div>
+      )}
 
       {/* Tab Navigation */}
       <div className="flex gap-2 border-b border-slate-200 overflow-x-auto">
@@ -611,7 +583,10 @@ export function SecurityHubLive({ userRole }: SecurityHubLiveProps) {
                         </div>
                       </div>
                       {!device.current && (
-                        <button className="h-9 px-4 bg-red-50 text-red-600 rounded-xl font-bold text-sm hover:bg-red-100 transition-all">
+                        <button 
+                          onClick={() => handleTerminateSession(device.id)}
+                          className="h-9 px-4 bg-red-50 text-red-600 rounded-xl font-bold text-sm hover:bg-red-100 transition-all"
+                        >
                           Remove
                         </button>
                       )}

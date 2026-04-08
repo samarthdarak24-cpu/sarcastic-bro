@@ -1,37 +1,40 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { useTranslation } from "react-i18next";
 
 export function BenefitsComparisonSection() {
+  const { t } = useTranslation();
+
   const farmerBenefits = [
     { 
       icon: "💰", 
-      title: "40% Higher Income",
+      title: t("landing.benefits.farmer.income"),
       gradient: "from-amber-500 to-orange-600"
     },
     { 
       icon: "⚡", 
-      title: "Instant AI Grading",
+      title: t("landing.benefits.farmer.ai_grading"),
       gradient: "from-yellow-400 to-amber-500"
     },
     { 
       icon: "📱", 
-      title: "Real-time Pricing",
+      title: t("landing.benefits.farmer.pricing"),
       gradient: "from-blue-500 to-cyan-500"
     },
     { 
       icon: "🔒", 
-      title: "Secure Payments",
+      title: t("landing.benefits.farmer.payments"),
       gradient: "from-green-500 to-emerald-600"
     },
     { 
       icon: "🚚", 
-      title: "Smart Logistics",
+      title: t("landing.benefits.farmer.logistics"),
       gradient: "from-purple-500 to-pink-500"
     },
     { 
       icon: "📊", 
-      title: "Analytics Dashboard",
+      title: t("landing.benefits.farmer.analytics"),
       gradient: "from-indigo-500 to-purple-600"
     },
   ];
@@ -39,32 +42,32 @@ export function BenefitsComparisonSection() {
   const buyerBenefits = [
     { 
       icon: "✓", 
-      title: "Verified Quality",
+      title: t("landing.benefits.buyer.verified"),
       gradient: "from-green-500 to-teal-600"
     },
     { 
       icon: "🌾", 
-      title: "Direct from Farm",
+      title: t("landing.benefits.buyer.direct"),
       gradient: "from-lime-500 to-green-600"
     },
     { 
       icon: "💳", 
-      title: "Flexible Payments",
+      title: t("landing.benefits.buyer.flexible"),
       gradient: "from-blue-500 to-indigo-600"
     },
     { 
-      icon: "📦", 
-      title: "Bulk Orders",
+      icon: "Box", 
+      title: t("landing.benefits.buyer.bulk"),
       gradient: "from-orange-500 to-red-600"
     },
     { 
       icon: "🔍", 
-      title: "Full Traceability",
+      title: t("landing.benefits.buyer.traceability"),
       gradient: "from-cyan-500 to-blue-600"
     },
     { 
       icon: "⏱️", 
-      title: "Fast Delivery",
+      title: t("landing.benefits.buyer.fast"),
       gradient: "from-pink-500 to-rose-600"
     },
   ];
@@ -110,14 +113,14 @@ export function BenefitsComparisonSection() {
             className="inline-block mb-4"
           >
             <span className="px-4 py-2 bg-gradient-to-r from-green-500 to-blue-500 text-white text-sm font-bold rounded-full shadow-lg">
-              ✨ Powerful Benefits
+              ✨ {t("landing.benefits.badge")}
             </span>
           </motion.div>
           <h2 className="text-4xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 mb-4">
-            Benefits for Everyone
+            {t("landing.benefits.title")}
           </h2>
           <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-            Empowering both farmers and buyers with cutting-edge technology
+            {t("landing.benefits.subtitle")}
           </p>
         </motion.div>
 
@@ -146,8 +149,8 @@ export function BenefitsComparisonSection() {
                     👨‍🌾
                   </motion.div>
                   <div>
-                    <h3 className="text-2xl font-black text-white">For Farmers</h3>
-                    <p className="text-green-100 text-sm">Maximize your profits</p>
+                    <h3 className="text-2xl font-black text-white">{t("landing.benefits.for_farmers")}</h3>
+                    <p className="text-green-100 text-sm">{t("landing.benefits.maximize_profits")}</p>
                   </div>
                 </div>
               </div>
@@ -212,8 +215,8 @@ export function BenefitsComparisonSection() {
                     🏢
                   </motion.div>
                   <div>
-                    <h3 className="text-2xl font-black text-white">For Buyers</h3>
-                    <p className="text-blue-100 text-sm">Quality guaranteed</p>
+                    <h3 className="text-2xl font-black text-white">{t("landing.benefits.for_buyers")}</h3>
+                    <p className="text-blue-100 text-sm">{t("landing.benefits.quality_guaranteed")}</p>
                   </div>
                 </div>
               </div>
@@ -243,7 +246,7 @@ export function BenefitsComparisonSection() {
                         transition={{ duration: 0.5 }}
                         className={`w-12 h-12 rounded-xl bg-gradient-to-br ${benefit.gradient} flex items-center justify-center text-2xl mb-3 shadow-lg`}
                       >
-                        {benefit.icon}
+                        {benefit.icon === "Box" ? "📦" : benefit.icon}
                       </motion.div>
                       <h4 className="text-sm font-bold text-slate-800 leading-tight">
                         {benefit.title}

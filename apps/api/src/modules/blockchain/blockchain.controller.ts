@@ -3,7 +3,8 @@
    and fraud detection endpoints.
    ======================================================================== */
 
-import { Request, Response, NextFunction } from "express";
+import { Response, NextFunction } from "express";
+import { AuthRequest } from "../../middleware/auth.middleware";
 import { BlockchainService } from "./blockchain.service";
 import { EscrowService } from "./escrow.service";
 import { OnChainRatingService } from "./rating.service";
@@ -13,28 +14,40 @@ export class BlockchainController {
   // ─── Traceability ─────────────────────────────────────────────────
 
   /** POST /blockchain/trace — Add a trace event to the product chain */
-  static async addTrace(req: Request, res: Response, next: NextFunction) {
+  static async addTrace(req: AuthRequest, res: Response, next: NextFunction) {
     try {
+      const farmerId = req.user?.userId;
+      if (!farmerId) {
+        return res.status(401).json({ success: false, message: 'User not authenticated' });
+      }
       const trace = await BlockchainService.addProductTrace({
         ...req.body,
-        farmerId: req.user!.userId,
+        farmerId,
       });
       res.status(201).json({ success: true, data: trace });
     } catch (error) { next(error); }
   }
 
   /** GET /blockchain/trace/:productId — Get full product chain */
-  static async getTrace(req: Request, res: Response, next: NextFunction) {
+  static async getTrace(req: AuthRequest, res: Response, next: NextFunction) {
     try {
-      const trace = await BlockchainService.getProductTrace(req.params.productId);
+      const productId = req.params.productId;
+      if (!productId) {
+        return res.status(400).json({ success: false, message: 'productId is required' });
+      }
+      const trace = await BlockchainService.getProductTrace(productId);
       res.status(200).json({ success: true, data: trace });
     } catch (error) { next(error); }
   }
 
   /** GET /blockchain/verify/:traceId — Verify a specific block */
-  static async verifyBlock(req: Request, res: Response, next: NextFunction) {
+  static async verifyBlock(req: AuthRequest, res: Response, next: NextFunction) {
     try {
-      const result = await BlockchainService.verifyBlock(req.params.traceId);
+      const traceId = req.params.traceId;
+      if (!traceId) {
+        return res.status(400).json({ success: false, message: 'traceId is required' });
+      }
+      const result = await BlockchainService.verifyBlock(traceId);
       res.status(200).json({ success: true, data: result });
     } catch (error) { next(error); }
   }
@@ -42,51 +55,87 @@ export class BlockchainController {
   // ─── Escrow / Smart Contract Payments ─────────────────────────────
 
   /** POST /blockchain/escrow — Create escrow for an order */
-  static async createEscrow(req: Request, res: Response, next: NextFunction) {
+  static async createEscrow(req: AuthRequest, res: Response, next: NextFunction) {
     try {
+      const userId = req.user?.userId;
+      if (!userId) {
+        return res.status(401).json({ success: false, message: 'User not authenticated' });
+      }
       const { orderId, farmerId, amount } = req.body;
-      const escrow = await EscrowService.createEscrow(orderId, req.user!.userId, farmerId, amount);
+      const escrow = await EscrowService.createEscrow(orderId, userId, farmerId, amount);
       res.status(201).json({ success: true, data: escrow });
     } catch (error) { next(error); }
   }
 
   /** PATCH /blockchain/escrow/:id/deliver — Farmer confirms delivery */
-  static async confirmDelivery(req: Request, res: Response, next: NextFunction) {
+  static async confirmDelivery(req: AuthRequest, res: Response, next: NextFunction) {
     try {
-      const result = await EscrowService.confirmDelivery(req.params.id, req.user!.userId);
+      const userId = req.user?.userId;
+      if (!userId) {
+        return res.status(401).json({ success: false, message: 'User not authenticated' });
+      }
+      const id = req.params.id;
+      if (!id) {
+        return res.status(400).json({ success: false, message: 'Escrow id is required' });
+      }
+      const result = await EscrowService.confirmDelivery(id, userId);
       res.status(200).json({ success: true, data: result });
     } catch (error) { next(error); }
   }
 
   /** PATCH /blockchain/escrow/:id/release — Buyer releases payment */
-  static async releasePayment(req: Request, res: Response, next: NextFunction) {
+  static async releasePayment(req: AuthRequest, res: Response, next: NextFunction) {
     try {
-      const result = await EscrowService.releasePayment(req.params.id, req.user!.userId);
+      const userId = req.user?.userId;
+      if (!userId) {
+        return res.status(401).json({ success: false, message: 'User not authenticated' });
+      }
+      const id = req.params.id;
+      if (!id) {
+        return res.status(400).json({ success: false, message: 'Escrow id is required' });
+      }
+      const result = await EscrowService.releasePayment(id, userId);
       res.status(200).json({ success: true, data: result });
     } catch (error) { next(error); }
   }
 
   /** PATCH /blockchain/escrow/:id/dispute — Buyer raises dispute */
-  static async raiseDispute(req: Request, res: Response, next: NextFunction) {
+  static async raiseDispute(req: AuthRequest, res: Response, next: NextFunction) {
     try {
+      const userId = req.user?.userId;
+      if (!userId) {
+        return res.status(401).json({ success: false, message: 'User not authenticated' });
+      }
+      const id = req.params.id;
+      if (!id) {
+        return res.status(400).json({ success: false, message: 'Escrow id is required' });
+      }
       const { reason } = req.body;
-      const result = await EscrowService.raiseDispute(req.params.id, req.user!.userId, reason);
+      const result = await EscrowService.raiseDispute(id, userId, reason);
       res.status(200).json({ success: true, data: result });
     } catch (error) { next(error); }
   }
 
   /** GET /blockchain/escrow/order/:orderId — Get escrow by order */
-  static async getEscrowByOrder(req: Request, res: Response, next: NextFunction) {
+  static async getEscrowByOrder(req: AuthRequest, res: Response, next: NextFunction) {
     try {
-      const result = await EscrowService.getByOrder(req.params.orderId);
+      const orderId = req.params.orderId;
+      if (!orderId) {
+        return res.status(400).json({ success: false, message: 'orderId is required' });
+      }
+      const result = await EscrowService.getByOrder(orderId);
       res.status(200).json({ success: true, data: result });
     } catch (error) { next(error); }
   }
 
   /** GET /blockchain/escrow/me — Get all escrows for logged-in user */
-  static async getMyEscrows(req: Request, res: Response, next: NextFunction) {
+  static async getMyEscrows(req: AuthRequest, res: Response, next: NextFunction) {
     try {
-      const result = await EscrowService.getUserEscrows(req.user!.userId);
+      const userId = req.user?.userId;
+      if (!userId) {
+        return res.status(401).json({ success: false, message: 'User not authenticated' });
+      }
+      const result = await EscrowService.getUserEscrows(userId);
       res.status(200).json({ success: true, data: result });
     } catch (error) { next(error); }
   }
@@ -94,18 +143,26 @@ export class BlockchainController {
   // ─── Decentralized Ratings ────────────────────────────────────────
 
   /** POST /blockchain/rating — Submit an on-chain rating */
-  static async submitRating(req: Request, res: Response, next: NextFunction) {
+  static async submitRating(req: AuthRequest, res: Response, next: NextFunction) {
     try {
+      const userId = req.user?.userId;
+      if (!userId) {
+        return res.status(401).json({ success: false, message: 'User not authenticated' });
+      }
       const { targetId, rating, comment } = req.body;
-      const result = await OnChainRatingService.submitRating(req.user!.userId, targetId, rating, comment);
+      const result = await OnChainRatingService.submitRating(userId, targetId, rating, comment);
       res.status(201).json({ success: true, data: result });
     } catch (error) { next(error); }
   }
 
   /** GET /blockchain/reputation/:userId — Get on-chain reputation */
-  static async getReputation(req: Request, res: Response, next: NextFunction) {
+  static async getReputation(req: AuthRequest, res: Response, next: NextFunction) {
     try {
-      const result = await OnChainRatingService.getReputation(req.params.userId);
+      const userId = req.params.userId;
+      if (!userId) {
+        return res.status(400).json({ success: false, message: 'userId is required' });
+      }
+      const result = await OnChainRatingService.getReputation(userId);
       res.status(200).json({ success: true, data: result });
     } catch (error) { next(error); }
   }
@@ -113,15 +170,19 @@ export class BlockchainController {
   // ─── Fraud Detection ──────────────────────────────────────────────
 
   /** GET /blockchain/fraud/:orderId — Analyze a single order */
-  static async analyzeOrder(req: Request, res: Response, next: NextFunction) {
+  static async analyzeOrder(req: AuthRequest, res: Response, next: NextFunction) {
     try {
-      const result = await FraudDetectionService.analyzeOrder(req.params.orderId);
+      const orderId = req.params.orderId;
+      if (!orderId) {
+        return res.status(400).json({ success: false, message: 'orderId is required' });
+      }
+      const result = await FraudDetectionService.analyzeOrder(orderId);
       res.status(200).json({ success: true, data: result });
     } catch (error) { next(error); }
   }
 
   /** GET /blockchain/fraud/scan — Scan all pending orders */
-  static async scanOrders(req: Request, res: Response, next: NextFunction) {
+  static async scanOrders(req: AuthRequest, res: Response, next: NextFunction) {
     try {
       const result = await FraudDetectionService.scanPendingOrders();
       res.status(200).json({ success: true, data: result });

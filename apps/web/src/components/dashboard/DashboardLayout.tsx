@@ -13,7 +13,7 @@ import { authService } from "@/services/auth";
 import { LivePriceTicker } from "@/components/ui/LivePriceTicker";
 import { LiveNotificationBell } from "@/components/ui/LiveNotificationBell";
 import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
-import { VoiceAssistantButton } from "@/components/ui/VoiceAssistant/VoiceAssistantButton";
+import { JarvisButton } from "@/components/ui/JarvisAssistant/JarvisButton";
 import ChatWidget from "@/components/ui/ChatWidget";
 
 interface NavItem {
@@ -38,6 +38,7 @@ export function DashboardLayout({ children, navItems, userRole }: DashboardLayou
   const currentSection = searchParams.get("section");
   const user = authService.getUser();
   const { t, i18n } = useTranslation();
+  
   // Subscribe to language changes to force re-render
   const [, setLang] = useState(i18n.language);
   useEffect(() => {
@@ -63,27 +64,28 @@ export function DashboardLayout({ children, navItems, userRole }: DashboardLayou
         className={`fixed inset-y-0 left-0 z-[60] bg-slate-900 border-r border-slate-800 transition-all duration-300 ease-in-out flex flex-col ${
           sidebarOpen ? "w-80" : "w-24"
         }`}
+        style={{ minHeight: '100vh' }}
       >
         {/* Sidebar Header */}
-        <div className="h-24 flex items-center px-8 border-b border-slate-800/50 shrink-0">
-          <Link href="/" className="flex items-center gap-4 group">
-            <div className={`h-12 w-12 ${themeBg} rounded-xl flex items-center justify-center text-white font-black text-xl shadow-lg group-hover:scale-110 transition-transform`}>
-              <Command size={24} />
+        <div className="h-20 flex items-center px-6 border-b border-slate-800/50 shrink-0">
+          <Link href="/" className="flex items-center gap-3 group">
+            <div className={`h-10 w-10 ${themeBg} rounded-xl flex items-center justify-center text-white font-black text-lg shadow-lg group-hover:scale-110 transition-transform`}>
+              <Command size={20} />
             </div>
             {sidebarOpen && (
               <div className="flex flex-col animate-in fade-in slide-in-from-left-2 duration-300">
-                <span className="font-black text-xl tracking-tighter text-white">
+                <span className="font-black text-lg tracking-tighter text-white">
                     FarmGuard<span className={themeColor}>.AI</span>
                 </span>
-                <span className="text-[8px] font-black uppercase tracking-[0.3em] text-slate-500">SMART FARMING v2.0</span>
+                <span className="text-[7px] font-black uppercase tracking-[0.3em] text-slate-500">SMART FARMING v2.0</span>
               </div>
             )}
           </Link>
         </div>
 
         {/* Sidebar Nav - Scrollable internal */}
-        <nav className="flex-1 overflow-y-auto custom-scrollbar px-4 py-8 space-y-2">
-          {navItems.map((item) => {
+        <nav className="flex-1 overflow-y-auto custom-scrollbar px-4 py-4 space-y-1">
+          {navItems.map((item, index) => {
             const isCurrentPath = pathname === item.href;
             const isActive = item.section 
               ? (currentSection === item.section || (!currentSection && (item.section === "Overview" || item.section === "Cockpit"))) && isCurrentPath
@@ -94,10 +96,10 @@ export function DashboardLayout({ children, navItems, userRole }: DashboardLayou
               : (item.href || '#');
 
             return (
-              <Link key={item.label} href={linkHref}>
+              <Link key={`${item.label}-${index}`} href={linkHref}>
                 <div
                   className={`
-                    flex items-center gap-4 px-4 py-4 rounded-2xl transition-all group cursor-pointer relative
+                    flex items-center gap-4 px-4 py-3 rounded-2xl transition-all group cursor-pointer relative
                     ${isActive
                       ? `bg-white/10 text-white shadow-xl`
                       : 'text-slate-400 hover:bg-white/5 hover:text-white'
@@ -135,21 +137,21 @@ export function DashboardLayout({ children, navItems, userRole }: DashboardLayou
         </nav>
 
         {/* Sidebar Footer - User Profile */}
-        <div className="p-6 border-t border-slate-800 bg-slate-900/50 shrink-0">
+        <div className="p-4 border-t border-slate-800 bg-slate-900/50 shrink-0">
             <Link href="/profile">
-              <div className={`p-4 rounded-2xl border border-slate-800 flex items-center gap-4 transition-all hover:bg-white/5 group cursor-pointer ${sidebarOpen ? 'bg-slate-800/40' : 'justify-center'}`}>
-                  <div className={`h-10 w-10 rounded-xl flex items-center justify-center text-white font-black shadow-lg ${themeBg} shrink-0`}>
-                      {user?.name?.[0] || 'U'}
+              <div className={`p-3 rounded-2xl border border-slate-800 flex items-center gap-3 transition-all hover:bg-white/5 group cursor-pointer ${sidebarOpen ? 'bg-slate-800/40' : 'justify-center'}`}>
+                  <div className={`h-8 w-8 rounded-xl flex items-center justify-center text-white font-black shadow-lg ${themeBg} shrink-0`}>
+                      R
                   </div>
                   {sidebarOpen && (
                       <div className="flex-1 min-w-0">
-                          <p className="font-bold text-sm text-white truncate">{user?.name || "Premium User"}</p>
-                          <p className="text-[10px] font-bold text-slate-500 uppercase">{t(`auth.${userRole.toLowerCase()}` as any) || userRole}</p>
+                          <p className="font-bold text-xs text-white truncate">Rajesh Kumar</p>
+                          <p className="text-[9px] font-bold text-slate-500 uppercase">{t(`auth.${userRole.toLowerCase()}` as any) || userRole}</p>
                       </div>
                   )}
                   {sidebarOpen && (
                       <button onClick={(e) => { e.preventDefault(); handleLogout(); }} className="text-slate-500 hover:text-red-500 transition-colors">
-                          <LogOut size={16} />
+                          <LogOut size={14} />
                       </button>
                   )}
               </div>
@@ -189,12 +191,13 @@ export function DashboardLayout({ children, navItems, userRole }: DashboardLayou
                     <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
                     <span className="text-[10px] font-black uppercase tracking-widest text-emerald-600">{t('common.live')}</span>
                 </div>
-                <VoiceAssistantButton />
+                {/* JARVIS temporarily disabled due to network issues - use AgriVoice instead */}
+                {/* <JarvisButton userRole={userRole as 'FARMER' | 'BUYER'} /> */}
                 <LiveNotificationBell />
                 <LanguageSwitcher />
                 <Link href="/profile">
                   <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white font-black text-sm shadow-sm hover:scale-105 transition-transform cursor-pointer">
-                    {user?.name?.charAt(0)?.toUpperCase() || 'U'}
+                    R
                   </div>
                 </Link>
             </div>

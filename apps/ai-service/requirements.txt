@@ -6,6 +6,7 @@ python-multipart==0.0.6
 python-dotenv==1.0.0
 aiofiles==23.2.1
 httpx==0.25.2
+aiohttp==3.9.1
 numpy==1.26.3
 pandas==2.1.4
 scikit-learn==1.3.2
@@ -19,3 +20,9 @@ timm==0.9.12
 opencv-python-headless==4.8.1.78
 openai==1.12.0
 sse-starlette==1.8.2
+
+# Whisper voice-to-text dependencies
+openai-whisper==20231117
+sounddevice==0.4.6
+ffmpeg-python==0.2.0
+psutil==5.9.6

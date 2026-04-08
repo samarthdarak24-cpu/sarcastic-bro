@@ -2,23 +2,24 @@
    Product Controller — HTTP handlers
    ======================================================================== */
 
-import type { Request, Response } from "express";
+import type { Response } from "express";
+import type { AuthRequest } from "../../middleware/auth.middleware";
 import { ProductService } from "./product.service";
 import { createProductSchema, updateProductSchema } from "./product.validation";
 import { sendSuccess, sendCreated, sendPaginated } from "../../utils/response";
 import { getSocketService } from "../../services/socketService";
 
 export class ProductController {
-  static async create(req: Request, res: Response) {
+  static async create(req: AuthRequest, res: Response) {
     const data = createProductSchema.parse(req.body);
     const imageUrls = req.files
       ? (req.files as Express.Multer.File[]).map((f) => `/uploads/images/${f.filename}`)
       : undefined;
-    const product = await ProductService.create(req.user!.userId, data, imageUrls);
+    const product = await ProductService.create(req.user?.id || req.user?.userId || '', data, imageUrls);
     return sendCreated(res, product, "Product created");
   }
 
-  static async getAll(req: Request, res: Response) {
+  static async getAll(req: AuthRequest, res: Response) {
     const { category, district, minPrice, maxPrice, search, page, limit } = req.query;
     const result = await ProductService.getAll({
       category: category as string,
@@ -32,17 +33,17 @@ export class ProductController {
     return sendPaginated(res, result.products, result.total, result.page, result.limit);
   }
 
-  static async getById(req: Request, res: Response) {
+  static async getById(req: AuthRequest, res: Response) {
     const product = await ProductService.getById(req.params.id);
     return sendSuccess(res, product);
   }
 
-  static async update(req: Request, res: Response) {
+  static async update(req: AuthRequest, res: Response) {
     const data = updateProductSchema.parse(req.body);
     
     // Get old product for price comparison
     const oldProduct = await ProductService.getById(req.params.id);
-    const product = await ProductService.update(req.params.id, req.user!.userId, data);
+    const product = await ProductService.update(req.params.id, req.user?.id || req.user?.userId || '', data);
     
     // Emit price update if price changed
     if (data.price && oldProduct.price !== data.price) {
@@ -65,8 +66,19 @@ export class ProductController {
     return sendSuccess(res, product, "Product updated");
   }
 
-  static async delete(req: Request, res: Response) {
-    await ProductService.delete(req.params.id, req.user!.userId);
+  static async getByFarmer(req: AuthRequest, res: Response) {
+    const products = await ProductService.getByFarmerId(req.user?.id || req.user?.userId || '');
+    return sendSuccess(res, products);
+  }
+
+  static async toggleStatus(req: AuthRequest, res: Response) {
+    const product = await ProductService.toggleStatus(req.params.id, req.user?.id || req.user?.userId || '');
+    return sendSuccess(res, product, "Status toggled");
+  }
+
+  static async delete(req: AuthRequest, res: Response) {
+    await ProductService.delete(req.params.id, req.user?.id || req.user?.userId || '');
     return sendSuccess(res, null, "Product deleted");
   }
 }
+

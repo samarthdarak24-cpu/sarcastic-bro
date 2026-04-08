@@ -557,3 +557,42 @@ class TrustScoreResponse(BaseModel):
     tier: str = Field(..., description="Trust tier (Elite, Platinum, Gold, Silver)")
     verifiedNodes: List[str] = Field(..., description="Verified trust anchors")
     growth_potential: int = Field(..., description="Score improvement probability")
+
+
+# ============================================================================
+# CHAT AND CONTEXT-AWARE AI MODELS
+# ============================================================================
+
+class ChatMessage(BaseModel):
+    """Model for a single chat message in a conversation."""
+    role: str = Field(..., description="Role of the sender: user or assistant")
+    content: str = Field(..., description="Message content")
+    timestamp: Optional[str] = Field(None, description="ISO timestamp")
+
+
+class ContextAwareChatRequest(BaseModel):
+    """Request model for intelligent, context-aware chat."""
+    message: str = Field(..., description="User's new message")
+    user_type: str = Field("FARMER", description="User role: FARMER or BUYER")
+    conversation_history: List[ChatMessage] = Field(default_factory=list, description="Previous messages")
+    user_context: Dict[str, Any] = Field(default_factory=dict, description="Additional user data like location, products, etc.")
+
+
+class ChatResponse(BaseModel):
+    """Response model for intelligent chat."""
+    response: str = Field(..., description="AI's text response")
+    suggestions: List[str] = Field(default_factory=list, description="Smart follow-up suggestions")
+    intent: str = Field("general", description="Detected user intent")
+    confidence: float = Field(0.0, ge=0.0, le=1.0, description="Confidence in intent detection")
+    actions: List[Dict[str, Any]] = Field(default_factory=list, description="Recommended platform actions")
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "response": "Based on current market trends, wheat prices are expected to rise by 5% in Punjab. I recommend holding your stock for 2 more weeks.",
+                "suggestions": ["Show price trends", "Find storage facilities", "Contact local buyers"],
+                "intent": "PRICE_ADVICE",
+                "confidence": 0.95,
+                "actions": [{"type": "NAVIGATE", "target": "/dashboard/market-intel"}]
+            }
+        }

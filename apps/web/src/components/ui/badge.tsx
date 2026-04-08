@@ -5,6 +5,8 @@ const toneClasses = {
   brand: "bg-[var(--brand-soft)] text-[var(--brand-700)]",
   amber: "bg-[var(--amber-soft)] text-[var(--amber-700)]",
   ink: "bg-[var(--ink-soft)] text-[var(--text-primary)]",
+  destructive: "bg-red-100 text-red-700",
+  success: "bg-emerald-100 text-emerald-700",
 };
 
 export function Badge({

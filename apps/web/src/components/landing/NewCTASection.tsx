@@ -2,8 +2,11 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
+import { useTranslation } from "react-i18next";
 
 export function NewCTASection() {
+  const { t } = useTranslation();
+
   return (
     <section className="py-20 relative overflow-hidden">
       {/* Animated Gradient Background */}
@@ -34,7 +37,7 @@ export function NewCTASection() {
             className="inline-block mb-6"
           >
             <div className="glass-effect-white px-6 py-2 rounded-full text-sm font-bold text-white">
-              🚀 Join 450,000+ Farmers Already Growing with Us
+              🚀 {t("landing.cta.badge")}
             </div>
           </motion.div>
 
@@ -46,9 +49,7 @@ export function NewCTASection() {
             transition={{ delay: 0.3 }}
             className="text-4xl md:text-6xl font-black text-white mb-6 leading-tight"
           >
-            Ready to Transform Your
-            <br />
-            Agricultural Business?
+            {t("landing.cta.title")}
           </motion.h2>
 
           {/* Description */}
@@ -59,8 +60,7 @@ export function NewCTASection() {
             transition={{ delay: 0.4 }}
             className="text-lg md:text-xl text-white/90 mb-10 max-w-3xl mx-auto"
           >
-            Join thousands of farmers and buyers who are already experiencing 40% higher profits
-            with AI-powered quality grading and direct marketplace connections.
+            {t("landing.cta.subtitle")}
           </motion.p>
 
           {/* CTA Buttons */}
@@ -77,7 +77,7 @@ export function NewCTASection() {
                 whileTap={{ scale: 0.95 }}
                 className="px-8 py-4 bg-white text-[#22c55e] rounded-xl font-bold text-lg shadow-2xl hover:shadow-white/20 transition-all flex items-center gap-2 group"
               >
-                <span>Start as Farmer</span>
+                <span>{t("landing.cta.start_farmer")}</span>
                 <span className="group-hover:translate-x-1 transition-transform">→</span>
               </motion.button>
             </Link>
@@ -88,7 +88,7 @@ export function NewCTASection() {
                 whileTap={{ scale: 0.95 }}
                 className="px-8 py-4 bg-white/10 backdrop-blur-sm text-white border-2 border-white rounded-xl font-bold text-lg hover:bg-white/20 transition-all flex items-center gap-2 group"
               >
-                <span>Start as Buyer</span>
+                <span>{t("landing.cta.start_buyer")}</span>
                 <span className="group-hover:translate-x-1 transition-transform">→</span>
               </motion.button>
             </Link>
@@ -104,15 +104,15 @@ export function NewCTASection() {
           >
             <div className="flex items-center gap-2">
               <span className="text-xl">✓</span>
-              <span>Free to Join</span>
+              <span>{t("landing.cta.free_to_join")}</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-xl">✓</span>
-              <span>No Credit Card Required</span>
+              <span>{t("landing.cta.no_cc")}</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-xl">✓</span>
-              <span>Setup in 5 Minutes</span>
+              <span>{t("landing.cta.setup_5m")}</span>
             </div>
           </motion.div>
         </motion.div>

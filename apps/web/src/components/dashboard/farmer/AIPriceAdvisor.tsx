@@ -18,7 +18,7 @@ export default function AIPriceAdvisor() {
   const [refreshing, setRefreshing] = useState(false);
 
   const tabs = [
-    { id: 'overview', label: 'Overview', icon: Activity },
+    { id: 'overview', label: 'Market Advisor Overview', icon: Activity },
     { id: 'market-intelligence', label: 'Market Intel', icon: Brain },
     { id: 'pricing-strategy', label: 'Strategy', icon: Target },
     { id: 'competitors', label: 'Competitors', icon: Users },
@@ -117,7 +117,7 @@ export default function AIPriceAdvisor() {
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex items-center gap-2 px-5 py-3 rounded-xl font-black text-xs uppercase whitespace-nowrap transition-all ${
                   activeTab === tab.id
-                    ? 'bg-brand-primary text-white shadow-lg scale-105'
+                    ? 'bg-emerald-600 text-white shadow-lg scale-105'
                     : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
                 }`}
               >

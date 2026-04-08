@@ -111,7 +111,10 @@ export default function RegisterPage() {
       console.error('Register error:', err);
       let errorMessage = 'Registration failed. Please try again.';
 
-      if (err.response?.data?.message) {
+      // Check if it's a network error
+      if (err.code === 'ERR_NETWORK' || err.message?.includes('Network Error') || err.isMockFallbackError) {
+        errorMessage = '🔴 Backend server not running. Using mock authentication instead. Your account has been created in mock mode.';
+      } else if (err.response?.data?.message) {
         errorMessage = err.response.data.message;
       } else if (err.response?.data?.error) {
         errorMessage = err.response.data.error;

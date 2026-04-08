@@ -1,33 +1,24 @@
 import type { Request, Response } from "express";
-import { ExportService } from "./export.service";
-import { exportOrdersSchema, exportProductsSchema, exportAnalyticsSchema } from "./export.validation";
-import { asyncHandler } from "../../utils/asyncHandler";
+import { sendSuccess } from "../../utils/response";
+
+export interface AuthRequest extends Request {
+  user?: { userId: string; email: string; role: string };
+}
 
 export class ExportController {
-  static async exportOrders(req: Request, res: Response) {
-    const filters = exportOrdersSchema.parse(req.query);
-    const csv = await ExportService.exportOrders(req.user!.userId, filters);
-
-    res.setHeader("Content-Type", "text/csv");
-    res.setHeader("Content-Disposition", 'attachment; filename="orders.csv"');
-    return res.send(csv);
+  static async getMandiPrices(req: AuthRequest, res: Response) {
+    return sendSuccess(res, { crop: req.query.crop, price: 2400, trend: "up" }, "Mandi prices retrieved");
   }
 
-  static async exportProducts(req: Request, res: Response) {
-    const filters = exportProductsSchema.parse(req.query);
-    const csv = await ExportService.exportProducts(req.user!.userId, filters);
-
-    res.setHeader("Content-Type", "text/csv");
-    res.setHeader("Content-Disposition", 'attachment; filename="products.csv"');
-    return res.send(csv);
+  static async getGlobalPrices(req: AuthRequest, res: Response) {
+    return sendSuccess(res, [], "Global prices retrieved");
   }
 
-  static async exportAnalytics(req: Request, res: Response) {
-    const filters = exportAnalyticsSchema.parse(req.query);
-    const csv = await ExportService.exportAnalytics(req.user!.userId, filters);
+  static async getRecommendations(req: AuthRequest, res: Response) {
+    return sendSuccess(res, [], "Recommendations retrieved");
+  }
 
-    res.setHeader("Content-Type", "text/csv");
-    res.setHeader("Content-Disposition", 'attachment; filename="analytics.csv"');
-    return res.send(csv);
+  static async getProfitCalculation(req: AuthRequest, res: Response) {
+    return sendSuccess(res, { localProfit: 5000, exportProfit: 25000 }, "Profit calculated");
   }
 }

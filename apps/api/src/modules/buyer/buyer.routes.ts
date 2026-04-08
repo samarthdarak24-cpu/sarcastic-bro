@@ -3,7 +3,47 @@ import prisma from "../../prisma/client";
 import { authMiddleware } from "../../middleware/auth.middleware";
 import { asyncHandler } from "../../utils/asyncHandler";
 
+// Import new buyer module controllers
+import supplierController from "./supplier.controller";
+import bulkProductController from "./bulk-product.controller";
+import procurementController from "./procurement.controller";
+import reputationController from "./reputation.controller";
+import bidController from "./bid.controller";
+import preBookingController from "./pre-booking.controller";
+import orderTrackingController from "./order-tracking.controller";
+import bulkTradeController from "./bulk-trade.controller";
+import blockchainController from "./blockchain.controller";
+import chatController from "./chat.controller";
+import analyticsController from "./analytics.controller";
+import escrowController from "./escrow.controller";
+import securityController from "./security.controller";
+import reviewController from "./review.controller";
+import marketIntelligenceController from "./market-intelligence.controller";
+import clusterController from "./cluster.controller";
+import cockpitController from "./cockpit.controller";
+import tradeDeskController from "./trade-desk.controller";
+
 const router = Router();
+
+// Mount new buyer module routes
+router.use("/suppliers", supplierController);
+router.use("/bulk-products", bulkProductController);
+router.use("/procurement", procurementController);
+router.use("/reputation", reputationController);
+router.use("/bids", bidController);
+router.use("/pre-bookings", preBookingController);
+router.use("/orders", orderTrackingController);
+router.use("/bulk-trades", bulkTradeController);
+router.use("/blockchain", blockchainController);
+router.use("/chat", chatController);
+router.use("/analytics", analyticsController);
+router.use("/escrow", escrowController);
+router.use("/security", securityController);
+router.use("/reviews", reviewController);
+router.use("/market-intelligence", marketIntelligenceController);
+router.use("/clusters", clusterController);
+router.use("/cockpit", cockpitController);
+router.use("/trade-desk", tradeDeskController);
 
 /**
  * Get buyer overview stats.

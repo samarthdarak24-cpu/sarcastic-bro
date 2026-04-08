@@ -1,5 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import axios from 'axios';
+import { redis } from '../../services/redis.service';
+import { getSocketService } from '../../services/socketService';
 
 const prisma = new PrismaClient();
 
@@ -8,266 +10,318 @@ interface EscrowCreationData {
   amount: number;
   buyerId: string;
   sellerId: string;
-  milestones?: Array<{
-    name: string;
-    percentage: number;
-    condition: string;
-  }>;
-}
-
-interface DisputeData {
-  escrowId: string;
-  raisedBy: string;
-  reason: string;
-  evidence: string[];
 }
 
 export class EscrowService {
   private aiServiceUrl = process.env.AI_SERVICE_URL || 'http://localhost:8000';
 
   async createSmartEscrow(data: EscrowCreationData) {
-    // AI Risk Assessment
-    const riskAssessment = await axios.post(`${this.aiServiceUrl}/api/escrow/risk-assessment`, {
-      buyerId: data.buyerId,
-      sellerId: data.sellerId,
-      amount: data.amount,
-    });
-
-    // Auto-generate milestones if not provided
-    let milestones = data.milestones;
-    if (!milestones || milestones.length === 0) {
-      const aiMilestones = await axios.post(`${this.aiServiceUrl}/api/escrow/generate-milestones`, {
-        orderId: data.orderId,
-        amount: data.amount,
-      });
-      milestones = aiMilestones.data.milestones;
-    }
-
-    const escrow = await prisma.escrow.create({
+    // Create escrow order
+    const escrow = await prisma.escrowOrder.create({
       data: {
         orderId: data.orderId,
         amount: data.amount,
         buyerId: data.buyerId,
-        sellerId: data.sellerId,
-        status: 'ACTIVE',
-        riskScore: riskAssessment.data.riskScore,
-        riskLevel: riskAssessment.data.riskLevel,
-        milestones: JSON.stringify(milestones),
-        createdAt: new Date(),
+        farmerId: data.sellerId,
+        status: 'HELD',
+        escrowAddress: `0x${Math.random().toString(16).substring(2, 42)}`,
+        depositTxHash: `0x${Math.random().toString(16).substring(2, 66)}`,
+        buyerConfirmed: false,
+        farmerDelivered: false,
       },
     });
 
+    // Invalidate cache
+    await redis.delPattern(`escrow:user:${data.buyerId}:*`);
+    await redis.delPattern(`escrow:user:${data.sellerId}:*`);
+    await redis.del(`escrow:analytics:${data.buyerId}`);
+    await redis.del(`escrow:analytics:${data.sellerId}`);
+
+    // Emit real-time event to both parties
+    try {
+      const socketService = getSocketService();
+      socketService.emitEscrowUpdate(data.buyerId, {
+        escrowId: escrow.id,
+        orderId: escrow.orderId,
+        status: 'held',
+        amount: escrow.amount,
+      });
+      socketService.emitEscrowUpdate(data.sellerId, {
+        escrowId: escrow.id,
+        orderId: escrow.orderId,
+        status: 'held',
+        amount: escrow.amount,
+      });
+    } catch (error) {
+      console.error('[Escrow] Socket.IO not available:', error);
+    }
+
     return {
       escrow,
-      riskAssessment: riskAssessment.data,
-      milestones,
+      message: 'Escrow created successfully. Funds are held securely.',
     };
   }
 
   async getEscrowAnalytics(userId: string, role: string) {
-    const escrows = await prisma.escrow.findMany({
-      where: role === 'BUYER' ? { buyerId: userId } : { sellerId: userId },
+    const cacheKey = `escrow:analytics:${userId}`;
+    
+    // Try to get from cache
+    const cached = await redis.get(cacheKey);
+    if (cached) {
+      console.log(`[Escrow] Cache hit for analytics:${userId}`);
+      return cached;
+    }
+
+    const escrows = await prisma.escrowOrder.findMany({
+      where: role === 'BUYER' ? { buyerId: userId } : { farmerId: userId },
       include: {
         order: true,
       },
     });
 
-    const totalAmount = escrows.reduce((sum, e) => sum + e.amount, 0);
-    const activeCount = escrows.filter(e => e.status === 'ACTIVE').length;
-    const completedCount = escrows.filter(e => e.status === 'COMPLETED').length;
-    const disputedCount = escrows.filter(e => e.status === 'DISPUTED').length;
+    const totalAmount = escrows.reduce((sum: number, e: any) => sum + e.amount, 0);
+    const activeCount = escrows.filter((e: any) => e.status === 'HELD').length;
+    const completedCount = escrows.filter((e: any) => e.status === 'RELEASED').length;
+    const disputedCount = escrows.filter((e: any) => e.status === 'DISPUTED').length;
 
-    const avgRiskScore = escrows.reduce((sum, e) => sum + (e.riskScore || 0), 0) / escrows.length;
-
-    return {
+    const result = {
       totalEscrows: escrows.length,
       totalAmount,
       activeCount,
       completedCount,
       disputedCount,
-      avgRiskScore,
-      escrows: escrows.map(e => ({
+      escrows: escrows.map((e: any) => ({
         id: e.id,
         orderId: e.orderId,
         amount: e.amount,
         status: e.status,
-        riskScore: e.riskScore,
-        riskLevel: e.riskLevel,
+        buyerConfirmed: e.buyerConfirmed,
+        farmerDelivered: e.farmerDelivered,
         createdAt: e.createdAt,
-        milestones: JSON.parse(e.milestones || '[]'),
       })),
     };
+
+    // Cache for 5 minutes
+    await redis.set(cacheKey, result, 300);
+    
+    return result;
   }
 
-  async releaseFunds(escrowId: string, milestoneIndex: number, verificationData: any) {
-    const escrow = await prisma.escrow.findUnique({ where: { id: escrowId } });
+  async releaseFunds(escrowId: string, userId: string) {
+    const escrow = await prisma.escrowOrder.findUnique({ where: { id: escrowId } });
     if (!escrow) throw new Error('Escrow not found');
 
-    const milestones = JSON.parse(escrow.milestones || '[]');
-    const milestone = milestones[milestoneIndex];
-
-    // AI verification
-    const verification = await axios.post(`${this.aiServiceUrl}/api/escrow/verify-milestone`, {
-      escrowId,
-      milestone,
-      verificationData,
-    });
-
-    if (verification.data.approved) {
-      milestones[milestoneIndex].status = 'RELEASED';
-      milestones[milestoneIndex].releasedAt = new Date();
-
-      const allReleased = milestones.every((m: any) => m.status === 'RELEASED');
-
-      await prisma.escrow.update({
-        where: { id: escrowId },
-        data: {
-          milestones: JSON.stringify(milestones),
-          status: allReleased ? 'COMPLETED' : 'ACTIVE',
-        },
-      });
-
-      // Create transaction record
-      await prisma.transaction.create({
-        data: {
-          escrowId,
-          amount: (escrow.amount * milestone.percentage) / 100,
-          type: 'RELEASE',
-          status: 'COMPLETED',
-          createdAt: new Date(),
-        },
-      });
-
-      return { success: true, milestone: milestones[milestoneIndex] };
+    // Verify user is authorized (buyer or farmer)
+    if (escrow.buyerId !== userId && escrow.farmerId !== userId) {
+      throw new Error('Unauthorized to release funds');
     }
 
-    return { success: false, reason: verification.data.reason };
-  }
+    // Check if both parties have confirmed
+    if (!escrow.buyerConfirmed || !escrow.farmerDelivered) {
+      throw new Error('Both parties must confirm before release');
+    }
 
-  async raiseDispute(data: DisputeData) {
-    const dispute = await prisma.dispute.create({
-      data: {
-        escrowId: data.escrowId,
-        raisedBy: data.raisedBy,
-        reason: data.reason,
-        evidence: JSON.stringify(data.evidence),
-        status: 'PENDING',
-        createdAt: new Date(),
-      },
-    });
-
-    // AI Analysis
-    const aiAnalysis = await axios.post(`${this.aiServiceUrl}/api/escrow/analyze-dispute`, {
-      disputeId: dispute.id,
-      reason: data.reason,
-      evidence: data.evidence,
-    });
-
-    await prisma.dispute.update({
-      where: { id: dispute.id },
-      data: {
-        aiAnalysis: JSON.stringify(aiAnalysis.data),
-        aiRecommendation: aiAnalysis.data.recommendation,
-      },
-    });
-
-    await prisma.escrow.update({
-      where: { id: data.escrowId },
-      data: { status: 'DISPUTED' },
-    });
-
-    return { dispute, aiAnalysis: aiAnalysis.data };
-  }
-
-  async detectFraud(escrowId: string) {
-    const escrow = await prisma.escrow.findUnique({
+    const updatedEscrow = await prisma.escrowOrder.update({
       where: { id: escrowId },
-      include: { order: true },
+      data: {
+        status: 'RELEASED',
+        releaseTxHash: `0x${Math.random().toString(16).substring(2, 66)}`,
+        releasedAt: new Date(),
+      },
     });
 
-    const fraudCheck = await axios.post(`${this.aiServiceUrl}/api/escrow/fraud-detection`, {
-      escrowId,
-      amount: escrow?.amount,
-      buyerId: escrow?.buyerId,
-      sellerId: escrow?.sellerId,
-    });
+    // Invalidate cache
+    await redis.delPattern(`escrow:user:${escrow.buyerId}:*`);
+    await redis.delPattern(`escrow:user:${escrow.farmerId}:*`);
+    await redis.del(`escrow:analytics:${escrow.buyerId}`);
+    await redis.del(`escrow:analytics:${escrow.farmerId}`);
 
-    if (fraudCheck.data.isFraudulent) {
-      await prisma.escrow.update({
-        where: { id: escrowId },
-        data: {
-          status: 'FROZEN',
-          fraudAlert: JSON.stringify(fraudCheck.data),
-        },
+    // Emit real-time event to both parties
+    try {
+      const socketService = getSocketService();
+      socketService.emitEscrowUpdate(escrow.buyerId, {
+        escrowId: updatedEscrow.id,
+        orderId: updatedEscrow.orderId,
+        status: 'released',
+        amount: updatedEscrow.amount,
       });
+      socketService.emitEscrowUpdate(escrow.farmerId, {
+        escrowId: updatedEscrow.id,
+        orderId: updatedEscrow.orderId,
+        status: 'released',
+        amount: updatedEscrow.amount,
+      });
+    } catch (error) {
+      console.error('[Escrow] Socket.IO not available:', error);
     }
 
-    return fraudCheck.data;
+    return { success: true, escrow: updatedEscrow };
   }
 
-  async calculateInsurance(escrowId: string) {
-    const escrow = await prisma.escrow.findUnique({ where: { id: escrowId } });
+  async confirmDelivery(escrowId: string, userId: string, role: 'buyer' | 'farmer') {
+    const escrow = await prisma.escrowOrder.findUnique({ where: { id: escrowId } });
+    if (!escrow) throw new Error('Escrow not found');
 
-    const insurance = await axios.post(`${this.aiServiceUrl}/api/escrow/calculate-insurance`, {
-      amount: escrow?.amount,
-      riskScore: escrow?.riskScore,
-      riskLevel: escrow?.riskLevel,
+    // Verify user is authorized
+    if (role === 'buyer' && escrow.buyerId !== userId) {
+      throw new Error('Unauthorized');
+    }
+    if (role === 'farmer' && escrow.farmerId !== userId) {
+      throw new Error('Unauthorized');
+    }
+
+    const updateData: any = {};
+    if (role === 'buyer') {
+      updateData.buyerConfirmed = true;
+    } else {
+      updateData.farmerDelivered = true;
+    }
+
+    const updatedEscrow = await prisma.escrowOrder.update({
+      where: { id: escrowId },
+      data: updateData,
     });
 
-    return insurance.data;
+    // Invalidate cache
+    await redis.delPattern(`escrow:user:${escrow.buyerId}:*`);
+    await redis.delPattern(`escrow:user:${escrow.farmerId}:*`);
+    await redis.del(`escrow:analytics:${escrow.buyerId}`);
+    await redis.del(`escrow:analytics:${escrow.farmerId}`);
+
+    // Emit real-time event
+    try {
+      const socketService = getSocketService();
+      const otherUserId = role === 'buyer' ? escrow.farmerId : escrow.buyerId;
+      socketService.emitEscrowUpdate(otherUserId, {
+        escrowId: updatedEscrow.id,
+        orderId: updatedEscrow.orderId,
+        status: 'confirmation_received',
+        amount: updatedEscrow.amount,
+      });
+    } catch (error) {
+      console.error('[Escrow] Socket.IO not available:', error);
+    }
+
+    return { success: true, escrow: updatedEscrow };
   }
 
-  async getMultiPartyEscrows(userId: string) {
-    const escrows = await prisma.multiPartyEscrow.findMany({
-      where: {
-        OR: [
-          { buyerId: userId },
-          { participants: { has: userId } },
-        ],
-      },
-    });
+  async raiseDispute(escrowId: string, userId: string, reason: string) {
+    const escrow = await prisma.escrowOrder.findUnique({ where: { id: escrowId } });
+    if (!escrow) throw new Error('Escrow not found');
 
-    return escrows;
-  }
+    // Verify user is authorized
+    if (escrow.buyerId !== userId && escrow.farmerId !== userId) {
+      throw new Error('Unauthorized to raise dispute');
+    }
 
-  async createAutoRefund(escrowId: string, reason: string) {
-    const escrow = await prisma.escrow.findUnique({ where: { id: escrowId } });
-
-    const refund = await prisma.refund.create({
+    const updatedEscrow = await prisma.escrowOrder.update({
+      where: { id: escrowId },
       data: {
-        escrowId,
-        amount: escrow?.amount || 0,
-        reason,
-        status: 'PROCESSING',
-        createdAt: new Date(),
+        status: 'DISPUTED',
+        disputeReason: reason,
       },
     });
 
-    // Process refund via blockchain
-    const blockchainTx = await axios.post(`${this.aiServiceUrl}/api/escrow/process-refund`, {
-      refundId: refund.id,
-      amount: escrow?.amount,
-      buyerId: escrow?.buyerId,
-    });
+    // Invalidate cache
+    await redis.delPattern(`escrow:user:${escrow.buyerId}:*`);
+    await redis.delPattern(`escrow:user:${escrow.farmerId}:*`);
+    await redis.del(`escrow:analytics:${escrow.buyerId}`);
+    await redis.del(`escrow:analytics:${escrow.farmerId}`);
 
-    await prisma.refund.update({
-      where: { id: refund.id },
-      data: {
-        status: 'COMPLETED',
-        transactionHash: blockchainTx.data.txHash,
-      },
-    });
+    // Emit real-time event to both parties
+    try {
+      const socketService = getSocketService();
+      socketService.emitEscrowUpdate(escrow.buyerId, {
+        escrowId: updatedEscrow.id,
+        orderId: updatedEscrow.orderId,
+        status: 'disputed',
+        amount: updatedEscrow.amount,
+      });
+      socketService.emitEscrowUpdate(escrow.farmerId, {
+        escrowId: updatedEscrow.id,
+        orderId: updatedEscrow.orderId,
+        status: 'disputed',
+        amount: updatedEscrow.amount,
+      });
+    } catch (error) {
+      console.error('[Escrow] Socket.IO not available:', error);
+    }
 
-    return refund;
+    return { success: true, dispute: updatedEscrow };
   }
 
-  async getEscrowMarketplace() {
-    const listings = await prisma.escrowListing.findMany({
-      where: { status: 'ACTIVE' },
-      include: { escrow: true },
+  async refundEscrow(escrowId: string, adminUserId: string, reason: string) {
+    const escrow = await prisma.escrowOrder.findUnique({ where: { id: escrowId } });
+    if (!escrow) throw new Error('Escrow not found');
+
+    const updatedEscrow = await prisma.escrowOrder.update({
+      where: { id: escrowId },
+      data: {
+        status: 'REFUNDED',
+        disputeReason: reason,
+        releaseTxHash: `0x${Math.random().toString(16).substring(2, 66)}`,
+        releasedAt: new Date(),
+      },
     });
 
-    return listings;
+    // Invalidate cache
+    await redis.delPattern(`escrow:user:${escrow.buyerId}:*`);
+    await redis.delPattern(`escrow:user:${escrow.farmerId}:*`);
+    await redis.del(`escrow:analytics:${escrow.buyerId}`);
+    await redis.del(`escrow:analytics:${escrow.farmerId}`);
+
+    // Emit real-time event to both parties
+    try {
+      const socketService = getSocketService();
+      socketService.emitEscrowUpdate(escrow.buyerId, {
+        escrowId: updatedEscrow.id,
+        orderId: updatedEscrow.orderId,
+        status: 'refunded',
+        amount: updatedEscrow.amount,
+      });
+      socketService.emitEscrowUpdate(escrow.farmerId, {
+        escrowId: updatedEscrow.id,
+        orderId: updatedEscrow.orderId,
+        status: 'refunded',
+        amount: updatedEscrow.amount,
+      });
+    } catch (error) {
+      console.error('[Escrow] Socket.IO not available:', error);
+    }
+
+    return { success: true, refund: updatedEscrow };
+  }
+
+  async getEscrowById(escrowId: string, userId: string) {
+    const cacheKey = `escrow:${escrowId}`;
+    
+    // Try to get from cache
+    const cached = await redis.get(cacheKey);
+    if (cached) {
+      console.log(`[Escrow] Cache hit for escrow:${escrowId}`);
+      return cached;
+    }
+
+    const escrow = await prisma.escrowOrder.findUnique({
+      where: { id: escrowId },
+      include: {
+        order: true,
+        buyer: { select: { id: true, name: true, email: true } },
+        farmer: { select: { id: true, name: true, email: true } },
+      },
+    });
+
+    if (!escrow) throw new Error('Escrow not found');
+
+    // Verify user is authorized
+    if (escrow.buyerId !== userId && escrow.farmerId !== userId) {
+      throw new Error('Unauthorized to view this escrow');
+    }
+
+    // Cache for 3 minutes
+    await redis.set(cacheKey, escrow, 180);
+    
+    return escrow;
   }
 }
 

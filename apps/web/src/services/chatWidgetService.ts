@@ -1,5 +1,6 @@
 import api from './api';
 import { ChatMessage, ChatAPIResponse, QuickAction } from '@/types/chat';
+import { getAdvancedAIResponse } from './farmBotAI';
 
 export interface SendMessageParams {
   message: string;
@@ -11,6 +12,7 @@ export interface SendMessageParams {
     location?: string;
     currentPage?: string;
     products?: string[];
+    language?: 'en' | 'hi' | 'mr';
   };
 }
 
@@ -68,11 +70,11 @@ export const chatWidgetService = {
         }
         
         console.error('Chat widget service error (all retries exhausted):', error);
-        return this.getIntelligentFallback(params.message, params.userContext);
+        return this.getIntelligentFallback(params.message, params.userContext as any);
       }
     }
     
-    return this.getIntelligentFallback(params.message, params.userContext);
+    return this.getIntelligentFallback(params.message, params.userContext as any);
   },
 
   async *sendMessageStream(params: SendMessageParams): AsyncGenerator<StreamChunk, void, unknown> {
@@ -133,7 +135,11 @@ export const chatWidgetService = {
 
         for (const line of lines) {
           try {
-            const data = JSON.parse(line) as StreamChunk;
+            // Handle SSE format "data: {...}"
+            const cleanLine = line.startsWith('data: ') ? line.slice(6) : line;
+            if (cleanLine === '[DONE]') continue;
+            
+            const data = JSON.parse(cleanLine) as StreamChunk;
             yield data;
           } catch {
             // Skip invalid JSON
@@ -150,96 +156,17 @@ export const chatWidgetService = {
     }
   },
 
-  getIntelligentFallback(message: string, userContext: Record<string, unknown> | undefined): ChatWidgetResponse {
-    const messageLower = message.toLowerCase();
-    const userType = (userContext?.userType as string) || 'FARMER';
+  async getIntelligentFallback(message: string, userContext: Record<string, any> | undefined): Promise<ChatWidgetResponse> {
+    const userRole = (userContext?.userType as 'FARMER' | 'BUYER') || 'FARMER';
+    const language = (userContext?.language as 'en' | 'hi' | 'mr') || 'en';
     
-    const intents: Record<string, string[]> = {
-      price: ['price', 'rate', 'cost', 'selling', 'market price', 'how much'],
-      quality: ['quality', 'grade', 'defect', 'inspect', 'analyze'],
-      crop: ['crop', 'plant', 'grow', 'season', 'soil', 'recommend'],
-      pest: ['pest', 'disease', 'insect', 'bug', 'infection'],
-      buyer: ['buyer', 'sell', 'customer', 'order', 'purchase'],
-      supplier: ['supplier', 'farmer', 'source', 'find', 'vendor'],
-      weather: ['weather', 'rain', 'temperature', 'forecast'],
-      market: ['trend', 'demand', 'market', 'forecast', 'prediction'],
-    };
-
-    let detectedIntent = 'general';
-    for (const [intent, keywords] of Object.entries(intents)) {
-      if (keywords.some(keyword => messageLower.includes(keyword))) {
-        detectedIntent = intent;
-        break;
-      }
-    }
-
-    if (userType === 'FARMER') {
-      return this.getFarmerResponse(detectedIntent, userContext);
-    } else {
-      return this.getBuyerResponse(detectedIntent, userContext);
-    }
-  },
-
-  getFarmerResponse(intent: string, context: Record<string, unknown> | undefined): ChatWidgetResponse {
-    const responses: Record<string, ChatWidgetResponse> = {
-      price: {
-        response: `💰 **Market Price Information**\n\nI can help you with pricing! Based on current market trends:\n\n• Premium quality crops fetch 15-20% higher rates\n• Regional variations affect pricing significantly\n• Demand is currently ${Math.random() > 0.5 ? 'high' : 'moderate'} for seasonal produce\n\nFor accurate pricing specific to your product, I recommend:\n1. Check the Price Advisor tool in your dashboard\n2. Compare prices across nearby markets\n3. Get AI-powered price predictions\n\nWould you like me to analyze your specific product?`,
-        suggestions: [
-          'Show me price trends',
-          'Compare market prices',
-          'Get price prediction',
-          'Find best buyers'
-        ],
-        intent: 'price_inquiry',
-        confidence: 0.85,
-        actions: []
-      },
-      general: {
-        response: `👋 Hello${context?.name ? ` ${context.name}` : ''}! I'm your AI farming assistant! 🌾\n\nI can help you with:\n\n💰 **Pricing & Market**\n• Current market prices\n• Price predictions\n• Market trends analysis\n\n📸 **Quality & Analysis**\n• Crop quality grading\n• Pest detection\n• Soil health analysis\n\n🌱 **Farming Advice**\n• Crop recommendations\n• Weather forecasts\n• Best practices\n\n🤝 **Business Growth**\n• Find buyers\n• Negotiate deals\n• Manage orders\n\nWhat would you like to know?`,
-        suggestions: [
-          'Check market prices',
-          'Analyze crop quality',
-          'Find buyers',
-          'Get crop advice'
-        ],
-        intent: 'general',
-        confidence: 0.7,
-        actions: []
-      }
-    };
-
-    return responses[intent] || responses.general;
-  },
-
-  getBuyerResponse(intent: string, context: Record<string, unknown> | undefined): ChatWidgetResponse {
-    const responses: Record<string, ChatWidgetResponse> = {
-      supplier: {
-        response: `🔍 **Find Suppliers**\n\nI'll help you source quality products!\n\n**Our Platform Offers:**\n• Verified farmer database\n• Quality-certified suppliers\n• Competitive pricing\n• Reliable delivery tracking\n• Trust score ratings\n\n**Search Filters:**\n✓ Product type and quality grade\n✓ Location and delivery radius\n✓ Certification (organic, etc.)\n✓ Supplier ratings and reviews\n\n${context?.name ? `${context.name}, ` : ''}visit the Sourcing Space to find suppliers matching your requirements!`,
-        suggestions: [
-          'Search suppliers',
-          'View top-rated farmers',
-          'Organic certified suppliers',
-          'Nearby suppliers'
-        ],
-        intent: 'supplier_search',
-        confidence: 0.9,
-        actions: []
-      },
-      general: {
-        response: `👋 Hello${context?.name ? ` ${context.name}` : ''}! I'm your AI procurement assistant! 🛒\n\nI can help you with:\n\n🔍 **Sourcing**\n• Find verified suppliers\n• Quality-certified farmers\n• Regional sourcing options\n\n💰 **Pricing**\n• Compare market prices\n• Negotiate better deals\n• Bulk order discounts\n\n📦 **Procurement**\n• Place bulk orders\n• Track deliveries\n• Manage contracts\n\n📊 **Intelligence**\n• Market trends\n• Supply forecasts\n• Price predictions\n\nWhat would you like to do today?`,
-        suggestions: [
-          'Find suppliers',
-          'Compare prices',
-          'Place bulk order',
-          'Market analysis'
-        ],
-        intent: 'general',
-        confidence: 0.7,
-        actions: []
-      }
-    };
-
-    return responses[intent] || responses.general;
+    return await getAdvancedAIResponse(message, {
+      language,
+      userRole,
+      name: userContext?.name,
+      location: userContext?.location || userContext?.district,
+      history: []
+    });
   },
 
   async getSuggestions(): Promise<string[]> {
@@ -266,3 +193,5 @@ export const chatWidgetService = {
     }
   },
 };
+
+export default chatWidgetService;

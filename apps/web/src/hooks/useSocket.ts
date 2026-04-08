@@ -2,6 +2,11 @@ import { useEffect, useCallback } from 'react';
 import { getSocket } from '@/lib/socket';
 import toast from 'react-hot-toast';
 
+const onAny = (socket: any, events: string[], handler: (data: any) => void) => {
+  events.forEach((event) => socket.on(event, handler));
+  return () => events.forEach((event) => socket.off(event, handler));
+};
+
 /**
  * Hook for real-time order status updates
  */
@@ -20,13 +25,40 @@ export const useOrderUpdates = (callback?: (data: any) => void) => {
       });
     };
     
-    socket.on('order-status-update', handleOrderUpdate);
+    // Align with backend emitToUser(..., "order:status:updated", ...)
+    const off = onAny(socket, ['order-status-update', 'order:status', 'order:status:updated'], handleOrderUpdate);
     
     return () => {
-      socket.off('order-status-update', handleOrderUpdate);
+      off();
     };
   }, [callback]);
 };
+
+/**
+ * Hook for real-time new order notifications (for farmers)
+ */
+export const useNewOrderNotifications = (callback?: (data: any) => void) => {
+  useEffect(() => {
+    const socket = getSocket();
+    
+    const handleNewOrder = (data: any) => {
+      console.log('New order received:', data);
+      if (callback) callback(data);
+      
+      toast.success(`New order #${data.orderNumber} for ${data.productName}!`, {
+        icon: '🔔',
+        duration: 6000
+      });
+    };
+    
+    const off = onAny(socket, ['order:new'], handleNewOrder);
+    
+    return () => {
+      off();
+    };
+  }, [callback]);
+};
+
 
 /**
  * Hook for real-time price updates
@@ -40,10 +72,10 @@ export const usePriceUpdates = (callback?: (data: any) => void) => {
       if (callback) callback(data);
     };
     
-    socket.on('price-update', handlePriceUpdate);
+    const off = onAny(socket, ['price-update'], handlePriceUpdate);
     
     return () => {
-      socket.off('price-update', handlePriceUpdate);
+      off();
     };
   }, [callback]);
 };
@@ -58,18 +90,20 @@ export const useShipmentTracking = (orderId?: string, callback?: (data: any) => 
     const socket = getSocket();
     
     // Join order-specific room
-    socket.emit('join-order-room', orderId);
+    socket.emit('join-order-room', orderId); // legacy
+    socket.emit('order:join', { orderId });
     
     const handleLocationUpdate = (data: any) => {
       console.log('Shipment location update:', data);
       if (callback) callback(data);
     };
     
-    socket.on('shipment-location-update', handleLocationUpdate);
+    const off = onAny(socket, ['shipment-location-update'], handleLocationUpdate);
     
     return () => {
-      socket.emit('leave-order-room', orderId);
-      socket.off('shipment-location-update', handleLocationUpdate);
+      socket.emit('leave-order-room', orderId); // legacy
+      socket.emit('order:leave', { orderId });
+      off();
     };
   }, [orderId, callback]);
 };
@@ -86,16 +120,17 @@ export const useProposalUpdates = (callback?: (data: any) => void) => {
       if (callback) callback(data);
       
       // Show toast notification
-      toast.info(`Proposal ${data.proposalId} status: ${data.status}`, {
+      toast(`Proposal ${data.proposalId} status: ${data.status}`, {
         icon: '💼',
         duration: 4000
       });
     };
+
     
-    socket.on('proposal-update', handleProposalUpdate);
+    const off = onAny(socket, ['proposal-update', 'proposal:new', 'proposal:counter', 'proposal:accepted', 'proposal:rejected'], handleProposalUpdate);
     
     return () => {
-      socket.off('proposal-update', handleProposalUpdate);
+      off();
     };
   }, [callback]);
 };
@@ -118,10 +153,10 @@ export const useMessageNotifications = (callback?: (data: any) => void) => {
       });
     };
     
-    socket.on('new-message', handleNewMessage);
+    const off = onAny(socket, ['new-message', 'message:new', 'message:received'], handleNewMessage);
     
     return () => {
-      socket.off('new-message', handleNewMessage);
+      off();
     };
   }, [callback]);
 };
@@ -153,10 +188,10 @@ export const useNotifications = (callback?: (data: any) => void) => {
       });
     };
     
-    socket.on('notification', handleNotification);
+    const off = onAny(socket, ['notification', 'notification:new'], handleNotification);
     
     return () => {
-      socket.off('notification', handleNotification);
+      off();
     };
   }, [callback]);
 };
@@ -169,19 +204,21 @@ export const useTypingIndicator = (conversationId?: string) => {
   
   const startTyping = useCallback(() => {
     if (conversationId) {
-      socket.emit('typing-start', { conversationId });
+      socket.emit('typing-start', { conversationId }); // legacy
+      socket.emit('message:typing', { conversationId, isTyping: true });
     }
   }, [conversationId, socket]);
   
   const stopTyping = useCallback(() => {
     if (conversationId) {
-      socket.emit('typing-stop', { conversationId });
+      socket.emit('typing-stop', { conversationId }); // legacy
+      socket.emit('message:typing', { conversationId, isTyping: false });
     }
   }, [conversationId, socket]);
   
   const onTyping = useCallback((callback: (data: any) => void) => {
-    socket.on('user-typing', callback);
-    return () => socket.off('user-typing', callback);
+    const off = onAny(socket, ['user-typing', 'user:typing'], callback);
+    return off;
   }, [socket]);
   
   return { startTyping, stopTyping, onTyping };
@@ -204,12 +241,12 @@ export const useOnlineStatus = (callback?: (data: any) => void) => {
       if (callback) callback({ ...data, status: 'offline' });
     };
     
-    socket.on('user-online', handleUserOnline);
-    socket.on('user-offline', handleUserOffline);
+    const offOnline = onAny(socket, ['user-online', 'user:online'], handleUserOnline);
+    const offOffline = onAny(socket, ['user-offline', 'user:offline'], handleUserOffline);
     
     return () => {
-      socket.off('user-online', handleUserOnline);
-      socket.off('user-offline', handleUserOffline);
+      offOnline();
+      offOffline();
     };
   }, [callback]);
 };
@@ -225,16 +262,16 @@ export const useTenderNotifications = (callback?: (data: any) => void) => {
       console.log('Tender update received:', data);
       if (callback) callback(data);
       
-      toast.info(`Tender ${data.tenderTitle}: ${data.message}`, {
+      toast(`Tender ${data.tenderTitle}: ${data.message}`, {
         icon: '📋',
         duration: 5000
       });
     };
     
-    socket.on('tender-update', handleTenderUpdate);
+    const off = onAny(socket, ['tender-update'], handleTenderUpdate);
     
     return () => {
-      socket.off('tender-update', handleTenderUpdate);
+      off();
     };
   }, [callback]);
 };
@@ -256,10 +293,39 @@ export const useQualityScanResults = (callback?: (data: any) => void) => {
       });
     };
     
-    socket.on('quality-scan-complete', handleScanComplete);
+    const off = onAny(socket, ['quality-scan-complete'], handleScanComplete);
     
     return () => {
-      socket.off('quality-scan-complete', handleScanComplete);
+      off();
     };
   }, [callback]);
+};
+
+/**
+ * Hook for new product notifications across the platform
+ */
+export const useProductCreated = (callback?: (data: any) => void) => {
+  useEffect(() => {
+    const socket = getSocket();
+    
+    const handleProductCreated = (data: any) => {
+      console.log('Real-time: New product created', data);
+      if (callback) callback(data);
+    };
+    
+    const off = onAny(socket, ['product:created'], handleProductCreated);
+    
+    return () => {
+      off();
+    };
+  }, [callback]);
+};
+
+/**
+ * Generic useSocket hook - returns the Socket.IO instance
+ * Use this hook when you need direct access to the socket for custom events
+ */
+export const useSocket = () => {
+  const socket = getSocket();
+  return socket;
 };

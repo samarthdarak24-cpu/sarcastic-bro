@@ -9,8 +9,8 @@
   "scripts": {
     "dev:web": "npm run dev --workspace=apps/web",
     "dev:api": "npm run dev --workspace=apps/api",
-    "dev:ai": "cd apps/ai-service && uvicorn app.main:app --reload",
-    "dev": "concurrently \"npm run dev:web\" \"npm run dev:api\" -n \"WEB,API\" -c \"blue,green\""
+    "dev:ai": "cd apps/ai-service && python main.py",
+    "dev": "concurrently \"npm run dev:web\" \"npm run dev:api\" \"npm run dev:ai\" -n \"WEB,API,AI\" -c \"blue,green,yellow\""
   },
   "devDependencies": {
     "concurrently": "^9.2.1"

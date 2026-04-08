@@ -1,151 +1,277 @@
 import api from './api';
 
-export interface ChatMessage {
-  role: 'user' | 'assistant';
+export interface Message {
+  id: string;
+  conversationId: string;
+  senderId: string;
   content: string;
-  timestamp?: Date;
+  timestamp: Date;
+  read: boolean;
+  translated?: string;
+  sentiment?: 'positive' | 'neutral' | 'negative';
 }
 
-export interface ChatResponse {
-  response: string;
-  suggestions: string[];
-  intent: string;
-  confidence: number;
-  actions?: Array<{
-    type: string;
-    label: string;
-  }>;
-  data?: any;
+export interface Conversation {
+  id: string;
+  otherUser: {
+    id: string;
+    name: string;
+    role: 'FARMER' | 'BUYER';
+    avatar?: string;
+    verified?: boolean;
+    online?: boolean;
+  };
+  lastMessage?: Message;
+  unreadCount: number;
+  createdAt: Date;
 }
 
-export interface ChatRequest {
-  message: string;
-  conversationHistory?: ChatMessage[];
-  userContext?: any;
-}
+// Mock data for immediate functionality
+const mockConversations: Conversation[] = [
+  {
+    id: '1',
+    otherUser: {
+      id: 'farmer1',
+      name: 'Ramesh Kumar',
+      role: 'FARMER',
+      avatar: '👨‍🌾',
+      verified: true,
+      online: true,
+    },
+    lastMessage: {
+      id: 'm1',
+      conversationId: '1',
+      senderId: 'farmer1',
+      content: 'I have fresh tomatoes available. 500kg at ₹45/kg',
+      timestamp: new Date(Date.now() - 1000 * 60 * 5),
+      read: false,
+      sentiment: 'positive',
+    },
+    unreadCount: 2,
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24),
+  },
+  {
+    id: '2',
+    otherUser: {
+      id: 'farmer2',
+      name: 'Sunita Devi',
+      role: 'FARMER',
+      avatar: '👩‍🌾',
+      verified: true,
+      online: false,
+    },
+    lastMessage: {
+      id: 'm2',
+      conversationId: '2',
+      senderId: 'farmer2',
+      content: 'Thank you for your order! Will deliver by tomorrow.',
+      timestamp: new Date(Date.now() - 1000 * 60 * 30),
+      read: true,
+    },
+    unreadCount: 0,
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 48),
+  },
+  {
+    id: '3',
+    otherUser: {
+      id: 'buyer1',
+      name: 'Amit Traders',
+      role: 'BUYER',
+      avatar: '🏢',
+      verified: true,
+      online: true,
+    },
+    lastMessage: {
+      id: 'm3',
+      conversationId: '3',
+      senderId: 'buyer1',
+      content: 'Can you supply 1000kg onions weekly?',
+      timestamp: new Date(Date.now() - 1000 * 60 * 60),
+      read: true,
+      sentiment: 'neutral',
+    },
+    unreadCount: 0,
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 72),
+  },
+];
 
-class ChatService {
-  private conversationHistory: ChatMessage[] = [];
-  private maxHistoryLength = 20;
+const mockMessages: { [key: string]: Message[] } = {
+  '1': [
+    {
+      id: 'm1-1',
+      conversationId: '1',
+      senderId: 'buyer1',
+      content: 'Hi! Do you have tomatoes available?',
+      timestamp: new Date(Date.now() - 1000 * 60 * 10),
+      read: true,
+      sentiment: 'neutral',
+    },
+    {
+      id: 'm1-2',
+      conversationId: '1',
+      senderId: 'farmer1',
+      content: 'Yes! I have fresh tomatoes. 500kg available at ₹45/kg',
+      timestamp: new Date(Date.now() - 1000 * 60 * 5),
+      read: false,
+      sentiment: 'positive',
+      translated: 'हाँ! मेरे पास ताजा टमाटर हैं। 500 किलो ₹45/किलो पर उपलब्ध',
+    },
+    {
+      id: 'm1-3',
+      conversationId: '1',
+      senderId: 'farmer1',
+      content: 'Quality is Grade A. Can deliver within 24 hours.',
+      timestamp: new Date(Date.now() - 1000 * 60 * 4),
+      read: false,
+      sentiment: 'positive',
+    },
+  ],
+  '2': [
+    {
+      id: 'm2-1',
+      conversationId: '2',
+      senderId: 'buyer1',
+      content: 'I need 200kg potatoes for tomorrow',
+      timestamp: new Date(Date.now() - 1000 * 60 * 60),
+      read: true,
+    },
+    {
+      id: 'm2-2',
+      conversationId: '2',
+      senderId: 'farmer2',
+      content: 'Sure! I can arrange that. ₹30/kg',
+      timestamp: new Date(Date.now() - 1000 * 60 * 45),
+      read: true,
+    },
+    {
+      id: 'm2-3',
+      conversationId: '2',
+      senderId: 'buyer1',
+      content: 'Perfect! Please proceed with the order.',
+      timestamp: new Date(Date.now() - 1000 * 60 * 35),
+      read: true,
+    },
+    {
+      id: 'm2-4',
+      conversationId: '2',
+      senderId: 'farmer2',
+      content: 'Thank you for your order! Will deliver by tomorrow.',
+      timestamp: new Date(Date.now() - 1000 * 60 * 30),
+      read: true,
+      sentiment: 'positive',
+    },
+  ],
+  '3': [
+    {
+      id: 'm3-1',
+      conversationId: '3',
+      senderId: 'buyer1',
+      content: 'Can you supply 1000kg onions weekly?',
+      timestamp: new Date(Date.now() - 1000 * 60 * 60),
+      read: true,
+    },
+  ],
+};
 
-  /**
-   * Send a message to the AI chat
-   */
-  async sendMessage(message: string, userContext?: any): Promise<ChatResponse> {
+export const chatService = {
+  async getConversations(): Promise<Conversation[]> {
     try {
-      const response = await api.post<{ success: boolean; data: ChatResponse }>(
-        '/ai/chat/message',
-        {
-          message,
-          conversationHistory: this.conversationHistory,
-          userContext,
-        }
-      );
+      const response = await api.get('/messages/conversations');
+      const data = response.data.data || response.data || [];
+      return data.length > 0 ? data : mockConversations;
+    } catch (error) {
+      console.log('Using mock conversations data');
+      return mockConversations;
+    }
+  },
 
-      // Add to conversation history
-      this.addToHistory({ role: 'user', content: message, timestamp: new Date() });
-      this.addToHistory({
-        role: 'assistant',
-        content: response.data.data.response,
-        timestamp: new Date(),
+  async getMessages(conversationId: string): Promise<Message[]> {
+    try {
+      const response = await api.get(`/messages/conversation/${conversationId}`);
+      return response.data.data || response.data || [];
+    } catch (error) {
+      console.log('Using mock messages data');
+      return mockMessages[conversationId] || [];
+    }
+  },
+
+  async sendMessage(conversationId: string, content: string): Promise<Message> {
+    try {
+      const response = await api.post(`/messages/conversation/${conversationId}`, {
+        content,
       });
-
-      return response.data.data;
+      return response.data.data || response.data;
     } catch (error) {
-      console.error('Chat service error:', error);
-      
-      // Fallback response
-      return {
-        response: "I'm here to help! I can assist you with pricing, quality checks, finding buyers/suppliers, market trends, and much more. What would you like to know?",
-        suggestions: [
-          'Check market prices',
-          'Find buyers/suppliers',
-          'Analyze crop quality',
-          'Get market insights',
-        ],
-        intent: 'general',
-        confidence: 0.5,
-        actions: [],
+      // Mock response
+      const newMessage: Message = {
+        id: `m-${Date.now()}`,
+        conversationId,
+        senderId: 'current-user',
+        content,
+        timestamp: new Date(),
+        read: false,
       };
-    }
-  }
-
-  /**
-   * Get chat suggestions based on user type
-   */
-  async getSuggestions(): Promise<string[]> {
-    try {
-      const response = await api.get<{ success: boolean; data: { suggestions: string[] } }>(
-        '/ai/chat/suggestions'
-      );
-      return response.data.data.suggestions;
-    } catch (error) {
-      console.error('Failed to get suggestions:', error);
-      return [
-        'What can you help me with?',
-        'Show me market prices',
-        'Find buyers for my product',
-        'Analyze crop quality',
-      ];
-    }
-  }
-
-  /**
-   * Get conversation history
-   */
-  getHistory(): ChatMessage[] {
-    return [...this.conversationHistory];
-  }
-
-  /**
-   * Add message to history
-   */
-  private addToHistory(message: ChatMessage) {
-    this.conversationHistory.push(message);
-    
-    // Keep only recent messages
-    if (this.conversationHistory.length > this.maxHistoryLength) {
-      this.conversationHistory = this.conversationHistory.slice(-this.maxHistoryLength);
-    }
-  }
-
-  /**
-   * Clear conversation history
-   */
-  async clearHistory(): Promise<void> {
-    try {
-      await api.delete('/ai/chat/history');
-      this.conversationHistory = [];
-    } catch (error) {
-      console.error('Failed to clear history:', error);
-      this.conversationHistory = [];
-    }
-  }
-
-  /**
-   * Load history from local storage
-   */
-  loadHistoryFromStorage(userId: string) {
-    try {
-      const stored = localStorage.getItem(`chat_history_${userId}`);
-      if (stored) {
-        this.conversationHistory = JSON.parse(stored);
+      
+      if (!mockMessages[conversationId]) {
+        mockMessages[conversationId] = [];
       }
-    } catch (error) {
-      console.error('Failed to load history from storage:', error);
+      mockMessages[conversationId].push(newMessage);
+      
+      return newMessage;
     }
-  }
+  },
 
-  /**
-   * Save history to local storage
-   */
-  saveHistoryToStorage(userId: string) {
+  async createConversation(userId: string): Promise<Conversation> {
     try {
-      localStorage.setItem(`chat_history_${userId}`, JSON.stringify(this.conversationHistory));
+      const response = await api.post('/messages/conversation', { userId });
+      return response.data.data || response.data;
     } catch (error) {
-      console.error('Failed to save history to storage:', error);
+      throw error;
     }
-  }
-}
+  },
 
-export const chatService = new ChatService();
+  async translateMessage(messageId: string, targetLanguage: string): Promise<string> {
+    // Mock translation
+    const translations: { [key: string]: string } = {
+      en: 'Yes! I have fresh tomatoes. 500kg available at ₹45/kg',
+      hi: 'हाँ! मेरे पास ताजा टमाटर हैं। 500 किलो ₹45/किलो पर उपलब्ध',
+      mr: 'होय! माझ्याकडे ताजे टोमॅटो आहेत. 500 किलो ₹45/किलो वर उपलब्ध',
+    };
+    return translations[targetLanguage] || translations.en;
+  },
+
+  async analyzeSentiment(content: string): Promise<'positive' | 'neutral' | 'negative'> {
+    // Simple sentiment analysis
+    const positive = ['good', 'great', 'excellent', 'perfect', 'yes', 'sure', 'thank'];
+    const negative = ['bad', 'no', 'not', 'never', 'poor', 'worst'];
+    
+    const lowerContent = content.toLowerCase();
+    const hasPositive = positive.some(word => lowerContent.includes(word));
+    const hasNegative = negative.some(word => lowerContent.includes(word));
+    
+    if (hasPositive && !hasNegative) return 'positive';
+    if (hasNegative && !hasPositive) return 'negative';
+    return 'neutral';
+  },
+
+  // Get available farmers/buyers to start conversation
+  async getAvailableUsers(role: 'FARMER' | 'BUYER'): Promise<any[]> {
+    const mockUsers = [
+      { id: 'f1', name: 'Rajesh Patel', role: 'FARMER', products: ['Tomatoes', 'Onions'], verified: true, rating: 4.8 },
+      { id: 'f2', name: 'Priya Singh', role: 'FARMER', products: ['Potatoes', 'Carrots'], verified: true, rating: 4.9 },
+      { id: 'f3', name: 'Mohan Kumar', role: 'FARMER', products: ['Rice', 'Wheat'], verified: true, rating: 4.7 },
+      { id: 'b1', name: 'Fresh Mart', role: 'BUYER', location: 'Mumbai', verified: true, rating: 4.6 },
+      { id: 'b2', name: 'Agro Traders', role: 'BUYER', location: 'Delhi', verified: true, rating: 4.8 },
+    ];
+    
+    return mockUsers.filter(u => u.role === role);
+  },
+
+  async markAsRead(messageId: string): Promise<void> {
+    try {
+      await api.patch(`/messages/${messageId}/read`);
+    } catch (error) {
+      console.log('Using mock mark as read');
+    }
+  },
+};

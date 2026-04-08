@@ -2,11 +2,12 @@
    Role Middleware — Role-based access control
    ======================================================================== */
 
-import type { Request, Response, NextFunction } from "express";
+import type { Response, NextFunction } from "express";
+import { AuthRequest } from "./auth.middleware";
 import { ApiError } from "../utils/ApiError";
 
 export const roleMiddleware = (...allowedRoles: string[]) => {
-  return (req: Request, _res: Response, next: NextFunction) => {
+  return (req: AuthRequest, _res: Response, next: NextFunction) => {
     if (!req.user) {
       return next(ApiError.unauthorized("Authentication required"));
     }

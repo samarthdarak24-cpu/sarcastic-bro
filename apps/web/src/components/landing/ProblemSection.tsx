@@ -1,39 +1,57 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { useTranslation } from "react-i18next";
 
 export function ProblemSection() {
+  const { t } = useTranslation();
+
   const problems = [
     {
       icon: "🔗",
-      title: "Middlemen Exploitation",
-      description: "Farmers lose 30-40% of profit to middlemen",
+      title: t("landing.problem.middlemen_title"),
+      description: t("landing.problem.middlemen_desc"),
       color: "#ef4444",
     },
     {
       icon: "❓",
-      title: "Quality Uncertainty",
-      description: "Buyers have no way to verify product authenticity",
+      title: t("landing.problem.quality_title"),
+      description: t("landing.problem.quality_desc"),
       color: "#f59e0b",
     },
     {
       icon: "👁️",
-      title: "Supply Chain Opacity",
-      description: "No transparency from farm to market",
+      title: t("landing.problem.opacity_title"),
+      description: t("landing.problem.opacity_desc"),
       color: "#0ea5e9",
     },
     {
       icon: "🚚",
-      title: "Inefficient Logistics",
-      description: "No intelligent matching between products and logistics",
+      title: t("landing.problem.logistics_title"),
+      description: t("landing.problem.logistics_desc"),
       color: "#22c55e",
     },
   ];
 
   const stats = [
-    { value: "30-40%", label: "Commission Lost to Middlemen", progress: 40, color: "#ef4444" },
-    { value: "60%", label: "Buyers Unsure of Quality", progress: 60, color: "#f59e0b" },
-    { value: "₹2-3 Lakh", label: "Average Farmer Annual Loss", progress: 100, color: "#22c55e" },
+    { 
+      value: "30-40%", 
+      label: t("landing.problem.stat_commission"), 
+      progress: 40, 
+      color: "#ef4444" 
+    },
+    { 
+      value: "60%", 
+      label: t("landing.problem.stat_unsure"), 
+      progress: 60, 
+      color: "#f59e0b" 
+    },
+    { 
+      value: t("common.currency_symbol") + "2-3 " + t("common.lakh"), 
+      label: t("landing.problem.stat_loss"), 
+      progress: 100, 
+      color: "#22c55e" 
+    },
   ];
 
   return (
@@ -48,11 +66,10 @@ export function ProblemSection() {
           className="text-center mb-16"
         >
           <h2 className="text-4xl md:text-5xl font-black text-[#111827] mb-6">
-            The Agricultural Challenge
+            {t("landing.problem.title")}
           </h2>
           <p className="text-lg text-[#6b7280] max-w-3xl mx-auto leading-relaxed">
-            Farmers struggle with direct access to buyers. Middlemen take 30-40% commission. 
-            Buyers face quality uncertainty. Supply chain lacks transparency.
+            {t("landing.problem.subtitle")}
           </p>
         </motion.div>
 

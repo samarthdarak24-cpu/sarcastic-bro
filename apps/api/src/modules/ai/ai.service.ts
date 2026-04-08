@@ -1,9 +1,12 @@
 import axios from "axios";
 import { env } from "../../config/env";
 import prisma from "../../prisma/client";
+import { redis } from "../../services/redis.service";
+import { getSocketService } from "../../services/socketService";
 
 /**
  * Service to handle communication with the Python AI microservice.
+ * Enhanced with Redis caching and Socket.IO real-time integration.
  */
 export class AIService {
   private static readonly client = axios.create({
@@ -17,32 +20,118 @@ export class AIService {
   /**
    * Analyze product quality using AI.
    * Sends the local file to the Python AI service for analysis.
+   * Enhanced with database storage and Socket.IO notifications.
    */
   static async analyzeQuality(data: {
     image_url: string;
     product_type: string;
     product_name: string;
     image_path?: string;
+    userId?: string;
+    productId?: string;
   }) {
-    // If we have a local file from MULTER, we send it to the Python service
-    if (data.image_path) {
-      const fs = require('fs');
-      const FormData = require('form-data');
-      const form = new FormData();
-      form.append('image', fs.createReadStream(data.image_path));
-      form.append('product_type', data.product_type);
-      form.append('product_name', data.product_name);
-      
-      const response = await this.client.post("/ai/quality-grade", form, {
-        headers: {
-          ...form.getHeaders(),
+    try {
+      let aiResponse;
+
+      // If we have a local file from MULTER, we send it to the Python service
+      if (data.image_path) {
+        const fs = require('fs');
+        const FormData = require('form-data');
+        const form = new FormData();
+        form.append('image', fs.createReadStream(data.image_path));
+        form.append('product_type', data.product_type);
+        form.append('product_name', data.product_name);
+        
+        const response = await this.client.post("/ai/quality-grade", form, {
+          headers: {
+            ...form.getHeaders(),
+          },
+        });
+        aiResponse = response.data;
+      } else {
+        const response = await this.client.post("/ai/quality-grade", data);
+        aiResponse = response.data;
+      }
+
+      // Store quality scan result in database
+      const qualityGrade = await prisma.qualityGrade.create({
+        data: {
+          productId: data.productId || null,
+          imageUrl: data.image_url,
+          grade: aiResponse.grade || 'B',
+          score: aiResponse.score || 75,
+          defectCount: aiResponse.defects?.length || 0,
+          defects: JSON.stringify(aiResponse.defects || []),
+          heatmapUrl: aiResponse.heatmap_url || null,
+          recommendations: JSON.stringify(aiResponse.recommendations || []),
+          model: aiResponse.model || 'v1',
+          confidence: aiResponse.confidence || 0.95,
         },
       });
-      return response.data;
-    }
 
-    const response = await this.client.post("/ai/quality-grade", data);
-    return response.data;
+      // Update product with quality grade if productId provided
+      if (data.productId) {
+        await prisma.product.update({
+          where: { id: data.productId },
+          data: {
+            qualityGrade: aiResponse.grade,
+            qualityScore: aiResponse.score,
+          },
+        });
+
+        // Add blockchain trace event for QUALITY
+        try {
+          const product = await prisma.product.findUnique({
+            where: { id: data.productId },
+            select: { farmerId: true, district: true, state: true, name: true }
+          });
+          
+          if (product) {
+            const BlockchainTraceService = (await import('../blockchain-trace/blockchain-trace.service')).default;
+            await BlockchainTraceService.addTraceEvent({
+              productId: data.productId,
+              farmerId: product.farmerId,
+              eventType: 'QUALITY',
+              location: `${product.district}, ${product.state}`,
+              qualityGrade: aiResponse.grade,
+              metadata: {
+                productName: product.name,
+                qualityScore: aiResponse.score,
+                defects: aiResponse.defects || [],
+                confidence: aiResponse.confidence || 0.95,
+                scanId: qualityGrade.id
+              }
+            });
+          }
+        } catch (traceError) {
+          console.warn('[AI Service] Blockchain trace event failed:', traceError);
+        }
+      }
+
+      // Emit real-time Socket.IO event
+      if (data.userId) {
+        try {
+          const socketService = getSocketService();
+          socketService.emitQualityScanComplete(data.userId, {
+            scanId: qualityGrade.id,
+            productId: data.productId || '',
+            grade: aiResponse.grade,
+            score: aiResponse.score,
+            defects: aiResponse.defects || [],
+          });
+        } catch (socketError) {
+          console.error('[AI Service] Socket.IO emission failed:', socketError);
+        }
+      }
+
+      return {
+        ...aiResponse,
+        scanId: qualityGrade.id,
+      };
+    } catch (error: any) {
+      console.error('[AI Service] Quality analysis failed:', error.message);
+      throw new Error(`Quality analysis failed: ${error.message}`);
+    }
   }
 
   /**
@@ -124,6 +213,7 @@ export class AIService {
   /**
    * Get procurement recommendations for a buyer.
    * Ranks farmers based on Price, Reputation, and Proximity.
+   * Enhanced with Redis caching (5 min TTL).
    */
   static async getProcurementRecommendations(data: {
     productName: string;
@@ -132,6 +222,14 @@ export class AIService {
     buyerLng?: number;
   }) {
     const { productName, quantity, buyerLat, buyerLng } = data;
+
+    // Try cache first
+    const cacheKey = `procurement:${productName}:${quantity}:${buyerLat || 0}:${buyerLng || 0}`;
+    const cached = await redis.get<any>(cacheKey);
+    if (cached) {
+      console.log(`[AI Service] Procurement cache hit for ${productName}`);
+      return cached;
+    }
 
     // 1. Fetch matching products and their farmers
     const products = await prisma.product.findMany({
@@ -145,7 +243,9 @@ export class AIService {
       }
     });
 
-    if (products.length === 0) return { bestSuppliers: [], suggestedTiming: "No suppliers found for this quantity." };
+    if (products.length === 0) {
+      return { bestSuppliers: [], suggestedTiming: "No suppliers found for this quantity." };
+    }
 
     // 2. Ranking Logic
     const rankedSuppliers = products.map((product: any) => {
@@ -206,17 +306,31 @@ export class AIService {
       timing = "Supply tightening due to winter logistics. Buy now to avoid 20% seasonal markup.";
     }
 
-    return {
+    const result = {
       bestSuppliers: sorted,
       suggestedTiming: timing
     };
+
+    // Cache for 5 minutes
+    await redis.set(cacheKey, result, 300);
+
+    return result;
   }
 
   /**
    * Get dynamic price advice for a product.
+   * Enhanced with Redis caching (10 min TTL).
    */
   static async getPriceAdvice(data: { productName: string; quantity: number; location?: string }) {
     const { productName, quantity } = data;
+    
+    // Try cache first
+    const cacheKey = `price:advice:${productName}:${quantity}`;
+    const cached = await redis.get<any>(cacheKey);
+    if (cached) {
+      console.log(`[AI Service] Price advice cache hit for ${productName}`);
+      return cached;
+    }
     
     // Mock Market Trends based on product name
     const marketData: any = {
@@ -232,7 +346,7 @@ export class AIService {
     const recommendedPrice = Math.round(trends.avg + (trends.demand * 10) - (trends.supply * 5));
     const confidence = Math.round(85 + (Math.random() * 10));
 
-    return {
+    const result = {
       recommendedPrice,
       minPrice: Math.round(recommendedPrice * 0.85),
       maxPrice: Math.round(recommendedPrice * 1.2),
@@ -240,6 +354,11 @@ export class AIService {
       marketSentiment: trends.demand > trends.supply ? "Bullish" : "Bearish",
       demandLevel: trends.demand > 0.8 ? "High" : "Stable"
     };
+
+    // Cache for 10 minutes
+    await redis.set(cacheKey, result, 600);
+
+    return result;
   }
 
   /**
