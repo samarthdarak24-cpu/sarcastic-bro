@@ -16,18 +16,24 @@ function processFile(filePath) {
   let content = fs.readFileSync(filePath, 'utf8');
   let modified = false;
 
-  // Match t('key') or t("key") patterns
-  const regex = /t\(['"]([^'"]+)['"]\)/g;
+  // Match t('key') or t("key") patterns - more comprehensive
+  const patterns = [
+    /t\(['"]([^'"]+)['"]\)/g,
+    /t\(\s*['"]([^'"]+)['"]\s*\)/g,
+    /t\(\s*["']([^"']+)["']\s*,\s*{[^}]*}\s*\)/g, // with options
+  ];
   
-  content = content.replace(regex, (match, key) => {
-    const value = getNestedValue(translations, key);
-    if (value) {
-      modified = true;
-      // Escape quotes in the value
-      const escapedValue = value.replace(/"/g, '\\"');
-      return `"${escapedValue}"`;
-    }
-    return match;
+  patterns.forEach(regex => {
+    content = content.replace(regex, (match, key) => {
+      const value = getNestedValue(translations, key);
+      if (value && typeof value === 'string') {
+        modified = true;
+        // Escape quotes in the value
+        const escapedValue = value.replace(/"/g, '\\"');
+        return `"${escapedValue}"`;
+      }
+      return match;
+    });
   });
 
   if (modified) {

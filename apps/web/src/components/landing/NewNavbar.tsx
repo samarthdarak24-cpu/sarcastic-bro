@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, ShieldCheck } from "lucide-react";
 import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
 export function NewNavbar() {
-    const [scrolled, setScrolled] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
@@ -18,9 +18,9 @@ export function NewNavbar() {
   }, []);
 
   const navLinks = [
-    { label: t('landing.intelligent_sourcing'), href: "#features" },
-    { label: t('landing.trade_network'), href: "#how-it-works" },
-    { label: t('landing.market_intel'), href: "#stats" },
+    { label: "Intelligent Sourcing", href: "#features" },
+    { label: "Trade Network", href: "#how-it-works" },
+    { label: "Market Intel", href: "#stats" },
     { label: "Contact", href: "#contact" },
   ];
 
@@ -100,7 +100,7 @@ export function NewNavbar() {
                   whileTap={{ scale: 0.95 }}
                   className="px-6 py-2.5 text-sm font-semibold text-[#22c55e] border-2 border-[#22c55e] rounded-lg hover:bg-[#22c55e] hover:text-white transition-all duration-300"
                 >
-                  {t('auth.login')}
+                  Login
                 </motion.button>
               </Link>
 
@@ -111,7 +111,7 @@ export function NewNavbar() {
                   whileTap={{ scale: 0.95 }}
                   className="px-8 py-3 text-sm font-bold text-white bg-gradient-to-r from-[#22c55e] to-[#16a34a] rounded-lg shadow-lg hover:shadow-xl transition-all duration-300"
                 >
-                  {t('landing.get_started')}
+                  Get Started
                 </motion.button>
               </Link>
             </div>
@@ -167,12 +167,12 @@ export function NewNavbar() {
                 
                 <Link href="/login" onClick={() => setMobileOpen(false)}>
                   <button className="w-full px-6 py-3 text-sm font-semibold text-[#22c55e] border-2 border-[#22c55e] rounded-lg">
-                    {t('auth.login')}
+                    Login
                   </button>
                 </Link>
                 <Link href="/register" onClick={() => setMobileOpen(false)}>
                   <button className="w-full px-8 py-4 text-sm font-bold text-white bg-gradient-to-r from-[#22c55e] to-[#16a34a] rounded-lg">
-                    {t('landing.get_started')}
+                    Get Started
                   </button>
                 </Link>
               </div>

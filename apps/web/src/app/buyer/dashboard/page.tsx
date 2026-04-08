@@ -65,12 +65,12 @@ function BuyerDashboardContent() {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div>
                 <h1 className="text-2xl md:text-3xl xl:text-4xl font-black tracking-tight text-slate-900 mb-2 leading-tight">
-                    {activeSection === "Overview" ? t('buyer_dashboard.welcome', { name: user?.fullName || 'User' }) : activeSection}
+                    {activeSection === "Overview" ? "Welcome back, {{name}}! 👋" : activeSection}
                 </h1>
                 <p className="text-slate-500 font-medium text-sm md:text-base xl:text-lg italic leading-relaxed">
                     {activeSection === "Overview" 
                         ? "Your global procurement command center." 
-                        : t('buyer_dashboard.executing', { section: activeSection.toLowerCase() })}
+                        : "Executing your {{section}} protocol."}
                 </p>
             </div>
             <div className="flex items-center gap-3">

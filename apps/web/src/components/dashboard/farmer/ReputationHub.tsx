@@ -122,7 +122,7 @@ export function ReputationHub() {
                 <p className="text-[10px] font-black text-neut-300 uppercase tracking-widest mb-10">{"Current Standing"}</p>
                 <div className="text-8xl font-black text-neut-900 tracking-tighter mb-4">{Math.round(stats.reputationScore)}</div>
                 <p className="text-lg font-bold text-brand-primary uppercase tracking-widest">
-                   {t("reputation.tier_status", { tier: stats.trustLevel })}
+                   {"{{tier}} Tier Status"}
                 </p>
                 <div className="h-2 w-full max-w-[200px] bg-neut-200 rounded-full mx-auto mt-8 overflow-hidden">
                    <motion.div 
@@ -141,7 +141,7 @@ export function ReputationHub() {
             title={"Order Success"} 
             value={`${Math.round((stats.successfulDeliveries / (stats.totalOrders || 1)) * 100)}%`} 
             icon={<CheckCircle2 />} 
-            detail={t("reputation.success_detail", { count: stats.successfulDeliveries, total: stats.totalOrders })} 
+            detail={"{{count}} of {{total}} Completed"} 
             color="text-success" 
           />
           <StatsCard 

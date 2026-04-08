@@ -196,17 +196,17 @@ export default function FarmerCommandCenter() {
     {
       type: 'harvest',
       title: "Harvest Ready",
-      description: t('activity.harvest_desc', { crop: "Tomato", field: 'Field A2' }),
+      description: "{{crop}} - {{field}} ready for harvest",
       status: 'success',
-      time: t('time.minutesAgo', { count: 2 }),
+      time: "{{count}} minutes ago",
       icon: Sprout
     },
     {
       type: 'order',
       title: "New Order",
-      description: t('activity.order_desc', { crop: "Basmati Rice", quantity: '500kg', id: 'ORD-445' }),
+      description: "{{crop}} {{quantity}} - #{{id}}",
       status: 'processing',
-      time: t('time.minutesAgo', { count: 15 }),
+      time: "{{count}} minutes ago",
       icon: ShoppingBag
     },
     {
@@ -256,13 +256,13 @@ export default function FarmerCommandCenter() {
           <div className="flex items-start justify-between mb-6">
             <div>
               <h1 className="text-4xl font-black mb-2">{"Farmer Command Center"} 🌾</h1>
-              <h2 className="text-2xl font-bold mb-2">{t('dashboard.welcome_farmer', { name: 'Rajesh Kumar' })}</h2>
-              <p className="text-xl text-emerald-100">{t('dashboard.analyzing_intelligence', { size: '12.4TB' })}</p>
+              <h2 className="text-2xl font-bold mb-2">{"Welcome, {{name}}!"}</h2>
+              <p className="text-xl text-emerald-100">{"Analyzing {{size}} of Agricultural Intelligence for your farm today."}</p>
             </div>
             <div className="flex items-center gap-3">
               <div className="text-right">
                 <div className="text-sm text-emerald-200">{"System Health"}</div>
-                <div className="text-2xl font-black">{t('dashboard.optimized', { percent: '100' })}</div>
+                <div className="text-2xl font-black">{"Optimized {{percent}}%"}</div>
                 <div className="flex items-center gap-2 text-emerald-200">
                   <div className="h-2 w-2 bg-emerald-300 rounded-full animate-pulse" />
                   <span className="text-sm font-bold">{"Live"}</span>
@@ -391,7 +391,7 @@ export default function FarmerCommandCenter() {
         </div>
 
         <div className="text-center text-sm text-slate-600">
-          {t('dashboard.exporting_farmers', { count: 12 })}
+          {"+{{count}} Exporting Farmers active in your area"}
         </div>
       </motion.div>
 
@@ -572,7 +572,7 @@ function LiveFarmInsightsWidget() {
           </div>
           <div>
             <div className="text-2xl font-black text-blue-600">{farmInsights.totalArea} {"Acres"}</div>
-            <div className="text-xs text-slate-600">{"Total Area"}<br/>{t('dashboard.utilized', { percent: '85' })}</div>
+            <div className="text-xs text-slate-600">{"Total Area"}<br/>{"{{percent}}% utilized"}</div>
           </div>
         </div>
       </div>

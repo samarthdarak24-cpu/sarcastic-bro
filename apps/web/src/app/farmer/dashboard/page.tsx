@@ -87,7 +87,7 @@ function FarmerDashboardContent() {
                 </h1>
                 <p className="text-slate-500 font-medium text-sm md:text-base xl:text-lg italic leading-relaxed">
                     {activeSection === "Overview"
-                      ? t('dashboard.analyzing_intelligence', { size: '12.4TB' })
+                      ? "Analyzing {{size}} of Agricultural Intelligence for your farm today."
                       : `${"Loading..."} ${activeSection.toLowerCase()}`}
                 </p>
             </div>
