@@ -3,7 +3,6 @@
 import { useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { TrendingUp, TrendingDown, Minus, Activity } from "lucide-react";
-import { useTranslation } from "react-i18next";
 import { useRealtimeStore } from "@/store/realtimeStore";
 
 const INITIAL_CROPS = [
@@ -19,8 +18,7 @@ const INITIAL_CROPS = [
 
 function TickerItem({ crop }: { crop: typeof INITIAL_CROPS[0] }) {
   const { livePrices, priceFlashIds } = useRealtimeStore();
-  const { t } = useTranslation();
-  const live = livePrices[crop.id];
+    const live = livePrices[crop.id];
   const price = live?.price ?? crop.price;
   const direction = live?.direction ?? 'stable';
   const changePercent = live?.changePercent ?? 0;
@@ -57,8 +55,7 @@ function TickerItem({ crop }: { crop: typeof INITIAL_CROPS[0] }) {
 
 export function LivePriceTicker() {
   const { isConnected } = useRealtimeStore();
-  const { t } = useTranslation();
-  const trackRef = useRef<HTMLDivElement>(null);
+    const trackRef = useRef<HTMLDivElement>(null);
 
   return (
     <div className="w-full bg-white border-b border-gray-200 shadow-md fixed top-[70px] left-0 right-0 z-40">

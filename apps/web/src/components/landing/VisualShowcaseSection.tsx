@@ -2,48 +2,44 @@
 
 import { motion } from "framer-motion";
 import { useState } from "react";
-import { useTranslation } from "react-i18next";
-import "@/lib/i18n";
-
 export function VisualShowcaseSection() {
-  const { t } = useTranslation();
-  const [activeTab, setActiveTab] = useState("images");
+    const [activeTab, setActiveTab] = useState("images");
 
   const images = [
     {
       url: "https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=800&q=80",
-      title: t('showcase.smart_farming'),
-      description: t('showcase.smart_farming_desc'),
+      title: "Smart Farming",
+      description: "Farmers using AI-powered quality detection",
     },
     {
       url: "https://images.unsplash.com/photo-1574943320219-553eb213f72d?w=800&q=80",
-      title: t('showcase.fresh_produce'),
-      description: t('showcase.fresh_produce_desc'),
+      title: "Fresh Produce",
+      description: "High-quality vegetables graded by AI",
     },
     {
       url: "https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=800&q=80",
-      title: t('showcase.quality_tomatoes'),
-      description: t('showcase.quality_tomatoes_desc'),
+      title: "Quality Tomatoes",
+      description: "Grade A+ certified produce",
     },
     {
       url: "https://images.unsplash.com/photo-1464226184884-fa280b87c399?w=800&q=80",
-      title: t('showcase.direct_connection'),
-      description: t('showcase.direct_connection_desc'),
+      title: "Direct Connection",
+      description: "Farmers connecting with buyers",
     },
   ];
 
   const videos = [
     {
       thumbnail: "https://images.unsplash.com/photo-1595273670150-bd0c3c392e46?w=800&q=80",
-      title: t('showcase.ai_grading_video'),
+      title: "How AI Grading Works",
       duration: "2:30",
-      description: t('showcase.ai_grading_desc'),
+      description: "See how our AI analyzes crop quality in real-time",
     },
     {
       thumbnail: "https://images.unsplash.com/photo-1560493676-04071c5f467b?w=800&q=80",
-      title: t('showcase.success_story_video'),
+      title: "Farmer Success Story",
       duration: "3:15",
-      description: t('showcase.success_story_desc'),
+      description: "Rajesh Kumar shares his journey with ODOP Connect",
     },
   ];
 
@@ -59,10 +55,10 @@ export function VisualShowcaseSection() {
           className="text-center mb-12"
         >
           <h2 className="text-4xl md:text-5xl font-black text-[#111827] mb-4">
-            {t('showcase.title')}
+            {"See ODOP Connect in Action"}
           </h2>
           <p className="text-lg text-[#6b7280]">
-            {t('showcase.subtitle')}
+            {"Real farmers, real results, real transformation"}
           </p>
         </motion.div>
 
@@ -76,7 +72,7 @@ export function VisualShowcaseSection() {
                 : "bg-white text-gray-600 hover:bg-gray-50"
             }`}
           >
-            📸 {t('showcase.images_tab')}
+            📸 {"Images"}
           </button>
           <button
             onClick={() => setActiveTab("videos")}
@@ -86,7 +82,7 @@ export function VisualShowcaseSection() {
                 : "bg-white text-gray-600 hover:bg-gray-50"
             }`}
           >
-            🎥 {t('showcase.videos_tab')}
+            🎥 {"Videos"}
           </button>
         </div>
 

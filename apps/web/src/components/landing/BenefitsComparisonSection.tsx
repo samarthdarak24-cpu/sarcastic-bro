@@ -1,12 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useTranslation } from "react-i18next";
-
 export function BenefitsComparisonSection() {
-  const { t } = useTranslation();
-
-  const farmerBenefits = [
+    const farmerBenefits = [
     { 
       icon: "💰", 
       title: t("landing.benefits.farmer.income"),

@@ -3,8 +3,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 
-import { useTranslation } from 'react-i18next';
-
 interface Message {
   id: string;
   text: string;

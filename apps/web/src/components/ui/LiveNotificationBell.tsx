@@ -4,8 +4,6 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Bell, X, CheckCheck, Package, TrendingUp, MessageSquare, FileText, Zap, ShieldCheck } from "lucide-react";
 import { useRealtimeStore } from "@/store/realtimeStore";
-import { useTranslation } from "react-i18next";
-import "@/lib/i18n";
 import api from "@/services/api";
 
 const ICONS: Record<string, any> = {
@@ -31,9 +29,7 @@ const COLORS: Record<string, string> = {
 export function LiveNotificationBell() {
   const [open, setOpen] = useState(false);
   const { notifications, unreadCount, markAllRead, addNotification } = useRealtimeStore();
-  const { t } = useTranslation();
-
-  // Fetch notifications from API on mount
+    // Fetch notifications from API on mount
   useEffect(() => {
     const fetchNotifications = async () => {
       try {
@@ -97,7 +93,7 @@ export function LiveNotificationBell() {
               <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
                 <div className="flex items-center gap-2">
                   <Bell size={14} className="text-slate-600" />
-                  <span className="text-sm font-black text-slate-900">{t('notifications.title')}</span>
+                  <span className="text-sm font-black text-slate-900">{"Notifications"}</span>
                   <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
                 </div>
                 <button onClick={() => setOpen(false)} className="p-1 rounded-lg hover:bg-slate-100">
@@ -109,7 +105,7 @@ export function LiveNotificationBell() {
                 {notifications.length === 0 ? (
                   <div className="py-10 text-center">
                     <Bell size={32} className="text-slate-200 mx-auto mb-2" />
-                    <p className="text-sm text-slate-400 font-medium">{t('notifications.no_notifications')}</p>
+                    <p className="text-sm text-slate-400 font-medium">{"No notifications yet"}</p>
                   </div>
                 ) : (
                   notifications.slice(0, 20).map((n) => {
@@ -145,7 +141,7 @@ export function LiveNotificationBell() {
                     className="flex items-center gap-1.5 text-[11px] font-bold text-emerald-600 hover:text-emerald-700"
                   >
                     <CheckCheck size={12} />
-                    {t('notifications.mark_all_read')}
+                    {"Mark all as read"}
                   </button>
                 </div>
               )}

@@ -3,16 +3,13 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useAuthStore } from "@/store/authStore";
 import api from "@/services/api";
-import { useTranslation } from "react-i18next";
 import { Camera, Save, Phone, MapPin, User, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export function UserProfileSettings() {
   const { user, setUser } = useAuthStore();
-  const { t } = useTranslation();
-  
-  const [formData, setFormData] = useState({
+    const [formData, setFormData] = useState({
     name: "",
     phone: "",
     address: "",

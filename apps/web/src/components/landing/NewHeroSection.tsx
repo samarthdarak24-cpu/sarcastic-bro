@@ -3,11 +3,8 @@
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { useTranslation } from "react-i18next";
-import "@/lib/i18n";
 
 export function NewHeroSection() {
-  const { t } = useTranslation();
   const [counters, setCounters] = useState({ farmers: 0, gmv: 0, quality: 0 });
 
   useEffect(() => {
@@ -87,10 +84,10 @@ export function NewHeroSection() {
               transition={{ duration: 0.8, delay: 0.2 }}
               className="text-5xl md:text-6xl lg:text-7xl font-black leading-tight mb-6"
             >
-              <span className="text-[#111827]">{t('landing.hero.title_part1')}</span>
+              <span className="text-[#111827]">Transform Your Farm into a</span>
               <br />
-              <span className="text-[#111827]">{t('landing.hero.title_part2')}</span>
-              <span className="text-[#22c55e]">{t('landing.hero.title_trust')}</span>
+              <span className="text-[#111827]">Digital Powerhouse with </span>
+              <span className="text-[#22c55e]">Trust</span>
             </motion.h1>
 
             {/* Subheading */}
@@ -100,7 +97,7 @@ export function NewHeroSection() {
               transition={{ duration: 0.8, delay: 0.4 }}
               className="text-lg md:text-xl text-[#6b7280] leading-relaxed mb-10 max-w-2xl"
             >
-              {t('landing.hero.subtitle')}
+              Join India's most advanced agricultural marketplace powered by AI, blockchain, and real-time intelligence. Direct sourcing, transparent pricing, and verified quality.
             </motion.p>
 
             {/* CTA Buttons */}
@@ -116,7 +113,7 @@ export function NewHeroSection() {
                   whileTap={{ scale: 0.98 }}
                   className="px-10 py-4 text-base font-bold text-white bg-gradient-to-r from-[#22c55e] to-[#16a34a] rounded-xl shadow-lg hover:shadow-2xl transition-all"
                 >
-                  {t('landing.hero.farmer_cta')}
+                  I'm a Farmer
                 </motion.button>
               </Link>
 
@@ -126,7 +123,7 @@ export function NewHeroSection() {
                   whileTap={{ scale: 0.98 }}
                   className="px-10 py-4 text-base font-bold text-white bg-gradient-to-r from-[#0ea5e9] to-[#0284c7] rounded-xl shadow-lg hover:shadow-2xl transition-all"
                 >
-                  {t('landing.hero.buyer_cta')}
+                  I'm a Buyer
                 </motion.button>
               </Link>
             </motion.div>
@@ -143,7 +140,7 @@ export function NewHeroSection() {
                 <div className="text-3xl md:text-4xl font-black text-[#22c55e] mb-1">
                   {counters.farmers.toLocaleString()}+
                 </div>
-                <div className="text-sm text-[#6b7280] font-medium">{t('landing.hero.farmers_empowered')}</div>
+                <div className="text-sm text-[#6b7280] font-medium">Farmers Empowered</div>
               </div>
 
               <div className="h-12 w-px bg-[#22c55e]/30" />
@@ -153,7 +150,7 @@ export function NewHeroSection() {
                 <div className="text-3xl md:text-4xl font-black text-[#0ea5e9] mb-1">
                   ₹{counters.gmv}Cr
                 </div>
-                <div className="text-sm text-[#6b7280] font-medium">{t('landing.hero.monthly_gmv')}</div>
+                <div className="text-sm text-[#6b7280] font-medium">Monthly GMV</div>
               </div>
 
               <div className="h-12 w-px bg-[#22c55e]/30" />
@@ -163,7 +160,7 @@ export function NewHeroSection() {
                 <div className="text-3xl md:text-4xl font-black text-[#f59e0b] mb-1">
                   {counters.quality}%
                 </div>
-                <div className="text-sm text-[#6b7280] font-medium">{t('landing.hero.quality_accuracy')}</div>
+                <div className="text-sm text-[#6b7280] font-medium">Quality Accuracy</div>
               </div>
             </motion.div>
           </div>
@@ -188,14 +185,14 @@ export function NewHeroSection() {
                 <div className="aspect-[4/5] rounded-2xl overflow-hidden">
                   <img 
                     src="/farmer_demo.png" 
-                    alt={t('landing.hero.mockup_title')} 
+                    alt="AI-Powered Farming Dashboard" 
                     className="w-full h-full object-cover transform transition-transform duration-1000 group-hover:scale-110"
                   />
                   {/* Subtle Overlay */}
                   <div className="absolute inset-0 bg-gradient-to-t from-[#111827]/60 to-transparent flex items-end p-8">
                     <div>
-                      <div className="text-xl font-bold text-white mb-2">{t('landing.hero.ai_powered_farming')}</div>
-                      <div className="text-sm text-white/80">{t('landing.hero.ai_powered_farming_desc')}</div>
+                      <div className="text-xl font-bold text-white mb-2">AI-Powered Farming</div>
+                      <div className="text-sm text-white/80">Real-time insights and smart recommendations</div>
                     </div>
                   </div>
                 </div>
@@ -212,7 +209,7 @@ export function NewHeroSection() {
                     🌾
                   </div>
                   <div>
-                    <div className="text-[10px] font-bold text-[#6b7280] uppercase tracking-wider">{t('landing.hero.estimated_yield')}</div>
+                    <div className="text-[10px] font-bold text-[#6b7280] uppercase tracking-wider">Estimated Yield</div>
                     <div className="text-lg font-black text-[#111827]">+24.5%</div>
                   </div>
                 </div>
@@ -229,7 +226,7 @@ export function NewHeroSection() {
                     📸
                   </div>
                   <div>
-                    <div className="text-[10px] font-bold text-[#6b7280] uppercase tracking-wider">{t('landing.hero.ai_quality_grade')}</div>
+                    <div className="text-[10px] font-bold text-[#6b7280] uppercase tracking-wider">AI Quality Grade</div>
                     <div className="text-lg font-black text-[#0ea5e9]">GRADE A+</div>
                   </div>
                 </div>
@@ -246,8 +243,8 @@ export function NewHeroSection() {
                     <span className="text-xl">✓</span>
                   </div>
                   <div>
-                    <div className="text-sm font-bold text-[#111827]">{t('landing.hero.odop_certified')}</div>
-                    <div className="text-[10px] font-bold text-[#22c55e]">{t('landing.hero.verified_portal')}</div>
+                    <div className="text-sm font-bold text-[#111827]">ODOP Certified</div>
+                    <div className="text-[10px] font-bold text-[#22c55e]">Verified Portal</div>
                   </div>
                 </div>
               </motion.div>

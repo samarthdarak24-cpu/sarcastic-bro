@@ -1,12 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useTranslation } from "react-i18next";
-
 export function SolutionSection() {
-  const { t } = useTranslation();
-
-  const benefits = [
+    const benefits = [
     {
       icon: "🤝",
       title: t("landing.solution.direct_title"),

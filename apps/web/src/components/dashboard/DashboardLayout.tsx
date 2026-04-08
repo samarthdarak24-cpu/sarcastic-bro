@@ -4,8 +4,6 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { useTranslation } from "react-i18next";
-import "@/lib/i18n";
 import { 
   LogOut, Search, Menu, Command
 } from "lucide-react";
@@ -36,9 +34,7 @@ export function DashboardLayout({ children, navItems, userRole }: DashboardLayou
   const searchParams = useSearchParams();
   const currentSection = searchParams.get("section");
   const user = authService.getUser();
-  const { t, i18n } = useTranslation();
-  
-  // Subscribe to language changes to force re-render
+    // Subscribe to language changes to force re-render
   const [, setLang] = useState(i18n.language);
   useEffect(() => {
     const handler = (lng: string) => setLang(lng);
@@ -116,7 +112,7 @@ export function DashboardLayout({ children, navItems, userRole }: DashboardLayou
                         <span className="font-bold text-[13px] tracking-tight truncate">
                           {t(item.label)}
                         </span>
-                        {isActive && <span className="text-[8px] font-black uppercase tracking-relative opacity-40 text-blue-200">{t('common.live')}</span>}
+                        {isActive && <span className="text-[8px] font-black uppercase tracking-relative opacity-40 text-blue-200">{"Live"}</span>}
                     </div>
                   )}
 
@@ -179,7 +175,7 @@ export function DashboardLayout({ children, navItems, userRole }: DashboardLayou
                 <div className="max-w-md w-full relative hidden md:block group">
                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500" size={18} />
                    <input 
-                     placeholder={t('common.search_placeholder')} 
+                     placeholder={"Search anything..."} 
                      className="w-full h-11 bg-slate-50 border border-slate-200 rounded-xl pl-12 text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:bg-white focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 outline-none transition-all" 
                    />
                 </div>
@@ -188,7 +184,7 @@ export function DashboardLayout({ children, navItems, userRole }: DashboardLayou
             <div className="flex items-center gap-3">
                 <div className="hidden lg:flex items-center gap-2 px-3 h-9 bg-emerald-50 rounded-xl border border-emerald-100">
                     <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                    <span className="text-[10px] font-black uppercase tracking-widest text-emerald-600">{t('common.live')}</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-emerald-600">{"Live"}</span>
                 </div>
                 {/* JARVIS temporarily disabled due to network issues - use AgriVoice instead */}
                 {/* <JarvisButton userRole={userRole as 'FARMER' | 'BUYER'} /> */}
@@ -220,9 +216,9 @@ export function DashboardLayout({ children, navItems, userRole }: DashboardLayou
 
                 {/* Optional Static Footer to ensure no bottom-cut */}
                 <div className="mt-auto pt-24 pb-12 flex items-center justify-between border-t border-slate-200/50">
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">{t('page.copyright')}</p>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">{"© 2026 FarmGuard Technologies. All rights reserved."}</p>
                     <div className="flex gap-8">
-                        <Link href="#" className="text-[10px] font-bold text-slate-400 hover:text-blue-600 uppercase tracking-widest">{t('landing.contact')}</Link>
+                        <Link href="#" className="text-[10px] font-bold text-slate-400 hover:text-blue-600 uppercase tracking-widest">{"Contact"}</Link>
                         <Link href="#" className="text-[10px] font-bold text-slate-400 hover:text-blue-600 uppercase tracking-widest">{t('common.terms', 'Terms')}</Link>
                         <Link href="#" className="text-[10px] font-bold text-slate-400 hover:text-blue-600 uppercase tracking-widest">{t('common.privacy', 'Privacy')}</Link>
                     </div>

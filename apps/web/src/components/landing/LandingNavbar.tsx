@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence, useScroll, useSpring } from "framer-motion";
-import { useTranslation } from "react-i18next";
 import { Menu, X, ArrowRight, Zap, Globe, ShieldCheck, Target, Activity, MessageSquare, Leaf } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -12,9 +11,7 @@ import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
 export function LandingNavbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { t } = useTranslation();
-  
-  // Scroll progress
+    // Scroll progress
   const { scrollYProgress } = useScroll();
   const scaleX = useSpring(scrollYProgress, {
     stiffness: 100,
@@ -33,7 +30,7 @@ export function LandingNavbar() {
     { label: t("landing.intelligent_sourcing"), href: "#features", icon: <Target size={14} />, key: "intelligent_sourcing" },
     { label: t("landing.trade_network"), href: "#how-it-works", icon: <Globe size={14} />, key: "trade_network" },
     { label: t("landing.market_intel"), href: "#stats", icon: <Activity size={14} />, key: "market_intel" },
-    { label: t("landing.contact"), href: "#contact", icon: <MessageSquare size={14} />, key: "contact" },
+    { label: "Contact", href: "#contact", icon: <MessageSquare size={14} />, key: "contact" },
   ];
 
   return (

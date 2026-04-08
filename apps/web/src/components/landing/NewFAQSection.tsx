@@ -2,11 +2,8 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
-import { useTranslation } from "react-i18next";
-
 export function NewFAQSection() {
-  const { t } = useTranslation();
-  const [openIndex, setOpenIndex] = useState<number | null>(0);
+    const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   const faqs = [
     {
@@ -130,8 +127,8 @@ export function NewFAQSection() {
             <button className="font-bold text-green-600 hover:underline">{t("landing.faq.contact_support")} →</button>
           </div>
           <div className="flex gap-4">
-            <span className="text-[10px] text-slate-400 hover:text-slate-600 cursor-pointer">{t("common.privacy")}</span>
-            <span className="text-[10px] text-slate-400 hover:text-slate-600 cursor-pointer">{t("common.terms")}</span>
+            <span className="text-[10px] text-slate-400 hover:text-slate-600 cursor-pointer">{"Privacy"}</span>
+            <span className="text-[10px] text-slate-400 hover:text-slate-600 cursor-pointer">{"Terms"}</span>
             <span className="text-[10px] text-slate-400 hover:text-slate-600 cursor-pointer">{t("common.cookies")}</span>
           </div>
         </motion.div>

@@ -1,12 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useTranslation } from "react-i18next";
-
 export function HowItWorksSection() {
-  const { t } = useTranslation();
-
-  const steps = [
+    const steps = [
     { icon: "📝", title: t("landing.process.step1_title"), desc: t("landing.process.step1_desc"), color: "#22c55e" },
     { icon: "Box", title: t("landing.process.step2_title"), desc: t("landing.process.step2_desc"), color: "#0ea5e9" },
     { icon: "🤝", title: t("landing.process.step3_title"), desc: t("landing.process.step3_desc"), color: "#f59e0b" },

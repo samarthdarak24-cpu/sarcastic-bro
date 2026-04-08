@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { useTranslation } from "react-i18next";
 import { 
   Award, 
   ShieldCheck, 
@@ -26,8 +25,7 @@ import api from "@/services/api";
 
 export function ReputationHub() {
   const { user } = useAuthStore();
-  const { t } = useTranslation();
-  const [stats, setStats] = useState<any>(null);
+    const [stats, setStats] = useState<any>(null);
   const [onChainStats, setOnChainStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -98,30 +96,30 @@ export function ReputationHub() {
              <div className="space-y-8">
                 <div className="flex items-center gap-2">
                    <Badge tone="brand" className="h-10 px-6 rounded-2xl font-black text-lg bg-brand-primary/10 text-brand-primary border-none">
-                      {t("reputation.platform_trust_profile")}
+                      {"PLATFORM TRUST PROFILE"}
                    </Badge>
                    {onChainStats?.isBlockchainVerified && (
                       <Badge tone="brand" className="h-10 px-6 rounded-2xl font-black text-lg bg-neut-900 text-white border-none flex items-center gap-2">
                          <Globe size={18} className="text-brand-primary" />
-                         {t("reputation.blockchain_verified")}
+                         {"BLOCKCHAIN VERIFIED"}
                       </Badge>
                    )}
                 </div>
                 <h1 className="text-5xl md:text-7xl font-black text-neut-900 tracking-tighter leading-none">
-                   {t("reputation.title").split("Is").map((p, i) => (
+                   {"Your Reputation Is Your Capital.".split("Is").map((p, i) => (
                      <React.Fragment key={i}>
                        {p} {i === 0 && <br />}
                      </React.Fragment>
                    ))}
                 </h1>
                 <p className="text-xl font-medium text-neut-500 leading-relaxed max-w-lg">
-                   {t("reputation.desc")}
+                   {"The ODOP Reputation Engine analyzes your trade reliability, fulfillment accuracy, and peer reviews to build national marketplace trust."}
                 </p>
                 <ReputationBadge score={stats.reputationScore} />
              </div>
 
              <div className="bg-neut-50 p-12 rounded-[3.5rem] border border-neut-100 flex flex-col justify-center text-center">
-                <p className="text-[10px] font-black text-neut-300 uppercase tracking-widest mb-10">{t("reputation.current_standing")}</p>
+                <p className="text-[10px] font-black text-neut-300 uppercase tracking-widest mb-10">{"Current Standing"}</p>
                 <div className="text-8xl font-black text-neut-900 tracking-tighter mb-4">{Math.round(stats.reputationScore)}</div>
                 <p className="text-lg font-bold text-brand-primary uppercase tracking-widest">
                    {t("reputation.tier_status", { tier: stats.trustLevel })}
@@ -140,31 +138,31 @@ export function ReputationHub() {
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           <StatsCard 
-            title={t("reputation.order_success")} 
+            title={"Order Success"} 
             value={`${Math.round((stats.successfulDeliveries / (stats.totalOrders || 1)) * 100)}%`} 
             icon={<CheckCircle2 />} 
             detail={t("reputation.success_detail", { count: stats.successfulDeliveries, total: stats.totalOrders })} 
             color="text-success" 
           />
           <StatsCard 
-            title={t("reputation.cancellation_rate")} 
+            title={"Cancellation Rate"} 
             value={`${stats.cancellationRate}%`} 
             icon={<XCircle />} 
-            detail={t("reputation.cancellation_detail")} 
+            detail={"Orders dropped after confirmation"} 
             color="text-error" 
           />
           <StatsCard 
-            title={t("reputation.avg_peer_rating")} 
+            title={"Avg. Peer Rating"} 
             value={stats.ratingAvg} 
             icon={<Award />} 
-            detail={t("reputation.rating_detail")} 
+            detail={"Based on verified community reviews"} 
             color="text-brand-primary" 
           />
           <StatsCard 
-            title={t("reputation.active_listings")} 
+            title={"Active Listings"} 
             value="12" 
             icon={<Package />} 
-            detail={t("reputation.listing_detail")} 
+            detail={"Verified quality clusters"} 
             color="text-amber-500" 
           />
       </div>
@@ -177,30 +175,30 @@ export function ReputationHub() {
                 <div className="h-16 w-16 bg-white/10 rounded-2xl flex items-center justify-center text-brand-primary shadow-startup-soft">
                    <Activity size={32} />
                 </div>
-                <h3 className="text-3xl font-black tracking-tight leading-tight">{t("reputation.national_tier_upgrade")}</h3>
+                <h3 className="text-3xl font-black tracking-tight leading-tight">{"National Tier Upgrade"}</h3>
                 <p className="text-white/40 font-medium text-lg leading-relaxed max-w-lg">
-                  {t("reputation.upgrade_desc")}
+                  {"Your current performance ranks you in the top 12% of farmers in your region. Complete 5 more orders without cancellation to unlock Elite Gold benefits."}
                 </p>
              </div>
              <div className="mt-12 group-hover:translate-x-4 transition-transform flex items-center gap-4 text-brand-primary font-black uppercase text-xs tracking-widest">
-                {t("reputation.view_reward_roadmap")} <ArrowRight size={20} />
+                {"VIEW REWARD ROADMAP"} <ArrowRight size={20} />
              </div>
           </Card>
 
           <Card className="border-none shadow-startup-soft bg-white p-12 rounded-[3.5rem] border border-neut-50 flex flex-col justify-between">
               <div className="space-y-4">
                 <div className="h-14 w-14 bg-success/10 rounded-2xl flex items-center justify-center text-success mb-6"><ShieldCheck size={28} /></div>
-                <h4 className="text-2xl font-black text-neut-900 tracking-tight">{t("reputation.verification_status")}</h4>
+                <h4 className="text-2xl font-black text-neut-900 tracking-tight">{"Verification Status"}</h4>
                 <div className="space-y-4 pt-6">
-                   <VerificationItem label={t("reputation.aadhaar_kyc")} status={t("reputation.verified_status")} />
-                   <VerificationItem label={t("reputation.bank_account")} status={t("reputation.verified_status")} />
-                   <VerificationItem label={t("reputation.on_chain_ledger")} status={onChainStats?.isBlockchainVerified ? t("reputation.active_status") : t("reputation.pending_status")} />
-                   <VerificationItem label={t("reputation.farm_geo_tag")} status={t("reputation.pending_status")} />
+                   <VerificationItem label={"Aadhaar KYC"} status={"VERIFIED"} />
+                   <VerificationItem label={"Bank Account"} status={"VERIFIED"} />
+                   <VerificationItem label={"On-Chain Ledger"} status={onChainStats?.isBlockchainVerified ? "ACTIVE" : "PENDING"} />
+                   <VerificationItem label={"Farm Geo-Tag"} status={"PENDING"} />
                 </div>
               </div>
               <Button variant="outline" className="h-14 w-full rounded-2xl font-black border-2 border-brand-primary text-brand-primary mt-12 flex items-center justify-center gap-2">
                 <Database size={18} />
-                {onChainStats?.isBlockchainVerified ? t("reputation.view_on_chain_audit") : t("reputation.initiate_chain_link")}
+                {onChainStats?.isBlockchainVerified ? "VIEW ON-CHAIN AUDIT" : "INITIATE CHAIN LINK"}
               </Button>
           </Card>
       </div>

@@ -11,8 +11,6 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import toast from 'react-hot-toast';
-import { useTranslation } from 'react-i18next';
-
 // Import existing crop-related components
 import { SmartInventoryHub } from './SmartInventoryHub';
 import { CropQualityDetector } from './CropQualityDetector';
@@ -20,16 +18,15 @@ import FarmInsights from './FarmInsights';
 import { AutoSellSettings } from './AutoSellSettings';
 
 export default function CropManagementHub() {
-  const { t } = useTranslation();
-  const [activeTab, setActiveTab] = useState('overview');
+    const [activeTab, setActiveTab] = useState('overview');
   const [refreshing, setRefreshing] = useState(false);
 
   const tabs = [
-    { id: 'overview', label: t('cropHub.tabs.overview'), icon: Layers },
-    { id: 'inventory', label: t('cropHub.tabs.inventory'), icon: Package },
-    { id: 'quality', label: t('cropHub.tabs.quality'), icon: ShieldCheck },
-    { id: 'insights', label: t('cropHub.tabs.insights'), icon: BarChart3 },
-    { id: 'auto-sell', label: t('cropHub.tabs.autoSell'), icon: Zap },
+    { id: 'overview', label: "Agri Hub Overview", icon: Layers },
+    { id: 'inventory', label: "Smart Inventory", icon: Package },
+    { id: 'quality', label: "Quality Scanner", icon: ShieldCheck },
+    { id: 'insights', label: "Farm Insights", icon: BarChart3 },
+    { id: 'auto-sell', label: "Auto-Sell Rules", icon: Zap },
   ];
 
   // Mock crop data
@@ -43,10 +40,10 @@ export default function CropManagementHub() {
   };
 
   const cropsByCategory = [
-    { category: t('cropHub.categories.vegetables'), count: 3, value: 145000, color: 'green' },
-    { category: t('cropHub.categories.grains'), count: 2, value: 198000, color: 'amber' },
-    { category: t('cropHub.categories.fruits'), count: 2, value: 89000, color: 'red' },
-    { category: t('cropHub.categories.pulses'), count: 1, value: 24780, color: 'purple' },
+    { category: "Vegetables", count: 3, value: 145000, color: 'green' },
+    { category: "Grains", count: 2, value: 198000, color: 'amber' },
+    { category: "Fruits", count: 2, value: 89000, color: 'red' },
+    { category: "Pulses", count: 1, value: 24780, color: 'purple' },
   ];
 
   const topCrops = [
@@ -84,14 +81,14 @@ export default function CropManagementHub() {
         <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 pb-6 border-b-2 border-slate-200">
           <div className="space-y-3">
             <div className="flex items-center gap-4">
-              <h2 className="text-3xl md:text-4xl font-black tracking-tighter text-slate-900">{t('cropHub.title')}</h2>
+              <h2 className="text-3xl md:text-4xl font-black tracking-tighter text-slate-900">{"Crop Management Hub."}</h2>
               <Badge tone="brand" className="h-8 px-4 rounded-xl font-black gap-2 uppercase text-[9px]">
                 <Sprout size={14} />
-                {t('cropHub.allInOne')}
+                {"ALL-IN-ONE"}
               </Badge>
             </div>
             <p className="text-sm font-bold text-slate-600 uppercase tracking-widest">
-              {t('cropHub.subtitle')}
+              {"Complete crop inventory, quality & insights"}
             </p>
           </div>
           <Button
@@ -100,7 +97,7 @@ export default function CropManagementHub() {
             className="h-12 px-6 bg-white hover:bg-slate-50 text-slate-900 rounded-xl font-black border-2 border-slate-200"
           >
             <RefreshCw size={16} className={refreshing ? 'animate-spin mr-2' : 'mr-2'} />
-            {refreshing ? t('cropHub.refreshing') : t('cropHub.refresh')}
+            {refreshing ? "Refreshing..." : "Refresh"}
           </Button>
         </div>
 
@@ -141,7 +138,7 @@ export default function CropManagementHub() {
                       <Sprout size={24} className="text-white" />
                     </div>
                     <p className="text-3xl font-black text-slate-900 mb-1">{cropSummary.totalCrops}</p>
-                    <p className="text-xs font-bold text-slate-600 uppercase">{t('cropHub.stats.totalCrops')}</p>
+                    <p className="text-xs font-bold text-slate-600 uppercase">{"Total Crops"}</p>
                   </Card>
 
                   <Card className="p-6 border-none shadow-lg bg-gradient-to-br from-blue-50 to-cyan-50 rounded-[2rem]">
@@ -149,7 +146,7 @@ export default function CropManagementHub() {
                       <Activity size={24} className="text-white" />
                     </div>
                     <p className="text-3xl font-black text-slate-900 mb-1">{cropSummary.activeCrops}</p>
-                    <p className="text-xs font-bold text-slate-600 uppercase">{t('cropHub.stats.activeCrops')}</p>
+                    <p className="text-xs font-bold text-slate-600 uppercase">{"Active Crops"}</p>
                   </Card>
 
                   <Card className="p-6 border-none shadow-lg bg-gradient-to-br from-purple-50 to-pink-50 rounded-[2rem]">
@@ -157,7 +154,7 @@ export default function CropManagementHub() {
                       <Package size={24} className="text-white" />
                     </div>
                     <p className="text-3xl font-black text-slate-900 mb-1">{(cropSummary.totalQuantity / 1000).toFixed(1)}K</p>
-                    <p className="text-xs font-bold text-slate-600 uppercase">{t('cropHub.stats.totalQuantity')}</p>
+                    <p className="text-xs font-bold text-slate-600 uppercase">{"Total Quantity"}</p>
                   </Card>
 
                   <Card className="p-6 border-none shadow-lg bg-gradient-to-br from-amber-50 to-orange-50 rounded-[2rem]">
@@ -165,7 +162,7 @@ export default function CropManagementHub() {
                       <TrendingUp size={24} className="text-white" />
                     </div>
                     <p className="text-3xl font-black text-slate-900 mb-1">₹{(cropSummary.totalValue / 1000).toFixed(0)}K</p>
-                    <p className="text-xs font-bold text-slate-600 uppercase">{t('cropHub.stats.totalValue')}</p>
+                    <p className="text-xs font-bold text-slate-600 uppercase">{"Total Value"}</p>
                   </Card>
 
                   <Card className="p-6 border-none shadow-lg bg-gradient-to-br from-emerald-50 to-teal-50 rounded-[2rem]">
@@ -173,7 +170,7 @@ export default function CropManagementHub() {
                       <ShieldCheck size={24} className="text-white" />
                     </div>
                     <p className="text-3xl font-black text-slate-900 mb-1">{cropSummary.avgQuality}%</p>
-                    <p className="text-xs font-bold text-slate-600 uppercase">{t('cropHub.stats.avgQuality')}</p>
+                    <p className="text-xs font-bold text-slate-600 uppercase">{"Avg Quality"}</p>
                   </Card>
 
                   <Card className="p-6 border-none shadow-lg bg-gradient-to-br from-rose-50 to-red-50 rounded-[2rem]">
@@ -181,7 +178,7 @@ export default function CropManagementHub() {
                       <Calendar size={24} className="text-white" />
                     </div>
                     <p className="text-3xl font-black text-slate-900 mb-1">{cropSummary.readyForHarvest}</p>
-                    <p className="text-xs font-bold text-slate-600 uppercase">{t('cropHub.stats.readyToHarvest')}</p>
+                    <p className="text-xs font-bold text-slate-600 uppercase">{"Ready to Harvest"}</p>
                   </Card>
                 </div>
 
@@ -189,7 +186,7 @@ export default function CropManagementHub() {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   {/* Crops by Category */}
                   <Card className="p-6 border-none shadow-lg bg-white rounded-[2rem]">
-                    <h3 className="text-xl font-black text-slate-900 mb-6">{t('cropHub.categories.title')}</h3>
+                    <h3 className="text-xl font-black text-slate-900 mb-6">{"Crops by Category"}</h3>
                     <div className="space-y-4">
                       {cropsByCategory.map((cat, idx) => (
                         <div key={idx} className="space-y-2">
@@ -200,7 +197,7 @@ export default function CropManagementHub() {
                               </div>
                               <div>
                                 <p className="font-bold text-slate-900">{cat.category}</p>
-                                <p className="text-xs text-slate-500">{cat.count} {t('cropHub.categories.crops')}</p>
+                                <p className="text-xs text-slate-500">{cat.count} {"crops"}</p>
                               </div>
                             </div>
                             <p className="font-black text-lg text-slate-900">₹{(cat.value / 1000).toFixed(0)}K</p>
@@ -218,7 +215,7 @@ export default function CropManagementHub() {
 
                   {/* Top Performing Crops */}
                   <Card className="p-6 border-none shadow-lg bg-white rounded-[2rem]">
-                    <h3 className="text-xl font-black text-slate-900 mb-6">{t('cropHub.topCrops.title')}</h3>
+                    <h3 className="text-xl font-black text-slate-900 mb-6">{"Top Performing Crops"}</h3>
                     <div className="space-y-3">
                       {topCrops.map((crop, idx) => (
                         <div key={idx} className="flex items-center justify-between p-4 bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors">
@@ -248,17 +245,17 @@ export default function CropManagementHub() {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   {/* Quality Distribution */}
                   <Card className="p-6 border-none shadow-lg bg-gradient-to-br from-slate-50 to-slate-100 rounded-[2rem]">
-                    <h3 className="text-xl font-black text-slate-900 mb-6">{t('cropHub.quality.title')}</h3>
+                    <h3 className="text-xl font-black text-slate-900 mb-6">{"Quality Distribution"}</h3>
                     <div className="space-y-4">
                       {qualityDistribution.map((grade, idx) => (
                         <div key={idx} className="space-y-2">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
                               <Award size={20} className={`text-${grade.color}-600`} />
-                              <span className="font-bold text-slate-900">{t('cropHub.quality.grade')} {grade.grade}</span>
+                              <span className="font-bold text-slate-900">{"Grade"} {grade.grade}</span>
                             </div>
                             <div className="flex items-center gap-2">
-                              <span className="text-sm font-bold text-slate-600">{grade.count} {t('cropHub.categories.crops')}</span>
+                              <span className="text-sm font-bold text-slate-600">{grade.count} {"crops"}</span>
                               <span className="text-sm font-black text-slate-900">{grade.percentage}%</span>
                             </div>
                           </div>
@@ -275,7 +272,7 @@ export default function CropManagementHub() {
 
                   {/* Recent Activities */}
                   <Card className="p-6 border-none shadow-lg bg-white rounded-[2rem]">
-                    <h3 className="text-xl font-black text-slate-900 mb-6">{t('cropHub.activity.title')}</h3>
+                    <h3 className="text-xl font-black text-slate-900 mb-6">{"Recent Activities"}</h3>
                     <div className="space-y-3">
                       {recentActivities.map((activity, idx) => (
                         <div key={idx} className="flex items-start gap-3 p-3 bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors">
@@ -295,13 +292,13 @@ export default function CropManagementHub() {
 
                 {/* Quick Actions */}
                 <Card className="p-6 border-none shadow-lg bg-gradient-to-br from-green-50 to-emerald-50 rounded-[2rem]">
-                  <h3 className="text-xl font-black text-slate-900 mb-6">{t('cropHub.actions.title')}</h3>
+                  <h3 className="text-xl font-black text-slate-900 mb-6">{"Quick Actions"}</h3>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     {[
-                      { icon: Package, label: t('cropHub.actions.addCrop'), color: 'green', tab: 'inventory' },
-                      { icon: ShieldCheck, label: t('cropHub.actions.qualityScan'), color: 'blue', tab: 'quality' },
-                      { icon: BarChart3, label: t('cropHub.actions.viewInsights'), color: 'purple', tab: 'insights' },
-                      { icon: Zap, label: t('cropHub.actions.autoSellSetup'), color: 'amber', tab: 'auto-sell' },
+                      { icon: Package, label: "Add New Crop", color: 'green', tab: 'inventory' },
+                      { icon: ShieldCheck, label: "Quality Scan", color: 'blue', tab: 'quality' },
+                      { icon: BarChart3, label: "View Insights", color: 'purple', tab: 'insights' },
+                      { icon: Zap, label: "Auto-Sell Setup", color: 'amber', tab: 'auto-sell' },
                     ].map((action, idx) => (
                       <button
                         key={idx}

@@ -4,13 +4,9 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, ShieldCheck } from "lucide-react";
-import { useTranslation } from "react-i18next";
 import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
-import "@/lib/i18n";
-
 export function NewNavbar() {
-  const { t } = useTranslation();
-  const [scrolled, setScrolled] = useState(false);
+    const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
@@ -25,7 +21,7 @@ export function NewNavbar() {
     { label: t('landing.intelligent_sourcing'), href: "#features" },
     { label: t('landing.trade_network'), href: "#how-it-works" },
     { label: t('landing.market_intel'), href: "#stats" },
-    { label: t('landing.contact'), href: "#contact" },
+    { label: "Contact", href: "#contact" },
   ];
 
   return (

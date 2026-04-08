@@ -1,12 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useTranslation } from "react-i18next";
-
 export function ProblemSection() {
-  const { t } = useTranslation();
-
-  const problems = [
+    const problems = [
     {
       icon: "🔗",
       title: t("landing.problem.middlemen_title"),

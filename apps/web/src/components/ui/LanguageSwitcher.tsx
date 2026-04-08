@@ -3,8 +3,6 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Globe, Check } from "lucide-react";
-import { useTranslation } from "react-i18next";
-import "@/lib/i18n";
 import { SUPPORTED_LANGUAGES } from "@/lib/i18n";
 import toast from "react-hot-toast";
 
@@ -69,7 +67,7 @@ export function LanguageSwitcher() {
             style={{ zIndex: 99999 }}
           >
             <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-3 py-2 border-b border-slate-50">
-              {t('language_switcher.select')}
+              {"Select Language"}
             </p>
             {SUPPORTED_LANGUAGES.map(lang => (
               <button

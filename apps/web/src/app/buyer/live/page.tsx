@@ -5,8 +5,6 @@ import { useSearchParams } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { buyerNav } from "@/lib/nav-config";
-import { useTranslation } from "react-i18next";
-import "@/lib/i18n";
 import { Zap, Activity } from "lucide-react";
 
 // Import all 10 subfeature components
@@ -25,8 +23,7 @@ function LiveCockpitContent() {
   const searchParams = useSearchParams();
   const subfeature = searchParams.get("sub") || "market-feed";
   const { user } = useAuth('BUYER');
-  const { t } = useTranslation();
-  const [lastSync, setLastSync] = useState(new Date());
+    const [lastSync, setLastSync] = useState(new Date());
 
   // Auto-refresh every 5 seconds
   useEffect(() => {

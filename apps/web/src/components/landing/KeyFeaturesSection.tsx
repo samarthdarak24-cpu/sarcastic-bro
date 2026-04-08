@@ -1,12 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useTranslation } from "react-i18next";
-
 export function KeyFeaturesSection() {
-  const { t } = useTranslation();
-
-  const features = [
+    const features = [
     { 
       icon: "🤖", 
       title: t("landing.features.f1_title"),

@@ -2,12 +2,8 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { useTranslation } from "react-i18next";
-
 export function NewCTASection() {
-  const { t } = useTranslation();
-
-  return (
+    return (
     <section className="py-20 relative overflow-hidden">
       {/* Animated Gradient Background */}
       <div className="absolute inset-0 bg-gradient-to-br from-[#22c55e] via-[#0ea5e9] to-[#f59e0b] animate-gradient-shift" />

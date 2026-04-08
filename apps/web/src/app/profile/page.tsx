@@ -8,8 +8,6 @@ import {
   Sparkles, Award, TrendingUp, Package, ShoppingBag,
   AlertCircle, Loader2, Check
 } from "lucide-react";
-import { useTranslation } from "react-i18next";
-import "@/lib/i18n";
 import { useAuthStore } from "@/store/authStore";
 import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
 import api from "@/services/api";
@@ -25,8 +23,7 @@ const INDIAN_STATES = [
 ];
 
 export default function ProfilePage() {
-  const { t } = useTranslation();
-  const { user, setUser } = useAuthStore();
+    const { user, setUser } = useAuthStore();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [form, setForm] = useState({
@@ -317,7 +314,7 @@ export default function ProfilePage() {
             ← {t('nav.dashboard')}
           </Link>
           <span className="text-slate-600">/</span>
-          <span className="text-sm font-black text-white">{t('profile.title')}</span>
+          <span className="text-sm font-black text-white">{"My Profile"}</span>
         </div>
         <LanguageSwitcher />
       </motion.div>
@@ -641,8 +638,8 @@ export default function ProfilePage() {
             >
               {[
                 { label: t('dashboard.total_orders'), value: stats.orders || 154, icon: ShoppingBag, color: 'text-blue-400', bg: 'bg-blue-500/10', border: 'border-blue-500/20' },
-                { label: t('products.title'), value: stats.products || 32, icon: Package, color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20' },
-                { label: t('finance.revenue'), value: `₹${(stats.revenue || 142500).toLocaleString()}`, icon: TrendingUp, color: 'text-purple-400', bg: 'bg-purple-500/10', border: 'border-purple-500/20' },
+                { label: "Product Management", value: stats.products || 32, icon: Package, color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20' },
+                { label: "Total Revenue", value: `₹${(stats.revenue || 142500).toLocaleString()}`, icon: TrendingUp, color: 'text-purple-400', bg: 'bg-purple-500/10', border: 'border-purple-500/20' },
                 { label: t('dashboard.trust_score'), value: `${stats.rating || 4.9}★`, icon: Award, color: 'text-amber-400', bg: 'bg-amber-500/10', border: 'border-amber-500/20' },
               ].map((stat, i) => (
                 <motion.div 
@@ -694,8 +691,8 @@ export default function ProfilePage() {
               <Edit3 size={20} className="text-white" />
             </motion.div>
             <div>
-              <h2 className="text-xl font-black text-white">{t('profile.personal_info')}</h2>
-              <p className="text-xs text-slate-400">{t('profile.photo_hint')}</p>
+              <h2 className="text-xl font-black text-white">{"Personal Information"}</h2>
+              <p className="text-xs text-slate-400">{"JPG, PNG up to 5MB"}</p>
             </div>
           </div>
 
@@ -707,14 +704,14 @@ export default function ProfilePage() {
               transition={{ type: "spring", stiffness: 300 }}
             >
               <label className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                <User size={12} /> {t('profile.name')}
+                <User size={12} /> {"Full Name"}
               </label>
               <div className="relative">
                 <input
                   value={form.name}
                   onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
                   className="w-full h-12 px-4 rounded-xl border-2 border-slate-700 bg-slate-800/50 focus:bg-slate-800 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 outline-none text-sm font-semibold text-white transition-all input-glow"
-                  placeholder={t('profile.name')}
+                  placeholder={"Full Name"}
                 />
                 <motion.div
                   className="absolute right-3 top-1/2 -translate-y-1/2"
@@ -733,7 +730,7 @@ export default function ProfilePage() {
               transition={{ type: "spring", stiffness: 300 }}
             >
               <label className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                <Mail size={12} /> {t('profile.email')}
+                <Mail size={12} /> {"Email Address"}
               </label>
               <div className="relative">
                 <input
@@ -754,7 +751,7 @@ export default function ProfilePage() {
               transition={{ type: "spring", stiffness: 300 }}
             >
               <label className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                <Phone size={12} /> {t('profile.phone')}
+                <Phone size={12} /> {"Phone Number"}
               </label>
               <div className="relative">
                 <input
@@ -780,7 +777,7 @@ export default function ProfilePage() {
               transition={{ type: "spring", stiffness: 300 }}
             >
               <label className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                <MapPin size={12} /> {t('profile.district')}
+                <MapPin size={12} /> {"District"}
               </label>
               <div className="relative">
                 <input
@@ -806,14 +803,14 @@ export default function ProfilePage() {
               transition={{ type: "spring", stiffness: 300 }}
             >
               <label className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                <Globe size={12} /> {t('profile.state')}
+                <Globe size={12} /> {"State"}
               </label>
               <select
                 value={form.state}
                 onChange={e => setForm(f => ({ ...f, state: e.target.value }))}
                 className="w-full h-12 px-4 rounded-xl border-2 border-slate-700 bg-slate-800/50 focus:bg-slate-800 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 outline-none text-sm font-semibold text-white transition-all appearance-none cursor-pointer"
               >
-                <option value="">{t('profile.state')}</option>
+                <option value="">{"State"}</option>
                 {INDIAN_STATES.map(s => <option key={s} value={s}>{s}</option>)}
               </select>
             </motion.div>
@@ -825,7 +822,7 @@ export default function ProfilePage() {
               transition={{ type: "spring", stiffness: 300 }}
             >
               <label className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                <Globe size={12} /> {t('profile.language')}
+                <Globe size={12} /> {"Preferred Language"}
               </label>
               <div className="h-12 flex items-center">
                 <LanguageSwitcher />
@@ -877,7 +874,7 @@ export default function ProfilePage() {
               ) : (
                 <>
                   <Save size={16} />
-                  {t('profile.save')}
+                  {"Save Profile"}
                 </>
               )}
             </motion.button>

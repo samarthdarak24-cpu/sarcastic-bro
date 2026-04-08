@@ -10,8 +10,6 @@ import { productService } from "@/services/productService";
 import { orderService } from "@/services/orderService";
 import { financeService } from "@/services/financeService";
 import { useRealtimeStore } from "@/store/realtimeStore";
-import { useTranslation } from "react-i18next";
-import "@/lib/i18n";
 // Hub Components
 import AIIntelligenceHubFarmer from "@/components/dashboard/farmer/AIIntelligenceHubFarmer";
 import SupplyChainHubFarmer from "@/components/dashboard/farmer/SupplyChainHubFarmer";
@@ -28,9 +26,7 @@ function FarmerDashboardContent() {
   console.log('🎯 Active Section:', activeSection);
   const { user, loading: authLoading } = useAuth('FARMER');
   const { updateDashboardStats } = useRealtimeStore();
-  const { t } = useTranslation();
-
-  useEffect(() => {
+    useEffect(() => {
     if (!authLoading && user) {
       // Basic data loading for realtime store sync
       loadBasicData();
@@ -86,13 +82,13 @@ function FarmerDashboardContent() {
             <div>
                 <h1 className="text-2xl md:text-3xl xl:text-4xl font-black tracking-tight text-slate-900 mb-2 leading-tight">
                     {activeSection === "Overview"
-                      ? t('dashboard.farmer_command_center')
+                      ? "Farmer Command Center"
                       : t(`sidebar.${activeSection.toLowerCase().replace(/ /g, '_')}`, activeSection)}
                 </h1>
                 <p className="text-slate-500 font-medium text-sm md:text-base xl:text-lg italic leading-relaxed">
                     {activeSection === "Overview"
                       ? t('dashboard.analyzing_intelligence', { size: '12.4TB' })
-                      : `${t('common.loading')} ${activeSection.toLowerCase()}`}
+                      : `${"Loading..."} ${activeSection.toLowerCase()}`}
                 </p>
             </div>
             <div className="flex items-center gap-3">
@@ -101,7 +97,7 @@ function FarmerDashboardContent() {
                   className="h-12 px-6 bg-white border border-slate-200 rounded-xl font-bold text-slate-700 hover:bg-slate-50 transition-all shadow-sm flex items-center gap-2"
                 >
                     <Zap size={18} className="text-emerald-500" />
-                    {t('common.refresh')}
+                    {"Refresh"}
                 </button>
             </div>
         </div>

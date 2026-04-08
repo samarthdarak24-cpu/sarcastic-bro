@@ -7,16 +7,13 @@ import {
   Zap, Globe, TrendingUp, TrendingDown, RefreshCw, MapPin, 
   Search, Filter, Activity, BarChart3, Database, MessageSquare, Target, ArrowRight
 } from "lucide-react";
-import { useTranslation } from "react-i18next";
-import "@/lib/i18n";
 import LiveMandiFeed from "@/components/dashboard/farmer/LiveMandiFeed";
 import ExportOpportunities from "@/components/dashboard/farmer/ExportOpportunities";
 import MarketIntelligenceHub from "@/components/dashboard/farmer/MarketIntelligenceHub";
 import { motion, AnimatePresence } from "framer-motion";
 
 function FarmerLiveContent() {
-  const { t } = useTranslation();
-  const [activeTab, setActiveTab] = useState<'mandi' | 'global' | 'intelligence'>('mandi');
+    const [activeTab, setActiveTab] = useState<'mandi' | 'global' | 'intelligence'>('mandi');
   const [activeModal, setActiveModal] = useState<'search' | 'variance' | null>(null);
   
   // Modal Interactions State

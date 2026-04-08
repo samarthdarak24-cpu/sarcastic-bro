@@ -3,11 +3,8 @@
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { useState } from "react";
-import { useTranslation } from "react-i18next";
-
 export function NewFooter() {
-  const { t } = useTranslation();
-  const [email, setEmail] = useState("");
+    const [email, setEmail] = useState("");
 
   const handleNewsletterSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,8 +33,8 @@ export function NewFooter() {
       { label: t("common.status"), href: "/status" },
     ],
     legal: [
-      { label: t("common.privacy"), href: "/privacy" },
-      { label: t("common.terms"), href: "/terms" },
+      { label: "Privacy", href: "/privacy" },
+      { label: "Terms", href: "/terms" },
       { label: t("common.cookies"), href: "/cookies" },
       { label: t("common.licenses"), href: "/licenses" },
     ],

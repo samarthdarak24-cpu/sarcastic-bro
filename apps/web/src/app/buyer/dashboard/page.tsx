@@ -6,8 +6,6 @@ import { motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { buyerNav } from "@/lib/nav-config";
-import { useTranslation } from "react-i18next";
-import "@/lib/i18n";
 import { 
   TrendingUp, Package, DollarSign, ShoppingCart, 
   Sparkles, Users, 
@@ -28,8 +26,7 @@ function BuyerDashboardContent() {
   const router = useRouter();
   const activeSection = searchParams.get("section") || "Overview";
   const { user } = useAuth('BUYER');
-  const { t, i18n } = useTranslation();
-  const [, setLang] = useStateLang(i18n.language);
+    const [, setLang] = useStateLang(i18n.language);
   useEffectLang(() => {
     const handler = (lng: string) => setLang(lng);
     i18n.on("languageChanged", handler);
@@ -72,7 +69,7 @@ function BuyerDashboardContent() {
                 </h1>
                 <p className="text-slate-500 font-medium text-sm md:text-base xl:text-lg italic leading-relaxed">
                     {activeSection === "Overview" 
-                        ? t('buyer_dashboard.overview') 
+                        ? "Your global procurement command center." 
                         : t('buyer_dashboard.executing', { section: activeSection.toLowerCase() })}
                 </p>
             </div>
@@ -81,7 +78,7 @@ function BuyerDashboardContent() {
                   className="h-12 px-6 bg-white border border-slate-200 rounded-xl font-bold text-slate-700 hover:bg-slate-50 transition-all shadow-sm flex items-center gap-2"
                 >
                     <Zap size={18} className="text-blue-500" />
-                    {t('buyer_dashboard.market_sync')}
+                    {"Market Synchronization"}
                 </button>
             </div>
         </div>

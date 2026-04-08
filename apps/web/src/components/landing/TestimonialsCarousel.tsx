@@ -2,11 +2,8 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
-import { useTranslation } from "react-i18next";
-
 export function TestimonialsCarousel() {
-  const { t } = useTranslation();
-  const [activeIndex, setActiveIndex] = useState(0);
+    const [activeIndex, setActiveIndex] = useState(0);
 
   const testimonials = [
     {

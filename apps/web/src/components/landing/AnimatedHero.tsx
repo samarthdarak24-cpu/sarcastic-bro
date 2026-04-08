@@ -1,15 +1,13 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useTranslation } from "react-i18next";
 import Link from "next/link";
 import { ArrowRight, Sparkles } from "lucide-react";
 import { GradientButton } from "../ui/GradientButton";
 import { AnimatedCounter } from "../ui/AnimatedCounter";
 
 export function AnimatedHero() {
-  const { t } = useTranslation();
-  const words = t("landing.animated_hero.words", { returnObjects: true }) as string[];
+    const words = t("landing.animated_hero.words", { returnObjects: true }) as string[];
   
   return (
     <section className="relative min-h-screen flex items-center overflow-hidden bg-[#0f172a]">

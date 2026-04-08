@@ -11,19 +11,17 @@ import {
   Leaf, Wheat, Sun, Database, Eye, Sparkles
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useTranslation } from 'react-i18next';
 import { LiveStatCard } from '@/components/ui/LiveStatCard';
 
 export default function FarmerCommandCenter() {
   console.log('🚀 FarmerCommandCenter component loaded!');
   const router = useRouter();
-  const { t } = useTranslation();
-  const [marketSync, setMarketSync] = useState(12.4);
+    const [marketSync, setMarketSync] = useState(12.4);
   // Re-render decoupled to LiveFarmInsightsWidget
 
   const stats = [
     {
-      label: t('dashboard.total_crops_value'),
+      label: "Total Crops Value",
       value: '₹0',
       icon: Database,
       color: 'emerald',
@@ -31,7 +29,7 @@ export default function FarmerCommandCenter() {
       live: true
     },
     {
-      label: t('dashboard.active_orders'),
+      label: "Active Orders",
       value: '0',
       icon: ShoppingBag,
       color: 'blue',
@@ -39,7 +37,7 @@ export default function FarmerCommandCenter() {
       live: true
     },
     {
-      label: t('dashboard.pending_payments'),
+      label: "Pending Payments",
       value: '₹0',
       icon: DollarSign,
       color: 'amber',
@@ -47,7 +45,7 @@ export default function FarmerCommandCenter() {
       live: true
     },
     {
-      label: t('dashboard.market_profit_gain'),
+      label: "Market Profit Gain",
       value: '0%',
       icon: TrendingUp,
       color: 'purple',
@@ -59,43 +57,43 @@ export default function FarmerCommandCenter() {
 
 
   const mandiPrices = [
-    { crop: t('crops.wheat'), mandi: t('mandis.indore'), price: '₹2,450', change: '+45', trend: 'up' },
-    { crop: t('crops.rice'), mandi: t('mandis.karnal'), price: '₹3,800', change: '-20', trend: 'down' },
-    { crop: t('crops.tomato'), mandi: t('mandis.azadpur'), price: '₹1,200', change: '+150', trend: 'up' },
-    { crop: t('crops.onion'), mandi: t('mandis.lasalgaon'), price: '₹2,100', change: '+10', trend: 'up' },
-    { crop: t('crops.turmeric'), mandi: t('mandis.erode'), price: '₹9,200', change: '-100', trend: 'down' }
+    { crop: "Wheat", mandi: "Indore Mandi", price: '₹2,450', change: '+45', trend: 'up' },
+    { crop: "Rice", mandi: "Karnal Mandi", price: '₹3,800', change: '-20', trend: 'down' },
+    { crop: "Tomato", mandi: "Azadpur Mandi", price: '₹1,200', change: '+150', trend: 'up' },
+    { crop: "Onion", mandi: "Lasalgaon Mandi", price: '₹2,100', change: '+10', trend: 'up' },
+    { crop: "Turmeric", mandi: "Erode Mandi", price: '₹9,200', change: '-100', trend: 'down' }
   ];
 
   const exportOpportunities = [
     {
-      crop: t('crops.basmati_rice'),
-      destination: t('destinations.uae'),
-      demand: t('dashboard.high_demand'),
-      market: t('destinations.dubai'),
+      crop: "Basmati Rice",
+      destination: "United Arab Emirates",
+      demand: "High Demand",
+      market: "Dubai Market",
       margin: '+22%',
       color: 'emerald'
     },
     {
-      crop: t('crops.organic_spices'),
-      destination: t('destinations.germany'),
-      demand: t('dashboard.medium_demand'),
-      market: t('destinations.hamburg'),
+      crop: "Organic Spices",
+      destination: "Germany",
+      demand: "Medium Demand",
+      market: "Hamburg Market",
       margin: '+35%',
       color: 'blue'
     },
     {
-      crop: t('crops.fresh_mangoes'),
-      destination: t('destinations.uk'),
-      demand: t('dashboard.critical_demand'),
-      market: t('destinations.london'),
+      crop: "Fresh Mangoes",
+      destination: "United Kingdom",
+      demand: "Critical Demand",
+      market: "London Market",
       margin: '+40%',
       color: 'purple'
     },
     {
-      crop: t('crops.cashew_nuts'),
-      destination: t('destinations.vietnam'),
-      demand: t('dashboard.high_demand'),
-      market: t('destinations.ho_chi_minh'),
+      crop: "Cashew Nuts",
+      destination: "Vietnam",
+      demand: "High Demand",
+      market: "Ho Chi Minh Market",
       margin: '+18%',
       color: 'amber'
     }
@@ -104,8 +102,8 @@ export default function FarmerCommandCenter() {
   const subFeatures = [
     {
       id: 'ai-intelligence',
-      title: t('features.ai_intelligence_hub'),
-      description: t('features.ai_intelligence_desc'),
+      title: "AI Intelligence Hub",
+      description: "AI-powered insights, recommendations, and smart analytics",
       icon: Sparkles,
       color: 'blue',
       metrics: { insights: 8, accuracy: '94%' },
@@ -113,8 +111,8 @@ export default function FarmerCommandCenter() {
     },
     {
       id: 'production',
-      title: t('features.production_supply'),
-      description: t('features.production_desc'),
+      title: "Production & Supply Chain",
+      description: "Smart product hub, crop management, and inventory",
       icon: Package,
       color: 'green',
       metrics: { products: 12, active: '85%' },
@@ -122,8 +120,8 @@ export default function FarmerCommandCenter() {
     },
     {
       id: 'orders-logistics',
-      title: t('features.orders_logistics'),
-      description: t('features.orders_desc'),
+      title: "Orders & Logistics",
+      description: "Order control, delivery management, and tracking",
       icon: Truck,
       color: 'orange',
       metrics: { orders: 23, delivered: '96%' },
@@ -131,8 +129,8 @@ export default function FarmerCommandCenter() {
     },
     {
       id: 'payments-finance',
-      title: t('features.payments_finance'),
-      description: t('features.payments_desc'),
+      title: "Payments & Finance",
+      description: "AgriPay center, auto-sell rules, and financial management",
       icon: DollarSign,
       color: 'emerald',
       metrics: { balance: '₹45K', pending: '₹12K' },
@@ -140,8 +138,8 @@ export default function FarmerCommandCenter() {
     },
     {
       id: 'tender-bidding',
-      title: t('features.tender_bidding'),
-      description: t('features.tender_desc'),
+      title: "Tender & Bidding",
+      description: "Government tenders, contract farming, bulk sales",
       icon: Target,
       color: 'purple',
       metrics: { active: 8, won: 12 },
@@ -149,8 +147,8 @@ export default function FarmerCommandCenter() {
     },
     {
       id: 'trust-reputation',
-      title: t('features.trust_reputation'),
-      description: t('features.trust_desc'),
+      title: "Trust & Reputation",
+      description: "Identity verification, ratings, and credibility",
       icon: Award,
       color: 'cyan',
       metrics: { score: '4.8★', verified: '✓' },
@@ -158,8 +156,8 @@ export default function FarmerCommandCenter() {
     },
     {
       id: 'security-compliance',
-      title: t('features.security_compliance'),
-      description: t('features.security_desc'),
+      title: "Security & Compliance",
+      description: "Blockchain trace, quality compliance, export audit",
       icon: Shield,
       color: 'indigo',
       metrics: { traced: 89, compliant: '100%' },
@@ -167,8 +165,8 @@ export default function FarmerCommandCenter() {
     },
     {
       id: 'quality-detector',
-      title: t('features.quality_detector'),
-      description: t('features.quality_desc'),
+      title: "Quality Detector",
+      description: "AI-powered crop quality analysis and grading",
       icon: Eye,
       color: 'red',
       metrics: { scans: 45, grade: 'A+' },
@@ -176,8 +174,8 @@ export default function FarmerCommandCenter() {
     },
     {
       id: 'farm-insights',
-      title: t('features.farm_insights'),
-      description: t('features.farm_insights_desc'),
+      title: "Farm Insights",
+      description: "Weather, soil health, pest detection, and analytics",
       icon: BarChart3,
       color: 'amber',
       metrics: { score: '85/100', alerts: 2 },
@@ -185,8 +183,8 @@ export default function FarmerCommandCenter() {
     },
     {
       id: 'agrichat',
-      title: t('features.agrichat_connect'),
-      description: t('features.agrichat_desc'),
+      title: "AgriChat Connect",
+      description: "Voice-enabled AI assistant and communication hub",
       icon: MessageSquare,
       color: 'violet',
       metrics: { chats: 23, active: '●' },
@@ -197,26 +195,26 @@ export default function FarmerCommandCenter() {
   const recentActivity = [
     {
       type: 'harvest',
-      title: t('activity.harvest_ready'),
-      description: t('activity.harvest_desc', { crop: t('crops.tomato'), field: 'Field A2' }),
+      title: "Harvest Ready",
+      description: t('activity.harvest_desc', { crop: "Tomato", field: 'Field A2' }),
       status: 'success',
       time: t('time.minutesAgo', { count: 2 }),
       icon: Sprout
     },
     {
       type: 'order',
-      title: t('activity.new_order'),
-      description: t('activity.order_desc', { crop: t('crops.basmati_rice'), quantity: '500kg', id: 'ORD-445' }),
+      title: "New Order",
+      description: t('activity.order_desc', { crop: "Basmati Rice", quantity: '500kg', id: 'ORD-445' }),
       status: 'processing',
       time: t('time.minutesAgo', { count: 15 }),
       icon: ShoppingBag
     },
     {
       type: 'weather',
-      title: t('activity.weather_alert'),
-      description: t('activity.weather_desc'),
+      title: "Weather Alert",
+      description: "Light rain expected tomorrow",
       status: 'info',
-      time: t('time.hourAgo'),
+      time: "An hour ago",
       icon: CloudRain
     }
   ];
@@ -257,17 +255,17 @@ export default function FarmerCommandCenter() {
         <div className="relative z-10">
           <div className="flex items-start justify-between mb-6">
             <div>
-              <h1 className="text-4xl font-black mb-2">{t('dashboard.farmer_command_center')} 🌾</h1>
+              <h1 className="text-4xl font-black mb-2">{"Farmer Command Center"} 🌾</h1>
               <h2 className="text-2xl font-bold mb-2">{t('dashboard.welcome_farmer', { name: 'Rajesh Kumar' })}</h2>
               <p className="text-xl text-emerald-100">{t('dashboard.analyzing_intelligence', { size: '12.4TB' })}</p>
             </div>
             <div className="flex items-center gap-3">
               <div className="text-right">
-                <div className="text-sm text-emerald-200">{t('dashboard.system_health')}</div>
+                <div className="text-sm text-emerald-200">{"System Health"}</div>
                 <div className="text-2xl font-black">{t('dashboard.optimized', { percent: '100' })}</div>
                 <div className="flex items-center gap-2 text-emerald-200">
                   <div className="h-2 w-2 bg-emerald-300 rounded-full animate-pulse" />
-                  <span className="text-sm font-bold">{t('common.live')}</span>
+                  <span className="text-sm font-bold">{"Live"}</span>
                 </div>
               </div>
             </div>
@@ -290,7 +288,7 @@ export default function FarmerCommandCenter() {
                   {stat.live && (
                     <span className="text-xs font-bold bg-white/20 px-2 py-1 rounded-full flex items-center gap-1">
                       <div className="h-1.5 w-1.5 bg-emerald-300 rounded-full animate-pulse" />
-                      {t('common.live')}
+                      {"Live"}
                     </span>
                   )}
                 </div>
@@ -312,15 +310,15 @@ export default function FarmerCommandCenter() {
         >
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h2 className="text-2xl font-black text-slate-900 mb-1">{t('dashboard.live_mandi_prices')}</h2>
+              <h2 className="text-2xl font-black text-slate-900 mb-1">{"Live Mandi Prices"}</h2>
               <div className="flex items-center gap-2 text-emerald-600">
                 <div className="h-2 w-2 bg-emerald-500 rounded-full animate-pulse" />
-                <span className="text-sm font-bold">{t('dashboard.realtime_sync')}</span>
+                <span className="text-sm font-bold">{"Real-time Sync Active"}</span>
               </div>
             </div>
             <div className="text-right">
-              <div className="text-lg font-black text-slate-600">{t('dashboard.regional_average')}</div>
-              <div className="text-2xl font-black text-emerald-600">₹2,480.00 {t('units.per_qtl')}</div>
+              <div className="text-lg font-black text-slate-600">{"Regional Average"}</div>
+              <div className="text-2xl font-black text-emerald-600">₹2,480.00 {"/ qtl"}</div>
             </div>
           </div>
 
@@ -345,7 +343,7 @@ export default function FarmerCommandCenter() {
                 <div className="text-right">
                   <div className="text-xl font-black text-slate-900">{item.price}</div>
                   <div className={`text-sm font-bold ${getTrendColor(item.trend)}`}>
-                    {item.change} ({t('dashboard.today')})
+                    {item.change} ({"today"})
                   </div>
                 </div>
               </motion.div>
@@ -365,13 +363,13 @@ export default function FarmerCommandCenter() {
       >
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-2xl font-black text-slate-900 mb-1">{t('dashboard.global_export_hub')}</h2>
+            <h2 className="text-2xl font-black text-slate-900 mb-1">{"Global Export Hub"}</h2>
             <div className="flex items-center gap-2 text-blue-600">
               <Globe size={16} />
-              <span className="text-sm font-bold">{t('dashboard.global_sourcing_live')}</span>
+              <span className="text-sm font-bold">{"Global Sourcing Live AI"}</span>
             </div>
           </div>
-          <button className="text-sm font-bold text-blue-600 hover:underline">{t('dashboard.view_analysis')}</button>
+          <button className="text-sm font-bold text-blue-600 hover:underline">{"View Analysis"}</button>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -387,7 +385,7 @@ export default function FarmerCommandCenter() {
               <div className={`text-sm font-bold text-${opportunity.color}-600 mb-2`}>{opportunity.demand}</div>
               <div className="text-xs text-slate-600 mb-2">{opportunity.market}</div>
               <div className={`text-lg font-black text-${opportunity.color}-600`}>{opportunity.margin}</div>
-              <div className="text-xs text-slate-500">{t('dashboard.net_margin')}</div>
+              <div className="text-xs text-slate-500">{"Net Margin"}</div>
             </motion.div>
           ))}
         </div>
@@ -401,8 +399,8 @@ export default function FarmerCommandCenter() {
       <div>
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-2xl font-black text-slate-900">{t('dashboard.farm_management_hub')}</h2>
-            <p className="text-slate-600">{t('dashboard.access_tools')}</p>
+            <h2 className="text-2xl font-black text-slate-900">{"Farm Management Hub"}</h2>
+            <p className="text-slate-600">{"Access all farming tools and features"}</p>
           </div>
         </div>
 
@@ -461,11 +459,11 @@ export default function FarmerCommandCenter() {
             </div>
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <h3 className="text-2xl font-black">{t('dashboard.ai_intelligence_assistant')}</h3>
-                <span className="bg-white/20 px-3 py-1 rounded-full text-sm font-bold">🤖 {t('common.live')}</span>
+                <h3 className="text-2xl font-black">{"AI Intelligence Assistant"}</h3>
+                <span className="bg-white/20 px-3 py-1 rounded-full text-sm font-bold">🤖 {"Live"}</span>
               </div>
               <p className="text-emerald-100 text-lg">
-                {t('dashboard.ai_insights_desc')}
+                {"Get real-time insights, pricing recommendations, and growth strategies"}
               </p>
             </div>
           </div>
@@ -473,14 +471,14 @@ export default function FarmerCommandCenter() {
             onClick={() => router.push('/farmer/dashboard?section=AI Intelligence')}
             className="bg-white text-emerald-600 px-6 py-3 rounded-xl font-bold hover:bg-emerald-50 transition-all"
           >
-            {t('dashboard.open_chat')}
+            {"Open Chat"}
           </button>
         </div>
       </motion.div>
 
       {/* Footer */}
       <div className="text-center py-6 text-slate-500 text-sm">
-        {t('dashboard.copyright')}
+        {"© 2026 FarmGuard Technologies. All rights reserved."}
       </div>
     </div>
   );
@@ -488,8 +486,7 @@ export default function FarmerCommandCenter() {
 
 function LiveFarmInsightsWidget() {
   const router = useRouter();
-  const { t } = useTranslation();
-  const [activeCrops, setActiveCrops] = useState(12);
+    const [activeCrops, setActiveCrops] = useState(12);
   const [weatherScore, setWeatherScore] = useState(85);
   const [soilHealth, setSoilHealth] = useState(92);
   const [pestRisk, setPestRisk] = useState(15);
@@ -508,8 +505,8 @@ function LiveFarmInsightsWidget() {
 
   const farmInsights = {
     weatherScore: weatherScore,
-    soilHealth: `${soilHealth}% ${t('units.ideal')}`,
-    pestRisk: `${pestRisk}% ${t('units.index')}`,
+    soilHealth: `${soilHealth}% ${"Ideal"}`,
+    pestRisk: `${pestRisk}% ${"Index"}`,
     revenue: `₹${revenue.toLocaleString()}`,
     totalCrops: activeCrops,
     totalArea: 25
@@ -522,14 +519,14 @@ function LiveFarmInsightsWidget() {
       className="bg-white rounded-2xl border-2 border-slate-200 p-6 shadow-lg"
     >
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-black text-slate-900">{t('dashboard.farm_yield_insights')}</h2>
+        <h2 className="text-xl font-black text-slate-900">{"Farm Yield Insights"}</h2>
         <span className="text-xs font-bold bg-blue-100 text-blue-600 px-2 py-1 rounded-full flex items-center gap-2">
           <span className="h-1.5 w-1.5 rounded-full bg-blue-600 animate-pulse" /> AI Prediction Engine v4.2
         </span>
       </div>
       
       <button onClick={() => router.push('/farmer/overview')} className="w-full text-right mb-6 group flex justify-end items-center gap-1">
-        <span className="text-sm font-bold text-blue-600 group-hover:underline">{t('dashboard.full_detail')}</span>
+        <span className="text-sm font-bold text-blue-600 group-hover:underline">{"Full Detail"}</span>
         <ArrowRight size={14} className="text-blue-600 transition-transform group-hover:translate-x-1" />
       </button>
 
@@ -537,7 +534,7 @@ function LiveFarmInsightsWidget() {
         <div className="flex items-center justify-between p-3 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl">
           <div className="flex items-center gap-3">
             <CloudRain size={20} className="text-blue-600" />
-            <span className="font-bold text-slate-900">{t('dashboard.weather_score')}</span>
+            <span className="font-bold text-slate-900">{"Weather Score"}</span>
           </div>
           <span className="text-xl font-black text-blue-600">{farmInsights.weatherScore}/100</span>
         </div>
@@ -545,7 +542,7 @@ function LiveFarmInsightsWidget() {
         <div className="flex items-center justify-between p-3 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl group transition-all hover:-translate-y-1 hover:shadow-md">
           <div className="flex items-center gap-3">
             <Leaf size={20} className="text-green-600 group-hover:scale-110 transition-transform" />
-            <span className="font-bold text-slate-900">{t('dashboard.soil_health')}</span>
+            <span className="font-bold text-slate-900">{"Soil Health"}</span>
           </div>
           <span className={`text-lg font-black transition-colors ${soilHealth > 90 ? 'text-green-600' : 'text-slate-900'}`}>{farmInsights.soilHealth}</span>
         </div>
@@ -553,7 +550,7 @@ function LiveFarmInsightsWidget() {
         <div className="flex items-center justify-between p-3 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl group transition-all hover:-translate-y-1 hover:shadow-md">
           <div className="flex items-center gap-3">
             <Bug size={20} className="text-amber-600 group-hover:scale-110 transition-transform" />
-            <span className="font-bold text-slate-900">{t('dashboard.pest_risk')}</span>
+            <span className="font-bold text-slate-900">{"Pest Risk"}</span>
           </div>
           <span className={`text-lg font-black transition-colors ${pestRisk > 20 ? 'text-red-500' : 'text-amber-600'}`}>{farmInsights.pestRisk}</span>
         </div>
@@ -561,7 +558,7 @@ function LiveFarmInsightsWidget() {
         <div className="flex items-center justify-between p-3 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl group transition-all hover:-translate-y-1 hover:shadow-md">
           <div className="flex items-center gap-3">
             <DollarSign size={20} className="text-purple-600 group-hover:scale-110 transition-transform" />
-            <span className="font-bold text-slate-900">{t('dashboard.revenue')}</span>
+            <span className="font-bold text-slate-900">{"Revenue"}</span>
           </div>
           <span className="text-xl font-black text-purple-600">{farmInsights.revenue}</span>
         </div>
@@ -571,11 +568,11 @@ function LiveFarmInsightsWidget() {
         <div className="grid grid-cols-2 gap-4 text-center">
           <div>
             <div className="text-2xl font-black text-emerald-600">{farmInsights.totalCrops}+2</div>
-            <div className="text-xs text-slate-600">{t('dashboard.total_crops')}<br/>{t('dashboard.this_season')}</div>
+            <div className="text-xs text-slate-600">{"Total Crops"}<br/>{"this season"}</div>
           </div>
           <div>
-            <div className="text-2xl font-black text-blue-600">{farmInsights.totalArea} {t('units.acres')}</div>
-            <div className="text-xs text-slate-600">{t('dashboard.total_area')}<br/>{t('dashboard.utilized', { percent: '85' })}</div>
+            <div className="text-2xl font-black text-blue-600">{farmInsights.totalArea} {"Acres"}</div>
+            <div className="text-xs text-slate-600">{"Total Area"}<br/>{t('dashboard.utilized', { percent: '85' })}</div>
           </div>
         </div>
       </div>
