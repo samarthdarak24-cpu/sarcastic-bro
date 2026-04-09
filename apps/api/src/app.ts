@@ -58,6 +58,8 @@ import agriChatRoutes from "./modules/agri-chat/agri-chat.routes";
 import uploadsRoutes from "./modules/uploads/uploads.routes";
 import realtimeScanRoutes from "./modules/realtime-scan/realtime-scan.routes";
 // import communicationsRoutes from "./modules/communications/communications.routes";  // DISABLED - missing file
+import favoritesRoutes from "./modules/favorites/favorites.routes";
+import trustRatingRoutes from "./modules/trust-rating/trust-rating.routes";
 
 const app = express();
 
@@ -194,6 +196,8 @@ app.use("/api/farmer", farmerOverviewRoutes);
 // app.use("/ollama-chat", ollamaChatRoutes);  // DISABLED - missing file
 app.use("/api/n8n", n8nChatRoutes);
 app.use("/api/chat", chatRoutes);
+app.use("/api/favorites", favoritesRoutes);
+app.use("/api/trust-rating", trustRatingRoutes);
 // app.use("/communications", communicationsRoutes);  // DISABLED - missing file
 // app.use("/chat", chatRoutes);  // DISABLED - missing file
 

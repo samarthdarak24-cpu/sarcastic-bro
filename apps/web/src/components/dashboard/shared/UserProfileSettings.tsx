@@ -45,7 +45,7 @@ export function UserProfileSettings() {
       const res: any = await api.put("/user/profile", formData);
       if (res.success) {
         setUser({ ...user!, ...res.data });
-        showToast(t("save_changes") + " Successful");
+        showToast("save_changes" + " Successful");
       }
     } catch (error) {
       showToast("Error updating profile");
@@ -118,19 +118,19 @@ export function UserProfileSettings() {
                 accept="image/*"
                 onChange={handleFileChange}
               />
-              <p className="text-xs font-bold uppercase text-brand-primary mt-4 tracking-widest">{t("change_photo")}</p>
+              <p className="text-xs font-bold uppercase text-brand-primary mt-4 tracking-widest">{"change_photo"}</p>
             </div>
 
             {/* Form Section */}
             <div className="flex-1 space-y-8 w-full">
               <div className="space-y-1 pb-4 border-b border-neut-100">
-                <h2 className="text-3xl font-black tracking-tight">{t("personal_info")}</h2>
+                <h2 className="text-3xl font-black tracking-tight">{"personal_info"}</h2>
                 <p className="text-neut-500 font-medium">Update your profile details and contact information.</p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-neut-500 uppercase tracking-widest">{t("personal_info")} - Name</label>
+                  <label className="text-xs font-bold text-neut-500 uppercase tracking-widest">{"personal_info"} - Name</label>
                   <div className="relative">
                     <div className="absolute left-4 top-1/2 -translate-y-1/2 text-neut-400"><User size={18} /></div>
                     <input 
@@ -144,7 +144,7 @@ export function UserProfileSettings() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-neut-500 uppercase tracking-widest">{t("phone")}</label>
+                  <label className="text-xs font-bold text-neut-500 uppercase tracking-widest">{"phone"}</label>
                   <div className="relative">
                     <div className="absolute left-4 top-1/2 -translate-y-1/2 text-neut-400"><Phone size={18} /></div>
                     <input 
@@ -159,7 +159,7 @@ export function UserProfileSettings() {
                 </div>
 
                 <div className="space-y-2 md:col-span-2">
-                  <label className="text-xs font-bold text-neut-500 uppercase tracking-widest">{t("address")}</label>
+                  <label className="text-xs font-bold text-neut-500 uppercase tracking-widest">{"address"}</label>
                   <div className="relative">
                     <div className="absolute left-4 top-1/2 -translate-y-1/2 text-neut-400"><MapPin size={18} /></div>
                     <input 
@@ -182,7 +182,7 @@ export function UserProfileSettings() {
                   className="h-12 px-8 rounded-xl font-black shadow-lg shadow-brand-primary/20 gap-2"
                 >
                   {isSaving ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
-                  {t("update")}
+                  {"update"}
                 </Button>
               </div>
             </div>

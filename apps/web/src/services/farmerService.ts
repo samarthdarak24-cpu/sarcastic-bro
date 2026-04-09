@@ -34,7 +34,7 @@ export interface FarmerActivity {
 
 export const farmerService = {
   getMetrics: async (): Promise<FarmerMetrics> => {
-    const response = await api.get('/api/farmer/metrics');
+    const response = await api.get("/api/farmer/metrics");
     return response.data.data;
   },
 
@@ -52,22 +52,23 @@ export const farmerService = {
   },
 
   getExportOpportunities: async (): Promise<ExportOpportunity[]> => {
-    const response = await api.get('/api/farmer/export-data');
+    const response = await api.get("/api/farmer/export-data");
     return response.data.data;
   },
 
   getRecentActivity: async (): Promise<FarmerActivity[]> => {
-    const response = await api.get('/api/farmer/recent-activity');
+    const response = await api.get("/api/farmer/recent-activity");
     return response.data.data;
   },
 
   getCrops: async () => {
-    const response = await api.get('/api/farmer/crops');
+    const response = await api.get("/api/farmer/crops");
     return response.data.data;
   },
 
   getOrders: async () => {
-    const response = await api.get('/api/farmer/orders');
+    const response = await api.get("/api/farmer/orders");
     return response.data.data;
   }
 };
+

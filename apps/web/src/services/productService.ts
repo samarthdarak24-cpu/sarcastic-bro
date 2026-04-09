@@ -15,6 +15,12 @@ export interface Product {
   district?: string;
   state?: string;
   farmerId: string;
+  farmer?: {
+    id: string;
+    name: string;
+    email?: string;
+  };
+  minimumOrder?: number;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -35,7 +41,7 @@ export const productService = {
   // Get all products (alias for compatibility)
   async getAll(): Promise<Product[]> {
     try {
-      const response = await api.get('/products');
+      const response = await api.get("/products");
       const data = response.data.data || response.data || [];
       return Array.isArray(data) ? data : (data.products || []);
     } catch (error) {
@@ -48,7 +54,7 @@ export const productService = {
   async getMyProducts(): Promise<Product[]> {
     try {
       // Use the standard products endpoint (which exists)
-      const response = await api.get('/products');
+      const response = await api.get("/products");
       const data = response.data.data || response.data || [];
       return Array.isArray(data) ? data : (data.products || []);
     } catch (error) {
@@ -79,6 +85,23 @@ export const productService = {
   async getProduct(id: string): Promise<Product> {
     const response = await api.get(`/products/${id}`);
     return response.data;
+  },
+
+  // Get single product (alias)
+  async getById(id: string): Promise<Product> {
+    return this.getProduct(id);
+  },
+
+  // Get buyer products (active products)
+  async getBuyerProducts(query?: string): Promise<{ data: Product[] }> {
+    try {
+      const response = await api.get(`/products${query || ''}`);
+      const data = response.data.data || response.data || [];
+      return { data: Array.isArray(data) ? data : (data.products || []) };
+    } catch (error) {
+      console.error('getBuyerProducts error:', error);
+      return { data: [] };
+    }
   },
 
   // Create product (alias)
@@ -128,3 +151,4 @@ export const productService = {
     return response.data.data || response.data;
   }
 };
+

@@ -139,7 +139,7 @@ export const JarvisWidget: React.FC<JarvisWidgetProps> = ({
     if (newValue) {
       toast.success('Continuous listening enabled');
     } else {
-      toast('Continuous listening disabled. Use manual mode.');
+      toast("Continuous listening disabled. Use manual mode.");
     }
   };
 

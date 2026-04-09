@@ -36,7 +36,7 @@ export interface Conversation {
 export const messagingService = {
   async getConversations(): Promise<Conversation[]> {
     try {
-      const response = await api.get('/messages/conversations');
+      const response = await api.get("/messages/conversations");
       return response.data.data || [];
     } catch (error) {
       console.error('Error fetching conversations:', error);
@@ -94,7 +94,7 @@ export const messagingService = {
 
   async getUnreadCount(): Promise<number> {
     try {
-      const response = await api.get('/messages/unread-count');
+      const response = await api.get("/messages/unread-count");
       return response.data.data.unreadCount || 0;
     } catch (error) {
       console.error('Error getting unread count:', error);
@@ -116,3 +116,4 @@ export const messagingService = {
 };
 
 export default messagingService;
+

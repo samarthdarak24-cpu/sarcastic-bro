@@ -1,30 +1,31 @@
 "use client";
 
 import { motion } from "framer-motion";
+
 export function ProblemSection() {
-    const problems = [
+  const problems = [
     {
       icon: "🔗",
-      title: t("landing.problem.middlemen_title"),
-      description: t("landing.problem.middlemen_desc"),
+      title: "Middlemen Exploitation",
+      description: "Farmers lose 30-40% of their income to middlemen and commission agents",
       color: "#ef4444",
     },
     {
       icon: "❓",
-      title: t("landing.problem.quality_title"),
-      description: t("landing.problem.quality_desc"),
+      title: "Quality Uncertainty",
+      description: "No standardized quality grading leads to unfair pricing and disputes",
       color: "#f59e0b",
     },
     {
       icon: "👁️",
-      title: t("landing.problem.opacity_title"),
-      description: t("landing.problem.opacity_desc"),
+      title: "Price Opacity",
+      description: "Lack of real-time market data results in information asymmetry",
       color: "#0ea5e9",
     },
     {
       icon: "🚚",
-      title: t("landing.problem.logistics_title"),
-      description: t("landing.problem.logistics_desc"),
+      title: "Logistics Chaos",
+      description: "Inefficient supply chains cause delays and post-harvest losses",
       color: "#22c55e",
     },
   ];
@@ -32,19 +33,19 @@ export function ProblemSection() {
   const stats = [
     { 
       value: "30-40%", 
-      label: t("landing.problem.stat_commission"), 
+      label: "Commission to Middlemen", 
       progress: 40, 
       color: "#ef4444" 
     },
     { 
       value: "60%", 
-      label: t("landing.problem.stat_unsure"), 
+      label: "Farmers Unsure of Fair Price", 
       progress: 60, 
       color: "#f59e0b" 
     },
     { 
-      value: t("common.currency_symbol") + "2-3 " + t("common.lakh"), 
-      label: t("landing.problem.stat_loss"), 
+      value: "₹2-3 Lakh", 
+      label: "Average Annual Loss per Farmer", 
       progress: 100, 
       color: "#22c55e" 
     },
@@ -62,10 +63,10 @@ export function ProblemSection() {
           className="text-center mb-16"
         >
           <h2 className="text-4xl md:text-5xl font-black text-[#111827] mb-6">
-            {t("landing.problem.title")}
+            The Agricultural Crisis
           </h2>
           <p className="text-lg text-[#6b7280] max-w-3xl mx-auto leading-relaxed">
-            {t("landing.problem.subtitle")}
+            Indian farmers face systemic challenges that prevent them from getting fair value for their produce
           </p>
         </motion.div>
 

@@ -51,7 +51,7 @@ export const AdvancedChatInput: React.FC<AdvancedChatInputProps> = ({
   // Start voice recording
   const startRecording = async () => {
     if (!speechToTextRef.current) {
-      alert('Speech Recognition not supported in your browser');
+      alert("Speech Recognition not supported in your browser");
       return;
     }
 

@@ -36,7 +36,7 @@ export default function ClusterMapPage() {
       description="View regional supplier clusters and opportunities"
       backLink="/buyer/dashboard"
       loading={loading}
-      error={error}
+      error={error || undefined}
       onRetry={handleRetry}
     >
       <div className="bg-slate-800/50 rounded-lg p-6 border border-slate-700">

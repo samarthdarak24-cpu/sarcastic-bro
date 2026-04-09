@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { authService } from '@/services/auth';
-import { Eye, EyeOff, Mail, Lock, Loader2, Sprout, Wheat, Leaf, ShieldCheck } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, Loader2, Sprout, Wheat, Leaf } from 'lucide-react';
 import BackendStatusBanner from '@/components/ui/BackendStatusBanner';
 
 // Generate fixed particle positions to avoid hydration mismatch
@@ -61,39 +61,27 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      console.log('🔄 Attempting login with:', { email, apiUrl: process.env.NEXT_PUBLIC_API_URL });
-      
       const response = await authService.login({ email, password });
 
-      console.log('✅ Login response:', response);
+      console.log('Login response:', response);
 
       // Ensure data is stored
       if (typeof window !== 'undefined' && response.token) {
         localStorage.setItem('token', response.token);
         localStorage.setItem('user', JSON.stringify(response.user));
-        console.log('💾 Stored token and user data');
       }
 
       // Use window.location for reliable redirect
-      console.log('🔄 Redirecting to dashboard...');
       if (response.user.role === 'FARMER') {
         window.location.href = '/farmer/dashboard';
       } else if (response.user.role === 'BUYER') {
         window.location.href = '/buyer/dashboard';
       }
     } catch (err: any) {
-      console.error('❌ Login error:', err);
-      
+      console.error('Login error:', err);
       let errorMessage = 'Login failed. Please check your credentials and try again.';
 
-      // Check if it's a network error
-      if (err.code === 'ERR_NETWORK' || err.message?.includes('Network Error') || err.isMockFallbackError) {
-        errorMessage = '🔴 Backend server not running. Using mock authentication instead. Login with: farmer@test.com / Farmer123 or buyer@test.com / Buyer123';
-      } else if (err.response?.status === 401) {
-        errorMessage = '❌ Invalid email or password. Please check your credentials.';
-      } else if (err.response?.status === 500) {
-        errorMessage = '⚠️ Server error. Please try again later.';
-      } else if (err.response?.data?.message) {
+      if (err.response?.data?.message) {
         errorMessage = err.response.data.message;
       } else if (err.response?.data?.error) {
         errorMessage = err.response.data.error;
@@ -109,15 +97,6 @@ export default function LoginPage() {
       }
 
       setError(errorMessage);
-      
-      // Log detailed error for debugging
-      console.error('Detailed error:', {
-        status: err.response?.status,
-        statusText: err.response?.statusText,
-        data: err.response?.data,
-        message: err.message,
-        code: err.code,
-      });
     } finally {
       setLoading(false);
     }
@@ -125,25 +104,125 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen relative overflow-hidden flex flex-col">
-      {/* Visible Agricultural Background */}
+      {/* Epic Agricultural Background with Real Images - 50/50 Split */}
       <div className="absolute inset-0 z-0">
-        {/* High-quality background image */}
+        {/* Left Side - Farm/Agriculture Image (50%) */}
         <motion.div
-          className="absolute inset-0 z-0"
-          initial={{ scale: 1.05 }}
-          animate={{ scale: 1 }}
-          transition={{ duration: 20, repeat: Infinity, repeatType: 'reverse' }}
+          className="absolute inset-y-0 left-0 w-1/2 z-0 overflow-hidden"
+          initial={{ x: -100, opacity: 0 }}
+          animate={{
+            x: 0,
+            opacity: 1,
+            scale: [1, 1.05, 1]
+          }}
+          transition={{
+            x: { duration: 1 },
+            opacity: { duration: 1 },
+            scale: { duration: 15, repeat: Infinity, repeatType: 'reverse' }
+          }}
         >
           <div
             className="absolute inset-0 bg-cover bg-center"
             style={{
-              backgroundImage: `url('https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=1920&q=80')`,
+              backgroundImage: "url('https://images.unsplash.com/photo-1574943320219-553eb213f72d?w=1920&q=80')",
+              filter: 'brightness(0.6)',
             }}
           />
+          {/* Gradient fade to center */}
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-black/40" />
         </motion.div>
 
+        {/* Right Side - Industry/Warehouse Image (50%) */}
+        <motion.div
+          className="absolute inset-y-0 right-0 w-1/2 z-0 overflow-hidden"
+          initial={{ x: 100, opacity: 0 }}
+          animate={{
+            x: 0,
+            opacity: 1,
+            scale: [1, 1.05, 1]
+          }}
+          transition={{
+            x: { duration: 1 },
+            opacity: { duration: 1 },
+            scale: { duration: 15, repeat: Infinity, repeatType: 'reverse', delay: 7.5 }
+          }}
+        >
+          <div
+            className="absolute inset-0 bg-cover bg-center"
+            style={{
+              backgroundImage: "url('https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=1920&q=80')",
+              filter: 'brightness(0.6)',
+            }}
+          />
+          {/* Gradient fade to center */}
+          <div className="absolute inset-0 bg-gradient-to-l from-transparent via-transparent to-black/40" />
+        </motion.div>
+
+        {/* Center divider line with glow effect */}
+        <motion.div
+          className="absolute inset-y-0 left-1/2 w-1 z-10 -ml-0.5"
+          animate={{
+            opacity: [0.3, 0.8, 0.3],
+            boxShadow: [
+              '0 0 20px rgba(16, 185, 129, 0.3)',
+              '0 0 40px rgba(16, 185, 129, 0.6)',
+              '0 0 20px rgba(16, 185, 129, 0.3)'
+            ]
+          }}
+          transition={{ duration: 3, repeat: Infinity }}
+          style={{
+            background: 'linear-gradient(to bottom, transparent, rgba(16, 185, 129, 0.8), transparent)'
+          }}
+        />
+
         {/* Subtle dark overlay for readability */}
-        <div className="absolute inset-0 bg-gradient-to-br from-black/40 via-black/30 to-black/50 z-5" />
+        <div className="absolute inset-0 z-5 bg-black/30" />
+
+        {/* Floating agricultural icons with glow */}
+        <motion.div
+          className="absolute top-16 right-16 filter drop-shadow-2xl"
+          animate={{
+            y: [0, -35, 0],
+            rotate: [0, 15, 0],
+            scale: [1, 1.15, 1],
+          }}
+          transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut' }}
+        >
+          <div className="relative">
+            <div className="absolute inset-0 bg-emerald-400 blur-3xl opacity-50 rounded-full" />
+            <Sprout className="w-44 h-44 text-emerald-300/40 relative z-10" />
+          </div>
+        </motion.div>
+
+        <motion.div
+          className="absolute bottom-24 left-12 filter drop-shadow-2xl"
+          animate={{
+            y: [0, -30, 0],
+            rotate: [0, -10, 0],
+            scale: [1, 1.1, 1],
+          }}
+          transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut', delay: 1.2 }}
+        >
+          <div className="relative">
+            <div className="absolute inset-0 bg-green-400 blur-3xl opacity-50 rounded-full" />
+            <Wheat className="w-36 h-36 text-green-300/40 relative z-10" />
+          </div>
+        </motion.div>
+
+        <motion.div
+          className="absolute top-1/3 left-16 filter drop-shadow-2xl"
+          animate={{
+            y: [0, -20, 0],
+            rotate: [0, 25, 0],
+            x: [0, 15, 0],
+          }}
+          transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut', delay: 0.6 }}
+        >
+          <div className="relative">
+            <div className="absolute inset-0 bg-green-400 blur-2xl opacity-40 rounded-full" />
+            <Leaf className="w-28 h-28 text-green-300/30 relative z-10" />
+          </div>
+        </motion.div>
 
         {/* Animated particles */}
         {PARTICLES.map((particle) => (
@@ -169,6 +248,88 @@ export default function LoginPage() {
             }}
           />
         ))}
+
+        {/* Animated light rays */}
+        {[...Array(6)].map((_, i) => (
+          <motion.div
+            key={`ray-${i}`}
+            className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-white/20 via-emerald-300/10 to-transparent"
+            style={{
+              left: `${15 + i * 18}%`,
+              transformOrigin: 'top',
+            }}
+            animate={{
+              scaleY: [0, 1, 0],
+              opacity: [0, 0.6, 0],
+            }}
+            transition={{
+              duration: 3,
+              repeat: Infinity,
+              delay: i * 0.5,
+              ease: 'easeInOut',
+            }}
+          />
+        ))}
+
+        {/* Enhanced particles with trails */}
+        {[...Array(45)].map((_, i) => (
+          <motion.div
+            key={`enhanced-particle-${i}`}
+            className="absolute rounded-full"
+            style={{
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+              width: Math.random() * 6 + 2,
+              height: Math.random() * 6 + 2,
+              background: `radial-gradient(circle, ${
+                i % 3 === 0 ? 'rgba(167, 243, 208, 0.8)' :
+                i % 3 === 1 ? 'rgba(110, 231, 183, 0.8)' :
+                'rgba(52, 211, 153, 0.8)'
+              }, transparent)`,
+            }}
+            animate={{
+              y: [0, -120 - Math.random() * 100, 0],
+              x: [0, Math.random() * 60 - 30, 0],
+              opacity: [0, 1, 0],
+              scale: [0, 1.8, 0],
+            }}
+            transition={{
+              duration: 4 + Math.random() * 4,
+              repeat: Infinity,
+              delay: Math.random() * 3,
+              ease: 'easeOut',
+            }}
+          />
+        ))}
+
+        {/* Glowing orbs */}
+        {[...Array(10)].map((_, i) => (
+          <motion.div
+            key={`orb-${i}`}
+            className="absolute rounded-full blur-2xl"
+            style={{
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+              width: Math.random() * 250 + 100,
+              height: Math.random() * 250 + 100,
+              background: `radial-gradient(circle, ${
+                i % 2 === 0 ? 'rgba(16, 185, 129, 0.3)' : 'rgba(5, 150, 105, 0.3)'
+              }, transparent)`,
+            }}
+            animate={{
+              scale: [1, 1.6, 1],
+              opacity: [0.3, 0.7, 0.3],
+              x: [0, Math.random() * 120 - 60, 0],
+              y: [0, Math.random() * 120 - 60, 0],
+            }}
+            transition={{
+              duration: 12 + Math.random() * 10,
+              repeat: Infinity,
+              delay: Math.random() * 5,
+            }}
+          />
+        ))}
+
       </div>
 
       <BackendStatusBanner />
@@ -187,17 +348,10 @@ export default function LoginPage() {
               className="inline-flex items-center gap-3 mb-6"
               whileHover={{ scale: 1.05 }}
             >
-              <div className="w-16 h-16 shadow-lg rounded-2xl flex items-center justify-center relative overflow-hidden group bg-white">
-                <img src="/farmguard-logo.png" alt="FarmGuard Logo" className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500" />
+              <div className="w-16 h-16 bg-gradient-to-br from-green-400 to-emerald-500 rounded-2xl flex items-center justify-center shadow-2xl">
+                <Sprout className="w-8 h-8 text-white" />
               </div>
-              <motion.h1 
-                className="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-emerald-400 tracking-tighter inline-block"
-                animate={{ backgroundPosition: ['0% center', '200% center'] }}
-                transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
-                style={{ backgroundSize: '200% auto' }}
-              >
-                FarmGuard
-              </motion.h1>
+              <h1 className="text-5xl font-black text-white">ODOP Connect</h1>
             </motion.div>
             <motion.p
               className="text-2xl text-white/90 font-semibold mb-4"
@@ -275,11 +429,19 @@ export default function LoginPage() {
           {/* Header with Logo */}
           <motion.div variants={itemVariants} className="text-center mb-8">
             <motion.div
-              className="inline-flex items-center justify-center w-28 h-28 mb-6 shadow-2xl relative overflow-hidden bg-white rounded-3xl"
-              whileHover={{ scale: 1.1, rotate: 5 }}
+              className="inline-flex items-center justify-center w-24 h-24 bg-gradient-to-br from-green-400 via-emerald-400 to-green-500 rounded-3xl mb-6 shadow-2xl relative"
+              whileHover={{ scale: 1.1, rotate: 360 }}
               transition={{ type: 'spring', stiffness: 200, duration: 0.8 }}
             >
-              <img src="/farmguard-logo.png" alt="FarmGuard Logo" className="w-full h-full object-cover" />
+              <motion.div
+                className="absolute inset-0 bg-gradient-to-br from-green-300 to-emerald-500 rounded-3xl blur-xl opacity-50"
+                animate={{
+                  scale: [1, 1.2, 1],
+                  opacity: [0.5, 0.8, 0.5],
+                }}
+                transition={{ duration: 2, repeat: Infinity }}
+              />
+              <Sprout className="w-12 h-12 text-white relative z-10" />
             </motion.div>
             
             <motion.h1
@@ -306,12 +468,7 @@ export default function LoginPage() {
               animate={{ opacity: 1 }}
               transition={{ delay: 0.5 }}
             >
-              Sign in to <motion.span 
-                className="font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-emerald-400 inline-block"
-                animate={{ backgroundPosition: ['0% center', '200% center'] }}
-                transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
-                style={{ backgroundSize: '200% auto' }}
-              >FarmGuard</motion.span>
+              Sign in to <span className="font-bold text-white">ODOP Connect</span>
             </motion.p>
           </motion.div>
 

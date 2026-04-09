@@ -77,30 +77,6 @@ export default function CropManagementHub() {
   return (
     <div className="w-full min-h-screen bg-slate-50 p-6">
       <div className="max-w-[1600px] mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 pb-6 border-b-2 border-slate-200">
-          <div className="space-y-3">
-            <div className="flex items-center gap-4">
-              <h2 className="text-3xl md:text-4xl font-black tracking-tighter text-slate-900">{"Crop Management Hub."}</h2>
-              <Badge tone="brand" className="h-8 px-4 rounded-xl font-black gap-2 uppercase text-[9px]">
-                <Sprout size={14} />
-                {"ALL-IN-ONE"}
-              </Badge>
-            </div>
-            <p className="text-sm font-bold text-slate-600 uppercase tracking-widest">
-              {"Complete crop inventory, quality & insights"}
-            </p>
-          </div>
-          <Button
-            onClick={handleRefresh}
-            disabled={refreshing}
-            className="h-12 px-6 bg-white hover:bg-slate-50 text-slate-900 rounded-xl font-black border-2 border-slate-200"
-          >
-            <RefreshCw size={16} className={refreshing ? 'animate-spin mr-2' : 'mr-2'} />
-            {refreshing ? "Refreshing..." : "Refresh"}
-          </Button>
-        </div>
-
         {/* Tabs */}
         <div className="w-full bg-white rounded-2xl p-4 shadow-lg border border-slate-200">
           <div className="flex items-center gap-3 overflow-x-auto pb-2 scrollbar-hide">

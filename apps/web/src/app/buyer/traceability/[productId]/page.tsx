@@ -39,7 +39,7 @@ export default function BlockchainTracePage() {
       description="View complete supply chain trace on blockchain"
       backLink="/buyer/dashboard"
       loading={loading}
-      error={error}
+      error={error || undefined}
       onRetry={handleRetry}
     >
       <div className="bg-slate-800/50 rounded-lg p-6 border border-slate-700">

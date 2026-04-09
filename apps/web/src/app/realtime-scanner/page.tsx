@@ -55,7 +55,7 @@ export default function RealtimeScannerPage() {
     }
 
     const processFrame = async () => {
-      const ctx = canvasRef.current?.getContext('2d');
+      const ctx = canvasRef.current?.getContext("2d");
       if (!ctx || !videoRef.current) {
         animationFrameRef.current = requestAnimationFrame(processFrame);
         return;
@@ -66,7 +66,7 @@ export default function RealtimeScannerPage() {
         ctx.drawImage(videoRef.current, 0, 0, canvasRef.current.width, canvasRef.current.height);
 
         // Convert canvas to base64
-        const imageBuffer = canvasRef.current.toDataURL('image/jpeg', 0.8).split(',')[1];
+        const imageBuffer = canvasRef.current.toDataURL('image/jpeg', 0.8).split(",")[1];
 
         // Send to server for processing
         await processFrame(imageBuffer);
@@ -105,3 +105,4 @@ export default function RealtimeScannerPage() {
     </div>
   );
 }
+

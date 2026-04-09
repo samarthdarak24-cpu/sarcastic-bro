@@ -21,7 +21,7 @@ import toast from "react-hot-toast";
 import { AddProductModal } from "./AddProductModal";
 import dynamic from 'next/dynamic';
 
-const ProductMap = dynamic(() => import('./ProductMap').then(mod => mod.ProductMap), { 
+const ProductMap = dynamic(() => import("./ProductMap").then(mod => mod.ProductMap), { 
   ssr: false,
   loading: () => <div className="h-[600px] w-full bg-neut-50 flex flex-col items-center justify-center rounded-[3rem] animate-pulse font-black text-neut-300 gap-4">
       <MapIcon size={48} className="animate-spin-slow" />

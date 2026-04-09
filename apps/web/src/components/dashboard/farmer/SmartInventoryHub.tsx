@@ -291,65 +291,6 @@ export function SmartInventoryHub() {
         )}
       </AnimatePresence>
 
-      {/* Header Section */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="mb-8"
-      >
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-4">
-            <motion.div 
-              whileHover={{ rotate: 360 }}
-              transition={{ duration: 0.6 }}
-              className="p-4 bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-600 rounded-2xl shadow-xl"
-            >
-              <Package className="text-white" size={32} />
-            </motion.div>
-            <div>
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
-                Smart Inventory Hub
-              </h1>
-              <p className="text-slate-600 text-sm mt-1">Centralized node for commodities, price indexing & fulfillment</p>
-            </div>
-          </div>
-          <div className="flex gap-3">
-            <motion.button
-              whileHover={{ scale: 1.05, y: -2 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={handleRefresh}
-              className="flex items-center gap-2 px-5 py-3 bg-white/80 backdrop-blur-sm border-2 border-slate-200 rounded-xl hover:border-emerald-400 hover:shadow-lg transition-all"
-            >
-              <RefreshCw size={18} className={isLoading ? "animate-spin text-emerald-600" : "text-slate-700"} />
-              <span className="text-sm font-semibold text-slate-700">Sync</span>
-            </motion.button>
-            <motion.button
-              whileHover={{ scale: 1.05, y: -2 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setShowAddModal(true)}
-              className="flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-600 text-white rounded-xl shadow-lg hover:shadow-2xl transition-all"
-            >
-              <Plus size={18} />
-              <span className="text-sm font-semibold">Add Product</span>
-            </motion.button>
-          </div>
-        </div>
-
-        {/* Status Badge */}
-        <motion.div 
-          initial={{ scale: 0.9, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          className="flex items-center gap-2 w-fit px-5 py-2.5 bg-gradient-to-r from-emerald-50 to-teal-50 border-2 border-emerald-200 rounded-full shadow-sm"
-        >
-          <motion.div 
-            animate={{ scale: [1, 1.2, 1] }}
-            transition={{ duration: 2, repeat: Infinity }}
-            className="w-2.5 h-2.5 bg-emerald-500 rounded-full"
-          />
-          <span className="text-sm font-bold text-emerald-700">LIVE OPS ACTIVE</span>
-        </motion.div>
-      </motion.div>
-
       {/* KPI Cards */}
       <motion.div
         variants={staggerContainer}
@@ -1596,3 +1537,5 @@ export function SmartInventoryHub() {
     </div>
   );
 }
+
+export default SmartInventoryHub;

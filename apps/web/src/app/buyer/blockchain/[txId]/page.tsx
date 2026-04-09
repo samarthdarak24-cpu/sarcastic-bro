@@ -39,7 +39,7 @@ export default function TransactionDetailPage() {
       description="View blockchain transaction information"
       backLink="/buyer/blockchain"
       loading={loading}
-      error={error}
+      error={error || undefined}
       onRetry={handleRetry}
     >
       <div className="bg-slate-800/50 rounded-lg p-6 border border-slate-700">

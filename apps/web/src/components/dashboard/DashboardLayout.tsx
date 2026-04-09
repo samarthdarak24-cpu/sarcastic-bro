@@ -10,8 +10,9 @@ import {
 import { authService } from "@/services/auth";
 import { LivePriceTicker } from "@/components/ui/LivePriceTicker";
 import { LiveNotificationBell } from "@/components/ui/LiveNotificationBell";
-import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
 import { JarvisButton } from "@/components/ui/JarvisAssistant/JarvisButton";
+
+
 
 interface NavItem {
   label: string;
@@ -34,13 +35,7 @@ export function DashboardLayout({ children, navItems, userRole }: DashboardLayou
   const searchParams = useSearchParams();
   const currentSection = searchParams.get("section");
   const user = authService.getUser();
-    // Subscribe to language changes to force re-render
-  const [, setLang] = useState(i18n.language);
-  useEffect(() => {
-    const handler = (lng: string) => setLang(lng);
-    i18n.on("languageChanged", handler);
-    return () => { i18n.off("languageChanged", handler); };
-  }, [i18n]);
+  
 
   const handleLogout = () => {
     authService.logout();
@@ -110,7 +105,7 @@ export function DashboardLayout({ children, navItems, userRole }: DashboardLayou
                   {sidebarOpen && (
                     <div className="flex flex-col flex-1 overflow-hidden">
                         <span className="font-bold text-[13px] tracking-tight truncate">
-                          {t(item.label)}
+                          {item.label}
                         </span>
                         {isActive && <span className="text-[8px] font-black uppercase tracking-relative opacity-40 text-blue-200">{"Live"}</span>}
                     </div>
@@ -141,7 +136,7 @@ export function DashboardLayout({ children, navItems, userRole }: DashboardLayou
                   {sidebarOpen && (
                       <div className="flex-1 min-w-0">
                           <p className="font-bold text-xs text-white truncate">Rajesh Kumar</p>
-                          <p className="text-[9px] font-bold text-slate-500 uppercase">{t(`auth.${userRole.toLowerCase()}` as any) || userRole}</p>
+                          <p className="text-[9px] font-bold text-slate-500 uppercase">{userRole}</p>
                       </div>
                   )}
                   {sidebarOpen && (
@@ -164,7 +159,7 @@ export function DashboardLayout({ children, navItems, userRole }: DashboardLayou
         <LivePriceTicker />
 
         {/* STICKY TOP HEADER */}
-        <header className="h-20 px-6 md:px-10 flex items-center justify-between bg-white/95 backdrop-blur-md border-b border-slate-200 sticky top-0 z-[50] shrink-0 shadow-sm">
+        <header className="h-20 px-6 md:px-10 flex items-center justify-between bg-white/95 backdrop-blur-md border-b border-slate-200 sticky top-[42px] z-[90] shrink-0 shadow-sm">
             <div className="flex items-center gap-6 flex-1">
                 <button 
                   onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -189,7 +184,6 @@ export function DashboardLayout({ children, navItems, userRole }: DashboardLayou
                 {/* JARVIS temporarily disabled due to network issues - use AgriVoice instead */}
                 {/* <JarvisButton userRole={userRole as 'FARMER' | 'BUYER'} /> */}
                 <LiveNotificationBell />
-                <LanguageSwitcher />
                 <Link href="/profile">
                   <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white font-black text-sm shadow-sm hover:scale-105 transition-transform cursor-pointer">
                     R
@@ -219,8 +213,8 @@ export function DashboardLayout({ children, navItems, userRole }: DashboardLayou
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">{"© 2026 FarmGuard Technologies. All rights reserved."}</p>
                     <div className="flex gap-8">
                         <Link href="#" className="text-[10px] font-bold text-slate-400 hover:text-blue-600 uppercase tracking-widest">{"Contact"}</Link>
-                        <Link href="#" className="text-[10px] font-bold text-slate-400 hover:text-blue-600 uppercase tracking-widest">{t('common.terms', 'Terms')}</Link>
-                        <Link href="#" className="text-[10px] font-bold text-slate-400 hover:text-blue-600 uppercase tracking-widest">{t('common.privacy', 'Privacy')}</Link>
+                        <Link href="#" className="text-[10px] font-bold text-slate-400 hover:text-blue-600 uppercase tracking-widest">{"Terms"}</Link>
+                        <Link href="#" className="text-[10px] font-bold text-slate-400 hover:text-blue-600 uppercase tracking-widest">{"Privacy"}</Link>
                     </div>
                 </div>
             </div>

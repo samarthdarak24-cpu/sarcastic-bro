@@ -83,7 +83,7 @@ export default function BuyerProductsPage() {
       setError(null);
       // Fetch only ACTIVE products for buyers
       const response = await productService.getBuyerProducts('?status=ACTIVE');
-      setProducts(response.data || []);
+      setProducts(response.data as any || []);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : 'Failed to load products'

@@ -6,7 +6,6 @@ import { motion, AnimatePresence, useScroll, useSpring } from "framer-motion";
 import { Menu, X, ArrowRight, Zap, Globe, ShieldCheck, Target, Activity, MessageSquare, Leaf } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
 
 export function LandingNavbar() {
   const [scrolled, setScrolled] = useState(false);
@@ -26,10 +25,10 @@ export function LandingNavbar() {
   }, []);
 
   const navLinks = [
-    { label: t("landing.home"), href: "/", icon: <Zap size={14} />, key: "home" },
-    { label: t("landing.intelligent_sourcing"), href: "#features", icon: <Target size={14} />, key: "intelligent_sourcing" },
-    { label: t("landing.trade_network"), href: "#how-it-works", icon: <Globe size={14} />, key: "trade_network" },
-    { label: t("landing.market_intel"), href: "#stats", icon: <Activity size={14} />, key: "market_intel" },
+    { label: "Home", href: "/", icon: <Zap size={14} />, key: "home" },
+    { label: "Intelligent Sourcing", href: "#features", icon: <Target size={14} />, key: "intelligent_sourcing" },
+    { label: "Trade Network", href: "#how-it-works", icon: <Globe size={14} />, key: "trade_network" },
+    { label: "Market Intel", href: "#stats", icon: <Activity size={14} />, key: "market_intel" },
     { label: "Contact", href: "#contact", icon: <MessageSquare size={14} />, key: "contact" },
   ];
 
@@ -95,16 +94,12 @@ export function LandingNavbar() {
 
           {/* Action Deck */}
           <div className="flex items-center gap-6">
-            <div className="hidden sm:block">
-              <LanguageSwitcher />
-            </div>
-            
             <Link href="/login" className="hidden sm:inline text-[11px] font-black uppercase tracking-widest text-[#6B4F3A] hover:text-[#3E2F23] transition-colors">
-              {t("landing.node_entry")}
+              Node Entry
             </Link>
             <Link href="/register">
               <Button variant="gradient" className="h-12 px-8 rounded-xl font-black text-[11px] uppercase tracking-widest bg-gradient-to-r from-[#6B4F3A] to-[#3E2F23] hover:from-[#3E2F23] hover:to-[#6B4F3A] shadow-lg shadow-[#6B4F3A]/20 hover:scale-105 active:scale-95 transition-all">
-                {t("landing.initialize")}
+                Get Started
                 <ArrowRight size={14} className="ml-2" />
               </Button>
             </Link>
@@ -131,9 +126,6 @@ export function LandingNavbar() {
             exit={{ opacity: 0, y: -20 }}
             className="fixed inset-0 z-40 bg-gradient-to-br from-[#FFF8E7] to-[#FFE8CC] backdrop-blur-3xl pt-32 px-10 flex flex-col gap-10 lg:hidden"
           >
-            <div className="flex justify-end mb-4">
-              <LanguageSwitcher />
-            </div>
             {navLinks.map((link, i) => (
               <motion.div
                 key={link.key}
@@ -153,10 +145,10 @@ export function LandingNavbar() {
             ))}
             <div className="mt-auto pb-20 space-y-6">
                <Link href="/register" onClick={() => setMobileOpen(false)}>
-                  <Button variant="gradient" className="w-full h-20 rounded-[2rem] text-xl font-black uppercase tracking-widest bg-gradient-to-r from-[#6B4F3A] to-[#3E2F23] shadow-2xl">{t("landing.get_started")}</Button>
+                  <Button variant="gradient" className="w-full h-20 rounded-[2rem] text-xl font-black uppercase tracking-widest bg-gradient-to-r from-[#6B4F3A] to-[#3E2F23] shadow-2xl">Get Started</Button>
                </Link>
                <div className="text-center">
-                  <Link href="/login" onClick={() => setMobileOpen(false)} className="text-sm font-black uppercase tracking-widest text-[#6B4F3A]">{t("landing.node_entry")}</Link>
+                  <Link href="/login" onClick={() => setMobileOpen(false)} className="text-sm font-black uppercase tracking-widest text-[#6B4F3A]">Login</Link>
                </div>
             </div>
           </motion.div>

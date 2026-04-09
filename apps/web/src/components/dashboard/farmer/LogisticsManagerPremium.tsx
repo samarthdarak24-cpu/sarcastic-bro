@@ -185,4 +185,43 @@ export default function LogisticsManagerPremium() {
             { id: '4', timestamp: '2024-04-06T06:00:00', location: 'Pune Warehouse', status: 'PENDING', description: 'Awaiting pickup' }
           ],
           createdAt: '2024-04-06T06:00:00'
-        },
+        }
+      ];
+
+      setShipments(mockShipments);
+      setLoading(false);
+    }, 1000);
+  };
+
+  const filterAndSort = () => {
+    let filtered = [...shipments];
+    
+    if (statusFilter !== 'ALL') {
+      filtered = filtered.filter(s => s.status === statusFilter);
+    }
+    
+    if (searchQuery) {
+      filtered = filtered.filter(s => 
+        s.shipmentNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        s.trackingNumber.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+    
+    setFilteredShipments(filtered);
+  };
+
+  return (
+    <div className="p-6">
+      <h1 className="text-2xl font-bold mb-4">Logistics Manager</h1>
+      <div className="bg-white rounded-lg shadow p-6">
+        {loading ? (
+          <div className="text-center py-8">Loading...</div>
+        ) : (
+          <div>
+            <p>Shipments: {filteredShipments.length}</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

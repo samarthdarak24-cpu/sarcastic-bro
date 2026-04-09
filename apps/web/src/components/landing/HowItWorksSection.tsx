@@ -1,12 +1,13 @@
 "use client";
 
 import { motion } from "framer-motion";
+
 export function HowItWorksSection() {
     const steps = [
-    { icon: "📝", title: t("landing.process.step1_title"), desc: t("landing.process.step1_desc"), color: "#22c55e" },
-    { icon: "Box", title: t("landing.process.step2_title"), desc: t("landing.process.step2_desc"), color: "#0ea5e9" },
-    { icon: "🤝", title: t("landing.process.step3_title"), desc: t("landing.process.step3_desc"), color: "#f59e0b" },
-    { icon: "💰", title: t("landing.process.step4_title"), desc: t("landing.process.step4_desc"), color: "#22c55e" },
+    { icon: "📝", title: "Register & Verify", desc: "Create your account and complete KYC verification", color: "#22c55e" },
+    { icon: "Box", title: "List Products", desc: "Upload your products with AI quality grading", color: "#0ea5e9" },
+    { icon: "🤝", title: "Connect & Trade", desc: "Match with buyers and negotiate terms", color: "#f59e0b" },
+    { icon: "💰", title: "Get Paid", desc: "Receive secure payments through escrow", color: "#22c55e" },
   ];
 
   return (
@@ -27,14 +28,14 @@ export function HowItWorksSection() {
             className="inline-block mb-4"
           >
             <div className="px-4 py-2 bg-blue-100 text-blue-700 rounded-full text-sm font-bold">
-              🚀 {t("landing.process.badge")}
+              🚀 How It Works
             </div>
           </motion.div>
           <h2 className="text-4xl md:text-5xl font-black text-gray-900 mb-4">
-            {t("landing.process.title")}
+            Simple 4-Step Process
           </h2>
           <p className="text-lg text-gray-600">
-            {t("landing.process.subtitle")}
+            Get started in minutes
           </p>
         </motion.div>
 

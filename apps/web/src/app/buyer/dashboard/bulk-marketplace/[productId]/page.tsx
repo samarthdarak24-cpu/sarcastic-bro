@@ -53,7 +53,7 @@ export default function BulkProductDetailPage() {
     try {
       setLoading(true);
       const data = await productService.getById(productId);
-      setProduct(data);
+      setProduct(data as BulkProduct);
       setOrderQuantity(data.minimumOrder || 1);
     } catch (error) {
       console.error("Failed to load product:", error);

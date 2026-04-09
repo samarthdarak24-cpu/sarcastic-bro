@@ -341,3 +341,4 @@ const MOCK_TRACE = {
   chainLength: 5,
   isChainValid: true,
 };
+

@@ -1,60 +1,61 @@
 "use client";
 
 import { motion } from "framer-motion";
+
 export function KeyFeaturesSection() {
     const features = [
     { 
       icon: "🤖", 
-      title: t("landing.features.f1_title"),
-      description: t("landing.features.f1_desc"),
+      title: "AI Quality Detection",
+      description: "Instant crop quality analysis using computer vision",
       gradient: "from-emerald-500 to-green-600"
     },
     { 
       icon: "💬", 
-      title: t("landing.features.f2_title"),
-      description: t("landing.features.f2_desc"),
+      title: "Smart Chat Assistant",
+      description: "24/7 AI-powered farming advice and support",
       gradient: "from-blue-500 to-cyan-600"
     },
     { 
       icon: "⛓️", 
-      title: t("landing.features.f3_title"),
-      description: t("landing.features.f3_desc"),
+      title: "Blockchain Traceability",
+      description: "Complete transparency from farm to market",
       gradient: "from-purple-500 to-indigo-600"
     },
     { 
       icon: "🚚", 
-      title: t("landing.features.f4_title"),
-      description: t("landing.features.f4_desc"),
+      title: "Logistics Management",
+      description: "Real-time tracking and delivery optimization",
       gradient: "from-orange-500 to-red-600"
     },
     { 
       icon: "📈", 
-      title: t("landing.features.f5_title"),
-      description: t("landing.features.f5_desc"),
+      title: "Market Intelligence",
+      description: "Live pricing and demand forecasting",
       gradient: "from-pink-500 to-rose-600"
     },
     { 
       icon: "🔒", 
-      title: t("landing.features.f6_title"),
-      description: t("landing.features.f6_desc"),
+      title: "Secure Payments",
+      description: "Escrow protection and instant settlements",
       gradient: "from-teal-500 to-cyan-600"
     },
     { 
       icon: "📊", 
-      title: t("landing.features.f7_title"),
-      description: t("landing.features.f7_desc"),
+      title: "Analytics Dashboard",
+      description: "Comprehensive insights and reporting",
       gradient: "from-violet-500 to-purple-600"
     },
     { 
       icon: "🌍", 
-      title: t("landing.features.f8_title"),
-      description: t("landing.features.f8_desc"),
+      title: "Global Marketplace",
+      description: "Connect with buyers worldwide",
       gradient: "from-sky-500 to-blue-600"
     },
     { 
       icon: "🏪", 
-      title: t("landing.features.f9_title"),
-      description: t("landing.features.f9_desc"),
+      title: "Direct Trading",
+      description: "Eliminate middlemen, maximize profits",
       gradient: "from-amber-500 to-orange-600"
     },
   ];
@@ -86,14 +87,14 @@ export function KeyFeaturesSection() {
             className="inline-block mb-6"
           >
             <span className="px-5 py-2 bg-gradient-to-r from-green-500 to-emerald-500 text-white text-sm font-bold rounded-full shadow-lg">
-              ✨ {t("landing.features.badge")}
+              ✨ Platform Features
             </span>
           </motion.div>
           <h2 className="text-4xl md:text-5xl lg:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 mb-4">
-            {t("landing.features.title")}
+            Everything You Need
           </h2>
           <p className="text-lg md:text-xl text-slate-600 max-w-2xl mx-auto">
-            {t("landing.features.subtitle")}
+            Comprehensive tools for modern agriculture
           </p>
         </motion.div>
 

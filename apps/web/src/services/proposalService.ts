@@ -31,7 +31,7 @@ export const proposalService = {
   // Get all proposals for current user
   async getMyProposals(): Promise<{ proposals: Proposal[] }> {
     try {
-      const response = await api.get('/proposals/my-proposals');
+      const response = await api.get("/proposals/my-proposals");
       return { proposals: response.data.data || response.data || [] };
     } catch (error) {
       console.error('getMyProposals error:', error);
@@ -42,7 +42,7 @@ export const proposalService = {
   // Get sent proposals
   async getSentProposals(): Promise<{ proposals: Proposal[] }> {
     try {
-      const response = await api.get('/proposals/sent');
+      const response = await api.get("/proposals/sent");
       return { proposals: response.data.data || response.data || [] };
     } catch (error) {
       console.error('getSentProposals error:', error);
@@ -53,7 +53,7 @@ export const proposalService = {
   // Get received proposals
   async getReceivedProposals(): Promise<{ proposals: Proposal[] }> {
     try {
-      const response = await api.get('/proposals/received');
+      const response = await api.get("/proposals/received");
       return { proposals: response.data.data || response.data || [] };
     } catch (error) {
       console.error('getReceivedProposals error:', error);
@@ -110,7 +110,7 @@ export const proposalService = {
   // Get proposal statistics
   async getProposalStats(): Promise<any> {
     try {
-      const response = await api.get('/proposals/stats');
+      const response = await api.get("/proposals/stats");
       return response.data.data || response.data;
     } catch (error) {
       console.error('getProposalStats error:', error);
@@ -118,3 +118,4 @@ export const proposalService = {
     }
   }
 };
+

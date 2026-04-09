@@ -61,7 +61,7 @@ export const blockchainService = {
 
   // Get escrow contracts
   async getEscrowContracts(): Promise<EscrowContract[]> {
-    const response = await api.get('/blockchain/escrow');
+    const response = await api.get("/blockchain/escrow");
     return response.data;
   },
 
@@ -105,3 +105,4 @@ export const blockchainService = {
     }
   }
 };
+

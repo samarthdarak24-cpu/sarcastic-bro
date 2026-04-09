@@ -9,7 +9,6 @@ import {
   AlertCircle, Loader2, Check
 } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
-import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
 import api from "@/services/api";
 import toast from "react-hot-toast";
 import Link from "next/link";
@@ -311,12 +310,11 @@ export default function ProfilePage() {
         <div className="flex items-center gap-3">
           <Link href={isFarmer ? "/farmer/dashboard" : "/buyer/dashboard"}
             className="text-sm font-bold text-slate-400 hover:text-emerald-400 transition-colors">
-            ← {t('nav.dashboard')}
+            ← {"nav.dashboard"}
           </Link>
           <span className="text-slate-600">/</span>
           <span className="text-sm font-black text-white">{"My Profile"}</span>
         </div>
-        <LanguageSwitcher />
       </motion.div>
 
       <div className="relative max-w-5xl mx-auto px-6 py-10 space-y-8">
@@ -593,7 +591,7 @@ export default function ProfilePage() {
                     isFarmer ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700'
                   }`}
                 >
-                  {isFarmer ? '🌾' : '🛒'} {t(`auth.${user?.role?.toLowerCase() || 'farmer'}`)}
+                  {isFarmer ? '🌾' : '🛒'} {user?.role || 'FARMER'}
                 </motion.div>
                 <motion.div 
                   initial={{ scale: 0 }}
@@ -604,7 +602,7 @@ export default function ProfilePage() {
                   }`}
                 >
                   {user?.kycStatus === 'VERIFIED' ? <CheckCircle2 size={14} /> : <Clock size={14} />}
-                  {t(`profile.${user?.kycStatus?.toLowerCase() || 'pending'}`)}
+                  {user?.kycStatus || 'PENDING'}
                 </motion.div>
               </div>
             </div>
@@ -637,10 +635,10 @@ export default function ProfilePage() {
               className="grid grid-cols-4 gap-4 mt-8 pt-6 border-t border-slate-800"
             >
               {[
-                { label: t('dashboard.total_orders'), value: stats.orders || 154, icon: ShoppingBag, color: 'text-blue-400', bg: 'bg-blue-500/10', border: 'border-blue-500/20' },
+                { label: "dashboard.total_orders", value: stats.orders || 154, icon: ShoppingBag, color: 'text-blue-400', bg: 'bg-blue-500/10', border: 'border-blue-500/20' },
                 { label: "Product Management", value: stats.products || 32, icon: Package, color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20' },
                 { label: "Total Revenue", value: `₹${(stats.revenue || 142500).toLocaleString()}`, icon: TrendingUp, color: 'text-purple-400', bg: 'bg-purple-500/10', border: 'border-purple-500/20' },
-                { label: t('dashboard.trust_score'), value: `${stats.rating || 4.9}★`, icon: Award, color: 'text-amber-400', bg: 'bg-amber-500/10', border: 'border-amber-500/20' },
+                { label: "dashboard.trust_score", value: `${stats.rating || 4.9}★`, icon: Award, color: 'text-amber-400', bg: 'bg-amber-500/10', border: 'border-amber-500/20' },
               ].map((stat, i) => (
                 <motion.div 
                   key={i} 
@@ -824,8 +822,8 @@ export default function ProfilePage() {
               <label className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
                 <Globe size={12} /> {"Preferred Language"}
               </label>
-              <div className="h-12 flex items-center">
-                <LanguageSwitcher />
+              <div className="h-12 flex items-center text-sm text-slate-300">
+                English (Default)
               </div>
             </motion.div>
           </div>
@@ -959,3 +957,4 @@ export default function ProfilePage() {
     </div>
   );
 }
+

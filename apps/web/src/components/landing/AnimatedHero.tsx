@@ -7,7 +7,7 @@ import { GradientButton } from "../ui/GradientButton";
 import { AnimatedCounter } from "../ui/AnimatedCounter";
 
 export function AnimatedHero() {
-    const words = t("landing.animated_hero.words", { returnObjects: true }) as string[];
+    const words = ["Revolutionizing", "Digital", "Agriculture", "Efficiency"];
   
   return (
     <section className="relative min-h-screen flex items-center overflow-hidden bg-[#0f172a]">
@@ -61,7 +61,7 @@ export function AnimatedHero() {
           >
             <span className="inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-400 bg-emerald-400/10 border border-emerald-400/20 px-4 py-2 rounded-full mb-8 backdrop-blur-xl">
               <Sparkles size={12} className="animate-pulse" />
-              {t("landing.animated_hero.badge")}
+              Leading Agritech Platform
             </span>
           </motion.div>
 
@@ -89,7 +89,7 @@ export function AnimatedHero() {
             transition={{ duration: 0.8, delay: 1 }}
             className="text-[18px] text-white/50 leading-relaxed mb-12 max-w-2xl mx-auto"
           >
-            {t("landing.animated_hero.subtext")}
+            Empowering farmers and buyers with AI-driven intelligence, secure blockchain payments, and direct market access.
           </motion.p>
 
           {/* CTA Buttons */}
@@ -101,12 +101,12 @@ export function AnimatedHero() {
           >
             <Link href="/auth/register">
               <GradientButton icon={<ArrowRight size={18} />}>
-                {t("landing.animated_hero.cta1")}
+                Start for Free
               </GradientButton>
             </Link>
             <Link href="#demo">
               <GradientButton variant="secondary">
-                {t("landing.animated_hero.cta2")}
+                Watch Demo
               </GradientButton>
             </Link>
           </motion.div>
@@ -119,10 +119,10 @@ export function AnimatedHero() {
             className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-4xl mx-auto"
           >
             {[
-              { value: 450000, suffix: "+", label: t("landing.animated_hero.s1") },
-              { value: 750, suffix: "+", label: t("landing.animated_hero.s2") },
-              { value: 98, suffix: "%", label: t("landing.animated_hero.s3") },
-              { value: 150, suffix: "Cr+", label: t("landing.animated_hero.s4") },
+              { value: 450000, suffix: "+", label: "Active Farmers" },
+              { value: 750, suffix: "+", label: "Buyer Networks" },
+              { value: 98, suffix: "%", label: "Success Rate" },
+              { value: 150, suffix: "Cr+", label: "Trade Volume" },
             ].map((stat, i) => (
               <motion.div
                 key={i}

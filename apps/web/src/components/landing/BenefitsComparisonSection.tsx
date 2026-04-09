@@ -1,36 +1,37 @@
 "use client";
 
 import { motion } from "framer-motion";
+
 export function BenefitsComparisonSection() {
     const farmerBenefits = [
     { 
       icon: "💰", 
-      title: t("landing.benefits.farmer.income"),
+      title: "Higher Income",
       gradient: "from-amber-500 to-orange-600"
     },
     { 
       icon: "⚡", 
-      title: t("landing.benefits.farmer.ai_grading"),
+      title: "AI Quality Grading",
       gradient: "from-yellow-400 to-amber-500"
     },
     { 
       icon: "📱", 
-      title: t("landing.benefits.farmer.pricing"),
+      title: "Fair Pricing",
       gradient: "from-blue-500 to-cyan-500"
     },
     { 
       icon: "🔒", 
-      title: t("landing.benefits.farmer.payments"),
+      title: "Secure Payments",
       gradient: "from-green-500 to-emerald-600"
     },
     { 
       icon: "🚚", 
-      title: t("landing.benefits.farmer.logistics"),
+      title: "Easy Logistics",
       gradient: "from-purple-500 to-pink-500"
     },
     { 
       icon: "📊", 
-      title: t("landing.benefits.farmer.analytics"),
+      title: "Smart Analytics",
       gradient: "from-indigo-500 to-purple-600"
     },
   ];
@@ -38,32 +39,32 @@ export function BenefitsComparisonSection() {
   const buyerBenefits = [
     { 
       icon: "✓", 
-      title: t("landing.benefits.buyer.verified"),
+      title: "Verified Quality",
       gradient: "from-green-500 to-teal-600"
     },
     { 
       icon: "🌾", 
-      title: t("landing.benefits.buyer.direct"),
+      title: "Direct Sourcing",
       gradient: "from-lime-500 to-green-600"
     },
     { 
       icon: "💳", 
-      title: t("landing.benefits.buyer.flexible"),
+      title: "Flexible Payment",
       gradient: "from-blue-500 to-indigo-600"
     },
     { 
       icon: "Box", 
-      title: t("landing.benefits.buyer.bulk"),
+      title: "Bulk Orders",
       gradient: "from-orange-500 to-red-600"
     },
     { 
       icon: "🔍", 
-      title: t("landing.benefits.buyer.traceability"),
+      title: "Full Traceability",
       gradient: "from-cyan-500 to-blue-600"
     },
     { 
       icon: "⏱️", 
-      title: t("landing.benefits.buyer.fast"),
+      title: "Fast Delivery",
       gradient: "from-pink-500 to-rose-600"
     },
   ];
@@ -109,14 +110,14 @@ export function BenefitsComparisonSection() {
             className="inline-block mb-4"
           >
             <span className="px-4 py-2 bg-gradient-to-r from-green-500 to-blue-500 text-white text-sm font-bold rounded-full shadow-lg">
-              ✨ {t("landing.benefits.badge")}
+              ✨ Why Choose Us
             </span>
           </motion.div>
           <h2 className="text-4xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 mb-4">
-            {t("landing.benefits.title")}
+            Benefits for Everyone
           </h2>
           <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-            {t("landing.benefits.subtitle")}
+            Empowering farmers and buyers with cutting-edge technology
           </p>
         </motion.div>
 
@@ -145,8 +146,8 @@ export function BenefitsComparisonSection() {
                     👨‍🌾
                   </motion.div>
                   <div>
-                    <h3 className="text-2xl font-black text-white">{t("landing.benefits.for_farmers")}</h3>
-                    <p className="text-green-100 text-sm">{t("landing.benefits.maximize_profits")}</p>
+                    <h3 className="text-2xl font-black text-white">For Farmers</h3>
+                    <p className="text-green-100 text-sm">Maximize your profits</p>
                   </div>
                 </div>
               </div>
@@ -211,8 +212,8 @@ export function BenefitsComparisonSection() {
                     🏢
                   </motion.div>
                   <div>
-                    <h3 className="text-2xl font-black text-white">{t("landing.benefits.for_buyers")}</h3>
-                    <p className="text-blue-100 text-sm">{t("landing.benefits.quality_guaranteed")}</p>
+                    <h3 className="text-2xl font-black text-white">For Buyers</h3>
+                    <p className="text-blue-100 text-sm">Quality guaranteed</p>
                   </div>
                 </div>
               </div>

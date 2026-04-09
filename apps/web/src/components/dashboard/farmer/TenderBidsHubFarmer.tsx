@@ -446,8 +446,8 @@ export default function TenderBidsHubFarmer() {
                   ].map((item, i) => (
                     <div key={i} className={`bg-white border border-slate-200 rounded-xl p-4 flex flex-col sm:flex-row items-center gap-6 shadow-sm transition-all ${item.classes.border}`}>
                       <div className="w-full sm:w-24 text-center sm:text-left sm:border-r border-slate-100 sm:pr-6">
-                        <div className="text-sm text-slate-500 font-semibold uppercase">{item.date.split(' ')[0]}</div>
-                        <div className="text-2xl font-black text-slate-900">{item.date.split(' ')[1]}</div>
+                        <div className="text-sm text-slate-500 font-semibold uppercase">{item.date.split(" ")[0]}</div>
+                        <div className="text-2xl font-black text-slate-900">{item.date.split(" ")[1]}</div>
                       </div>
                       <div className="flex-1 text-center sm:text-left">
                         <h4 className="text-lg font-bold text-slate-900 mb-2">{item.event}</h4>

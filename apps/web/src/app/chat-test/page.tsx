@@ -13,7 +13,7 @@ export default function ChatTestPage() {
     console.log('Webhook URL:', url);
 
     // Load the n8n chat script
-    const script = document.createElement('script');
+    const script = document.createElement("script");
     script.src = '/n8n-chat/index.js';
     script.async = true;
     script.onload = () => {

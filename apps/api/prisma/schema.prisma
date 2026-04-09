@@ -1,7 +1,6 @@
 // ========================================================================
-//  Prisma Schema — ODOP Connect (Full Production Schema)
-//  Uses SQLite for hackathon portability. Switch to PostgreSQL by
-//  changing provider to "postgresql" and updating DATABASE_URL.
+// Prisma Schema — Real-Time Marketplace Ecosystem
+// PostgreSQL database for production deployment
 // ========================================================================
 
 generator client {
@@ -9,1263 +8,338 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
-// ─── ENUMS (modelled as String since SQLite has no native enums) ────────
+// ─── ENUMS ─────────────────────────────────────────────────────────────
 
-// UserRole: FARMER | BUYER | ADMIN
-// OrderStatus: PENDING | CONFIRMED | PROCESSING | SHIPPED | IN_TRANSIT | DELIVERED | CANCELLED
-// ProposalStatus: PENDING | ACCEPTED | REJECTED | COUNTER | EXPIRED
-// TenderStatus: OPEN | CLOSED | AWARDED | CANCELLED
-// NotificationType: ORDER | MESSAGE | PROPOSAL | TENDER | SYSTEM | KYC
+enum Role {
+  FARMER
+  BUYER
+  ADMIN
+}
+
+enum Language {
+  ENGLISH
+  HINDI
+  MARATHI
+}
+
+enum KycStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+enum OrderStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  IN_TRANSIT
+  DELIVERED
+  COMPLETED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum MessageType {
+  TEXT
+  IMAGE
+  VOICE
+  FILE
+}
+
+enum NotificationType {
+  ORDER
+  MESSAGE
+  PAYMENT
+  QUALITY
+  RATING
+  SYSTEM
+}
 
 // ─── USER ──────────────────────────────────────────────────────────────
 
 model User {
-  id            String   @id @default(uuid())
-  name          String
-  email         String   @unique
-  password      String
-  phone         String?
-  role          String   @default("FARMER") // FARMER | BUYER | ADMIN
-  district      String?
-  state         String?
-  address       String?
-  language      String   @default("en")
-  avatarUrl     String?
-  kycStatus     String   @default("PENDING") // PENDING | VERIFIED | REJECTED
-  kycDocumentUrl String?
-  aadhaarNumber String?
-  panNumber     String?
-  isActive      Boolean  @default(true)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  // Reputation Score Fields
-  ratingAvg           Float    @default(5.0)
-  totalOrders         Int      @default(0)
-  successfulDeliveries Int      @default(0)
-  cancellationRate    Float    @default(0.0)
-  reputationScore     Float    @default(100.0)
+  id                String    @id @default(uuid())
+  email             String    @unique
+  password          String
+  name              String
+  role              Role      @default(FARMER)
+  phone             String?
+  address           String?
+  district          String?
+  state             String?
+  language          Language  @default(ENGLISH)
+  kycStatus         KycStatus @default(PENDING)
+  reputationScore   Float     @default(0)
+  isActive          Boolean   @default(true)
+  lastSeen          DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 
   // Relations
   products          Product[]
-  ordersAsBuyer     Order[]          @relation("BuyerOrders")
-  ordersAsFarmer    Order[]          @relation("FarmerOrders")
-  sentMessages      Message[]        @relation("SentMessages")
-  receivedMessages  Message[]        @relation("ReceivedMessages")
-  proposalsSent     Proposal[]       @relation("ProposalSender")
-  proposalsReceived Proposal[]       @relation("ProposalReceiver")
-  reviewsGiven      Review[]         @relation("ReviewAuthor")
-  reviewsReceived   Review[]         @relation("ReviewTarget")
+  ordersAsFarmer    Order[]   @relation("FarmerOrders")
+  ordersAsBuyer     Order[]   @relation("BuyerOrders")
+  sentMessages      Message[] @relation("SentMessages")
+  receivedMessages  Message[] @relation("ReceivedMessages")
+  ratingsGiven      Rating[]  @relation("RatingsGiven")
+  ratingsReceived   Rating[]  @relation("RatingsReceived")
   notifications     Notification[]
-  tenders           Tender[]
-  tenderApps        TenderApplication[]
-  sampleRequests    SampleRequest[]
-  contractsAsBuyer  Contract[]       @relation("ContractBuyer")
-  contractsAsFarmer Contract[]       @relation("ContractFarmer")
-  refreshTokens     RefreshToken[]
-  chatConversations1 ChatConversation[] @relation("ConversationUser1")
-  chatConversations2 ChatConversation[] @relation("ConversationUser2")
-  chatMessages      ChatMessage[]
-  offersAsSender    Offer[]          @relation("OfferSender")
-  offersAsReceiver  Offer[]          @relation("OfferReceiver")
-  paymentsMade      Payment[]        @relation("PaymentBuyer")
-  paymentsReceived  Payment[]        @relation("PaymentSeller")
-  scans             CropScan[]       @relation("FarmerScans")
-  autoSellRules     AutoSellRule[]
-  behaviorEvents    BehaviorEvent[]
-  blockchainTraces  BlockchainTrace[] @relation("FarmerTraces")
-  escrowAsBuyer     EscrowOrder[]    @relation("EscrowBuyer")
-  escrowAsFarmer    EscrowOrder[]    @relation("EscrowFarmer")
-  ratingsGivenOnChain    OnChainRating[] @relation("RatingRater")
-  ratingsReceivedOnChain OnChainRating[] @relation("RatingTarget")
-  insurancePolicies   InsurancePolicy[] @relation("FarmerInsurance")
-  negotiationsAsBuyer Negotiation[]    @relation("NegotiationBuyer")
-  negotiationsAsSeller Negotiation[]   @relation("NegotiationSeller")
-  
-  // WhatsApp-like Chat System Relations
-  chatRoomsAsFarmer  ChatRoom[]       @relation("ChatRoomFarmer")
-  chatRoomsAsBuyer   ChatRoom[]       @relation("ChatRoomBuyer")
-  chatRoomMessages   ChatRoomMessage[]
-  typingStatus       TypingIndicator[]
-  onlineStatus       UserOnlineStatus[]
-  messageReactions   MessageReaction[]
-  chatNotifications  ChatNotification[] @relation(name: "chatNotifications")
-  chatRoomUsers      ChatRoomUser[] @relation(name: "chatRoomUsers")
+  payments          Payment[]
+  favoritesAsUser   Favorite[] @relation("FavoriteBuyer")
+  favoritesOfUser   Favorite[] @relation("FavoriteFarmer")
+  conversationsAsUser1 Conversation[] @relation("ConversationUser1")
+  conversationsAsUser2 Conversation[] @relation("ConversationUser2")
 
   @@index([email])
   @@index([role])
+  @@index([reputationScore])
   @@index([district])
 }
 
-// ─── REFRESH TOKEN ─────────────────────────────────────────────────────
-
-model RefreshToken {
-  id        String   @id @default(uuid())
-  token     String   @unique
-  userId    String
-  expiresAt DateTime
-  createdAt DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([token])
-  @@index([userId])
-}
-
-// ─── PRODUCT ───────────────────────────────────────────────────────────
+// ─── PRODUCT (Crop) ────────────────────────────────────────────────────
 
 model Product {
-  id          String   @id @default(uuid())
-  name        String
-  description String?
-  category    String
-  price       Float
-  unit        String   @default("kg")
-  quantity    Float    @default(0)
-  district    String
-  state       String
-  imageUrls   String?  // JSON array serialized as string
-  qualityGrade String?
-  qualityScore Float?
-  isODOP      Boolean  @default(false)
-  isActive    Boolean  @default(true)
-  lat         Float?
-  lng         Float?
-  address     String?
-  harvestDate DateTime?
-  farmerId    String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id              String    @id @default(uuid())
+  name            String
+  category        String    // fruit, vegetable, grain
+  description     String?
+  imageUrls       Json      // Array of image URLs
+  price           Float
+  quantity        Float
+  unit            String    @default("kg")
+  qualityGrade    String?   // A+, A, B+, B
+  qualityScore    Float?    // 0-100
+  district        String?
+  state           String?
+  isActive        Boolean   @default(true)
+  farmerId        String
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
-  farmer      User     @relation(fields: [farmerId], references: [id])
-  orders      Order[]
-  proposals   Proposal[]
-  reviews     Review[]
-  sampleRequests SampleRequest[]
-  offers      Offer[]
-  autoSellRules AutoSellRule[]
-  blockchainTraces BlockchainTrace[]
-  insurancePolicies InsurancePolicy[]
+  // Relations
+  farmer          User      @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+  orders          Order[]
+  qualityScans    QualityScan[]
 
   @@index([farmerId])
   @@index([category])
-  @@index([district])
+  @@index([qualityGrade])
   @@index([isActive])
-  @@index([category, district, isActive])
-  @@index([farmerId, isActive])
   @@index([category, isActive])
 }
 
 // ─── ORDER ─────────────────────────────────────────────────────────────
 
 model Order {
-  id            String   @id @default(uuid())
-  orderNumber   String   @unique @default(uuid())
-  buyerId       String
-  farmerId      String
-  productId     String
-  quantity      Float
-  totalPrice    Float
-  status        String   @default("PENDING") // OrderStatus
-  paymentMethod String?
-  paymentStatus String   @default("PENDING")
-  shippingAddress String?
-  trackingNumber String?
-  notes         String?
-  confirmedAt   DateTime?
-  shippedAt     DateTime?
-  deliveredAt   DateTime?
-  cancelledAt   DateTime?
-  expectedDeliveryDate DateTime?
-  qualityScore  Float?
-  rating        Int?
-  disputeReason String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id              String      @id @default(uuid())
+  orderNumber     String      @unique
+  productId       String
+  farmerId        String
+  buyerId         String
+  quantity        Float
+  totalPrice      Float
+  status          OrderStatus @default(PENDING)
+  notes           String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
 
-  buyer   User    @relation("BuyerOrders", fields: [buyerId], references: [id])
-  farmer  User    @relation("FarmerOrders", fields: [farmerId], references: [id])
-  product Product @relation(fields: [productId], references: [id])
-  logistics Logistics[]
-  escrowOrders EscrowOrder[]
-  chatRoom ChatRoom?  // WhatsApp-like chat system
+  // Relations
+  product         Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
+  farmer          User        @relation("FarmerOrders", fields: [farmerId], references: [id], onDelete: Cascade)
+  buyer           User        @relation("BuyerOrders", fields: [buyerId], references: [id], onDelete: Cascade)
+  tracking        OrderTracking[]
+  payment         Payment?
+  rating          Rating?
 
-  @@index([buyerId])
   @@index([farmerId])
+  @@index([buyerId])
   @@index([status])
   @@index([orderNumber])
   @@index([status, createdAt])
-  @@index([buyerId, status])
-  @@index([farmerId, status])
 }
 
-// ─── MESSAGE ───────────────────────────────────────────────────────────
-
-model Message {
-  id         String   @id @default(uuid())
-  senderId   String
-  receiverId String
-  content    String
-  type       String   @default("text") // text | image | voice
-  fileUrl    String?
-  isRead     Boolean  @default(false)
-  createdAt  DateTime @default(now())
-
-  sender   User @relation("SentMessages", fields: [senderId], references: [id])
-  receiver User @relation("ReceivedMessages", fields: [receiverId], references: [id])
-
-  @@index([senderId])
-  @@index([receiverId])
-  @@index([createdAt])
-}
-
-// ─── PROPOSAL ──────────────────────────────────────────────────────────
-
-model Proposal {
-  id          String   @id @default(uuid())
-  senderId    String
-  receiverId  String
-  productId   String
-  quantity    Float
-  pricePerUnit Float
-  totalPrice  Float
-  message     String?
-  status      String   @default("PENDING") // ProposalStatus
-  validUntil  DateTime?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  sender   User    @relation("ProposalSender", fields: [senderId], references: [id])
-  receiver User    @relation("ProposalReceiver", fields: [receiverId], references: [id])
-  product  Product @relation(fields: [productId], references: [id])
-
-  @@index([senderId])
-  @@index([receiverId])
-  @@index([status])
-}
-
-// ─── REVIEW ────────────────────────────────────────────────────────────
-
-model Review {
-  id        String   @id @default(uuid())
-  authorId  String
-  targetId  String
-  productId String?
-  rating    Int      // 1-5
-  comment   String?
-  createdAt DateTime @default(now())
-
-  author  User     @relation("ReviewAuthor", fields: [authorId], references: [id])
-  target  User     @relation("ReviewTarget", fields: [targetId], references: [id])
-  product Product? @relation(fields: [productId], references: [id])
-
-  @@index([targetId])
-  @@index([productId])
-}
-
-// ─── CONTRACT ──────────────────────────────────────────────────────────
-
-model Contract {
-  id            String   @id @default(uuid())
-  contractNumber String  @unique @default(uuid())
-  buyerId       String
-  farmerId      String
-  terms         String   // JSON string
-  totalValue    Float
-  status        String   @default("DRAFT") // DRAFT | ACTIVE | COMPLETED | TERMINATED
-  pdfUrl        String?
-  blockchainHash String?
-  qrCode        String?
-  signedAt      DateTime?
-  expiresAt     DateTime?
-  signedByFarmer Boolean   @default(false)
-  signedByBuyer  Boolean   @default(false)
-  
-  // Pre-Booking / Demand Lock Fields
-  isPreBooking  Boolean  @default(false)
-  productName   String   @default("Agri Product")
-  targetDate    DateTime?
-  
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  buyer  User @relation("ContractBuyer", fields: [buyerId], references: [id])
-  farmer User @relation("ContractFarmer", fields: [farmerId], references: [id])
-
-  @@index([buyerId])
-  @@index([farmerId])
-  @@index([status])
-  @@index([isPreBooking])
-}
-
-// ─── NOTIFICATION ──────────────────────────────────────────────────────
-
-model Notification {
-  id        String   @id @default(uuid())
-  userId    String
-  type      String   @default("SYSTEM") // NotificationType
-  title     String
-  message   String
-  isRead    Boolean  @default(false)
-  metadata  String?  // JSON string for extra data
-  createdAt DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id])
-
-  @@index([userId])
-  @@index([isRead])
-  @@index([type])
-}
-
-// ─── TENDER ────────────────────────────────────────────────────────────
-
-model Tender {
-  id            String   @id @default(uuid())
-  creatorId     String
-  title         String
-  description   String
-  category      String
-  quantity      Float
-  unit          String   @default("kg")
-  maxPrice      Float
-  status        String   @default("OPEN") // TenderStatus
-  deadline      DateTime
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  creator      User @relation(fields: [creatorId], references: [id])
-  applications TenderApplication[]
-
-  @@index([creatorId])
-  @@index([status])
-  @@index([category])
-}
-
-// ─── TENDER APPLICATION ────────────────────────────────────────────────
-
-model TenderApplication {
-  id          String   @id @default(uuid())
-  tenderId    String
-  applicantId String
-  priceOffer  Float
-  message     String?
-  status      String   @default("PENDING") // PENDING | ACCEPTED | REJECTED
-  createdAt   DateTime @default(now())
-
-  tender    Tender @relation(fields: [tenderId], references: [id])
-  applicant User   @relation(fields: [applicantId], references: [id])
-
-  @@index([tenderId])
-  @@index([applicantId])
-}
-
-// ─── SAMPLE REQUEST ────────────────────────────────────────────────────
-
-model SampleRequest {
-  id          String   @id @default(uuid())
-  requesterId String
-  productId   String
-  quantity    Float
-  message     String?
-  status      String   @default("PENDING") // PENDING | APPROVED | SHIPPED | RECEIVED
-  shippingAddress String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  requester User    @relation(fields: [requesterId], references: [id])
-  product   Product @relation(fields: [productId], references: [id])
-
-  @@index([requesterId])
-  @@index([productId])
-}
-
-// ─── LOGISTICS ─────────────────────────────────────────────────────────
-
-model Logistics {
-  id            String   @id @default(uuid())
-  orderId       String
-  provider      String
-  trackingId    String?
-  status        String   @default("PENDING") // PENDING | PICKED_UP | IN_TRANSIT | DELIVERED
-  fromLocation  String
-  toLocation    String
-  estimatedDate DateTime?
-  actualDate    DateTime?
-  temperature   Float?
-  humidity      Float?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  order Order @relation(fields: [orderId], references: [id])
-
-  @@index([orderId])
-  @@index([trackingId])
-}
-
-// ─── CHAT CONVERSATION ─────────────────────────────────────────────────
-
-model ChatConversation {
-  id        String   @id @default(uuid())
-  user1Id   String
-  user2Id   String
-  lastMessageAt DateTime @default(now())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  user1 User @relation("ConversationUser1", fields: [user1Id], references: [id])
-  user2 User @relation("ConversationUser2", fields: [user2Id], references: [id])
-  messages ChatMessage[]
-
-  @@unique([user1Id, user2Id])
-  @@index([user1Id])
-  @@index([user2Id])
-}
-
-// ─── CHAT MESSAGE ──────────────────────────────────────────────────────
-
-model ChatMessage {
-  id             String   @id @default(uuid())
-  conversationId String
-  senderId       String
-  content        String
-  type           String   @default("text") // text | image | voice | file
-  fileUrl        String?
-  fileName       String?
-  isRead         Boolean  @default(false)
-  readAt         DateTime?
-  createdAt      DateTime @default(now())
-
-  conversation ChatConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  sender       User             @relation(fields: [senderId], references: [id])
-
-  @@index([conversationId])
-  @@index([senderId])
-  @@index([createdAt])
-}
-
-// ─── MESSAGE ANALYTICS (Sentiment Analysis) ────────────────────────────
-
-model MessageAnalytics {
-  id              String   @id @default(uuid())
-  messageId       String
-  sentiment       String   @default("neutral") // positive | neutral | negative
-  sentimentScore  Float    // 0-1
-  keywords        String?  // JSON array of keywords
-  language        String   @default("en")
-  confidence      Float    // Confidence score (0-1)
-  metadata        String?  // JSON: additional analysis data
-  analyzedAt      DateTime @default(now())
-  createdAt       DateTime @default(now())
-
-  @@index([messageId])
-  @@index([sentiment])
-  @@index([createdAt])
-}
-
-// ─── NEGOTIATION (Deal Tracking) ──────────────────────────────────────
-
-model Negotiation {
-  id              String   @id @default(uuid())
-  buyerId         String
-  sellerId        String
-  productId       String
-  quantity        Float
-  unit            String   // kg | piece | bag | etc
-  initialPrice    Float
-  currentPrice    Float
-  status          String   @default("draft") // draft | in-progress | near-closing | closed | rejected
-  progress        Int      @default(0) // 0-100 percentage
-  messages        String?  // JSON array of negotiation messages
-  notes           String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  buyer   User @relation("NegotiationBuyer", fields: [buyerId], references: [id])
-  seller  User @relation("NegotiationSeller", fields: [sellerId], references: [id])
-
-  @@index([buyerId])
-  @@index([sellerId])
-  @@index([productId])
-  @@index([status])
-  @@index([progress])
-  @@index([createdAt])
-}
-
-// ─── QUALITY GRADE (AI Results) ────────────────────────────────────────
-
-model QualityGrade {
-  id            String   @id @default(uuid())
-  productId     String?
-  imageUrl      String
-  grade         String   // A | B | C | D
-  score         Float    // 0-100
-  defectCount   Int      @default(0)
-  defects       String?  // JSON array of defect descriptions
-  heatmapUrl    String?  // URL to heatmap overlay image
-  recommendations String?  // JSON array
-  model         String   @default("v1") // Model version
-  confidence    Float    @default(0.95) // Confidence score
-  processedAt   DateTime @default(now())
-  createdAt     DateTime @default(now())
-
-  @@index([productId])
-  @@index([grade])
-  @@index([createdAt])
-}
-
-// ─── DEMAND FORECAST ───────────────────────────────────────────────────
-
-model Forecast {
-  id             String   @id @default(uuid())
-  farmerId       String?
-  buyerId        String?
-  productId      String?
-  category       String?
-  forecastData   String   // JSON: [{month, predicted, lower, upper}, ...]
-  accuracy       Float    // Accuracy percentage (0-100)
-  model          String   @default("arima") // Model type
-  modelVersion   String   @default("v1")
-  seasonality    String?  // JSON: seasonal patterns
-  trend          String?  // JSON: trend analysis
-  insights       String?  // JSON: insights and recommendations
-  validUntil     DateTime
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-
-  @@index([farmerId])
-  @@index([buyerId])
-  @@index([productId])
-  @@index([category])
-  @@index([createdAt])
-}
-
-// ─── PRICE OFFER (Negotiation) ─────────────────────────────────────────
-
-model Offer {
-  id             String   @id @default(uuid())
-  productId      String
-  senderId       String
-  receiverId     String
-  quantity       Float
-  pricePerUnit   Float
-  totalPrice     Float
-  validUntil     DateTime
-  status         String   @default("PENDING") // PENDING | ACCEPTED | REJECTED | EXPIRED
-  counterOffers  Int      @default(0) // Number of counter offers
-  notes          String?
-  createdAt      DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  product  Product @relation(fields: [productId], references: [id])
-  sender   User    @relation("OfferSender", fields: [senderId], references: [id])
-  receiver User    @relation("OfferReceiver", fields: [receiverId], references: [id])
-
-  @@index([productId])
-  @@index([senderId])
-  @@index([receiverId])
-  @@index([status])
-}
-
-// ─── PAYMENT ───────────────────────────────────────────────────────────
-
-model Payment {
-  id              String   @id @default(uuid())
-  orderId         String?
-  contractId      String?
-  buyerId         String
-  sellerId        String
-  amount          Float
-  currency        String   @default("INR")
-  paymentMethod   String   // UPI | CARD | BANK_TRANSFER | WALLET
-  transactionId   String?  @unique
-  status          String   @default("PENDING") // PENDING | COMPLETED | FAILED | REFUND_INITIATED | REFUNDED
-  paymentGateway  String   @default("razorpay")
-  refundAmount    Float?
-  refundReason    String?
-  metadata        String?  // JSON: additional data
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  buyer  User @relation("PaymentBuyer", fields: [buyerId], references: [id])
-  seller User @relation("PaymentSeller", fields: [sellerId], references: [id])
-
-  @@index([orderId])
-  @@index([buyerId])
-  @@index([sellerId])
-  @@index([status])
-  @@index([transactionId])
-}
-
-// ─── TRANSACTION (AgriPay Center) ──────────────────────────────────────
-
-model Transaction {
-  id              String   @id @default(uuid())
-  userId          String
-  type            String   // RECEIVED | SENT | PENDING | REFUND
-  amount          Float
-  fromParty       String   // Name of sender
-  toParty         String   // Name of receiver
-  status          String   @default("PENDING") // COMPLETED | PENDING | FAILED | PROCESSING
-  method          String   // UPI | BANK_TRANSFER | NEFT | RTGS | CARD | WALLET
-  category        String   // PRODUCT_SALE | PURCHASE | LOGISTICS | EQUIPMENT | EXPORT
-  reference       String   @unique // Transaction reference number
-  description     String?
-  orderId         String?
-  paymentId       String?
-  razorpayOrderId String?
-  razorpayPaymentId String?
-  razorpaySignature String?
-  metadata        String?  // JSON: additional data
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  @@index([userId])
-  @@index([type])
-  @@index([status])
-  @@index([reference])
-  @@index([createdAt])
-  @@index([userId, status])
-  @@index([userId, type])
-}
-
-// ─── AUDIT LOG ─────────────────────────────────────────────────────────
-
-model AuditLog {
-  id        String   @id @default(uuid())
-  userId    String?
-  action    String   // CREATE | UPDATE | DELETE | LOGIN | LOGOUT | etc.
-  entity    String   // USER | PRODUCT | ORDER | etc.
-  entityId  String?
-  changes   String?  // JSON: what changed {before, after}
-  ipAddress String?
-  userAgent String?
-  status    String   @default("SUCCESS") // SUCCESS | FAILED
-  errorMsg  String?
-  createdAt DateTime @default(now())
-
-  @@index([userId])
-  @@index([action])
-  @@index([entity])
-  @@index([createdAt])
-}
-
-// ─── Add relations to User model relations (update in User model) ─────
-
-// Note: Update User model to include:
-// - chatConversations1: ChatConversation[] @relation("ConversationUser1")
-// - chatConversations2: ChatConversation[] @relation("ConversationUser2")
-// - chatMessages: ChatMessage[]
-// - offersAsSender: Offer[] @relation("OfferSender")
-// - offersAsReceiver: Offer[] @relation("OfferReceiver")
-// - paymentsMade: Payment[] @relation("PaymentBuyer")
-// ─── CROP SCAN (AI History) ───────────────────────────────────────────
-
-model CropScan {
-  id              String   @id @default(uuid())
-  farmerId        String
-  cropName        String
-  cropType        String
-  grade           String
-  confidence      Float
-  disease         String   @default("None")
-  imageUrl        String
-  bboxes          String?  // JSON string
-  recommendations String?  // JSON string
-  processedAt     Int      // processing time in ms
-  createdAt       DateTime @default(now())
-
-  farmer          User     @relation("FarmerScans", fields: [farmerId], references: [id])
-
-  @@index([farmerId])
-  @@index([grade])
-}
-
-// ─── AUTO-SELL RULE (Smart Deal Engine) ──────────────────────────────────
-
-model AutoSellRule {
-  id          String   @id @default(uuid())
-  farmerId    String
-  productId   String
-  minPrice    Float
-  quantity    Float
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  farmer      User     @relation(fields: [farmerId], references: [id])
-  product     Product  @relation(fields: [productId], references: [id])
-
-  @@index([farmerId])
-  @@index([productId])
-  @@index([isActive])
-}
-
-// ─── BEHAVIOR EVENT (Behavioral AI) ──────────────────────────────────────
-
-model BehaviorEvent {
-  id        String   @id @default(uuid())
-  userId    String
-  action    String   // VIEW | SEARCH | BUY | SELL | LOGOUT
-  category  String   // PRODUCT | CONTRACT | LOGISTICS
-  metadata  String?  // JSON string
-  timestamp DateTime @default(now())
-
-  user      User     @relation(fields: [userId], references: [id])
-
-  @@index([userId])
-  @@index([action])
-  @@index([timestamp])
-}
-
-// ─── BLOCKCHAIN TRACE (Supply Chain Traceability) ──────────────────────────
-
-model BlockchainTrace {
-  id            String   @id @default(uuid())
-  productId     String
-  farmerId      String
-  eventType     String   // SEED | CULTIVATION | HARVEST | QUALITY | LOGISTICS | DELIVERED
-  dataHash      String   // SHA256 hash of the event payload
-  prevHash      String   @default("0x0000000000000000000000000000000000000000000000000000000000000000")
-  blockIndex    Int      @default(0)
-  location      String?  // lat,lng or place name
-  qualityGrade  String?  // A+ | A | B | C
-  metadata      String?  // JSON string with extra details
-  txHash        String?  // simulated transaction hash
-  verified      Boolean  @default(true)
-  createdAt     DateTime @default(now())
-
-  product       Product  @relation(fields: [productId], references: [id])
-  farmer        User     @relation("FarmerTraces", fields: [farmerId], references: [id])
-
-  @@index([productId])
-  @@index([farmerId])
-  @@index([eventType])
-  @@index([dataHash])
-}
-
-// ─── ESCROW ORDER (Smart Contract Payment System) ──────────────────────────
-
-model EscrowOrder {
-  id               String   @id @default(uuid())
-  orderId          String
-  buyerId          String
-  farmerId         String
-  amount           Float
-  status           String   @default("HELD") // HELD | RELEASED | REFUNDED | DISPUTED
-  escrowAddress    String?  // simulated smart-contract address
-  depositTxHash    String?  // simulated deposit transaction
-  releaseTxHash    String?  // simulated release transaction
-  buyerConfirmed   Boolean  @default(false)
-  farmerDelivered  Boolean  @default(false)
-  disputeReason    String?
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-  releasedAt       DateTime?
-
-  order            Order    @relation(fields: [orderId], references: [id])
-  buyer            User     @relation("EscrowBuyer", fields: [buyerId], references: [id])
-  farmer           User     @relation("EscrowFarmer", fields: [farmerId], references: [id])
-
-  @@index([orderId])
-  @@index([buyerId])
-  @@index([farmerId])
-  @@index([status])
-}
-
-// ─── ON-CHAIN RATING (Decentralized Reputation) ────────────────────────────
-
-model OnChainRating {
-  id          String   @id @default(uuid())
-  targetId    String   // userId being rated
-  raterId     String   // userId giving the rating
-  rating      Int      // 1-5
-  txHash      String?  // simulated blockchain tx
-  dataHash    String?  // SHA256 of rating payload
-  comment     String?
-  createdAt   DateTime @default(now())
-
-  target      User     @relation("RatingTarget", fields: [targetId], references: [id])
-  rater       User     @relation("RatingRater", fields: [raterId], references: [id])
-
-  @@index([targetId])
-  @@index([raterId])
-}
-
-// ─── INSURANCE POLICY (Price Protection Engine) ───────────────────────────
-
-model InsurancePolicy {
-  id            String   @id @default(uuid())
-  policyNumber  String   @unique @default(uuid())
-  farmerId      String
-  productId     String
-  insuredPrice  Float    // Min guaranteed price
-  quantity      Float
-  totalValue    Float    // insuredPrice * quantity
-  premium       Float    // Cost paid by farmer
-  status        String   @default("ACTIVE") // ACTIVE | EXPIRED | CLAIMED | CANCELLED
-  startDate     DateTime @default(now())
-  endDate       DateTime
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  farmer        User     @relation("FarmerInsurance", fields: [farmerId], references: [id])
-  product       Product  @relation(fields: [productId], references: [id])
-  claims        InsuranceClaim[]
-
-  @@index([farmerId])
-  @@index([productId])
-  @@index([status])
-}
-
-// ─── INSURANCE CLAIM (Price Protection Engine) ────────────────────────────
-
-model InsuranceClaim {
-  id                String   @id @default(uuid())
-  policyId          String
-  marketPriceAtClaim Float
-  payoutAmount      Float
-  status            String   @default("PENDING") // PENDING | APPROVED | DISBURSED | REJECTED
-  proofUrl          String?  // Mandi price report or similar
-  processedAt       DateTime?
-  createdAt         DateTime @default(now())
-
-  policy            InsurancePolicy @relation(fields: [policyId], references: [id])
-
-  @@index([policyId])
-  @@index([status])
-}
-
-// ─── PRICE ALERT (Price Intelligence) ────────────────────────────────────
-
-model PriceAlert {
-  id          String   @id @default(uuid())
-  userId      String
-  category    String
-  targetPrice Float
-  condition   String   // ABOVE | BELOW
-  district    String?
-  state       String?
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  @@index([userId])
-  @@index([category])
-  @@index([isActive])
-}
-
-// ─── SUPPLIER (Buyer Dashboard) ────────────────────────────────────────
-
-model Supplier {
-  id              String   @id @default(uuid())
-  userId          String   @unique // Links to User with role FARMER
-  businessName    String
-  description     String?
-  certifications  String?  // JSON array
-  specialties     String?  // JSON array
-  minOrderQty     Float?
-  maxOrderQty     Float?
-  leadTime        Int?     // days
-  rating          Float    @default(5.0)
-  totalOrders     Int      @default(0)
-  responseTime    Int      @default(24) // hours
-  verificationStatus String @default("PENDING") // PENDING | VERIFIED | REJECTED
-  isActive        Boolean  @default(true)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  bulkProducts    BulkProduct[]
-
-  @@index([userId])
-  @@index([rating])
-  @@index([isActive])
-}
-
-// ─── BULK PRODUCT (Buyer Dashboard) ────────────────────────────────────
-
-model BulkProduct {
-  id              String   @id @default(uuid())
-  supplierId      String
-  name            String
-  category        String
-  description     String?
-  minQuantity     Float
-  maxQuantity     Float
-  unit            String   @default("kg")
-  pricePerUnit    Float
-  qualityGrade    String?
-  certifications  String?  // JSON array
-  imageUrls       String?  // JSON array
-  district        String
-  state           String
-  isActive        Boolean  @default(true)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  supplier        Supplier @relation(fields: [supplierId], references: [id])
-  preBookings     PreBooking[]
-  bulkTrades      BulkTrade[]
-
-  @@index([supplierId])
-  @@index([category])
-  @@index([district])
-  @@index([isActive])
-}
-
-// ─── BUYER REPUTATION (Buyer Dashboard) ────────────────────────────────
-
-model BuyerReputation {
-  id                  String   @id @default(uuid())
-  userId              String   @unique
-  score               Float    @default(100.0)
-  totalPurchases      Int      @default(0)
-  onTimePayments      Int      @default(0)
-  latePayments        Int      @default(0)
-  disputes            Int      @default(0)
-  averageOrderValue   Float    @default(0)
-  trustScore          Float    @default(5.0)
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
-
-  history             ReputationHistory[]
-
-  @@index([userId])
-  @@index([score])
-}
-
-// ─── REPUTATION HISTORY (Buyer Dashboard) ──────────────────────────────
-
-model ReputationHistory {
-  id              String   @id @default(uuid())
-  reputationId    String
-  action          String   // PURCHASE | PAYMENT | DISPUTE | REVIEW
-  scoreBefore     Float
-  scoreAfter      Float
-  change          Float
-  reason          String?
-  metadata        String?  // JSON
-  createdAt       DateTime @default(now())
-
-  reputation      BuyerReputation @relation(fields: [reputationId], references: [id])
-
-  @@index([reputationId])
-  @@index([createdAt])
-}
-
-// ─── PRE-BOOKING (Buyer Dashboard) ─────────────────────────────────────
-
-model PreBooking {
-  id              String   @id @default(uuid())
-  buyerId         String
-  bulkProductId   String
-  quantity        Float
-  pricePerUnit    Float
-  totalPrice      Float
-  targetDate      DateTime
-  status          String   @default("PENDING") // PENDING | CONFIRMED | CANCELLED | COMPLETED
-  notes           String?
-  confirmedAt     DateTime?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  bulkProduct     BulkProduct @relation(fields: [bulkProductId], references: [id])
-
-  @@index([buyerId])
-  @@index([bulkProductId])
-  @@index([status])
-}
-
-// ─── BID (Buyer Dashboard) ─────────────────────────────────────────────
-
-model Bid {
-  id              String   @id @default(uuid())
-  buyerId         String
-  productId       String
-  quantity        Float
-  pricePerUnit    Float
-  totalPrice      Float
-  validUntil      DateTime
-  status          String   @default("PENDING") // PENDING | ACCEPTED | REJECTED | COUNTER | EXPIRED
-  counterOfferPrice Float?
-  aiRecommendation String? // JSON
-  notes           String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  @@index([buyerId])
-  @@index([productId])
-  @@index([status])
-  @@index([validUntil])
-}
-
-// ─── ORDER TRACKING (Buyer Dashboard) ──────────────────────────────────
+// ─── ORDER TRACKING ────────────────────────────────────────────────────
 
 model OrderTracking {
-  id              String   @id @default(uuid())
+  id              String    @id @default(uuid())
   orderId         String
-  status          String   // PLACED | CONFIRMED | PACKED | SHIPPED | IN_TRANSIT | DELIVERED
+  status          OrderStatus
   location        String?
   lat             Float?
   lng             Float?
   notes           String?
   estimatedTime   DateTime?
   actualTime      DateTime?
-  createdAt       DateTime @default(now())
+  createdAt       DateTime  @default(now())
+
+  // Relations
+  order           Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
   @@index([orderId])
-  @@index([status])
   @@index([createdAt])
 }
 
-// ─── BULK TRADE (Buyer Dashboard) ──────────────────────────────────────
+// ─── MESSAGE (AgriChat) ────────────────────────────────────────────────
 
-model BulkTrade {
-  id              String   @id @default(uuid())
-  buyerId         String
-  bulkProductId   String
-  quantity        Float
-  pricePerUnit    Float
-  totalPrice      Float
-  status          String   @default("PENDING") // PENDING | MATCHED | IN_PROGRESS | COMPLETED | CANCELLED
-  matchedSuppliers String? // JSON array of supplier IDs
-  deliveryDate    DateTime?
-  notes           String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+model Message {
+  id              String      @id @default(uuid())
+  conversationId  String
+  senderId        String
+  receiverId      String
+  content         String
+  type            MessageType @default(TEXT)
+  attachmentUrl   String?
+  isRead          Boolean     @default(false)
+  readAt          DateTime?
+  createdAt       DateTime    @default(now())
 
-  bulkProduct     BulkProduct @relation(fields: [bulkProductId], references: [id])
+  // Relations
+  conversation    Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender          User         @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver        User         @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
 
-  @@index([buyerId])
-  @@index([bulkProductId])
-  @@index([status])
-}
-
-// ─── BLOCKCHAIN TRANSACTION (Buyer Dashboard) ──────────────────────────
-
-model BlockchainTransaction {
-  id              String   @id @default(uuid())
-  userId          String
-  txHash          String   @unique
-  type            String   // PAYMENT | ESCROW | RATING | TRACE
-  amount          Float?
-  fromAddress     String?
-  toAddress       String?
-  status          String   @default("PENDING") // PENDING | CONFIRMED | FAILED
-  blockNumber     Int?
-  gasUsed         Float?
-  metadata        String?  // JSON
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  @@index([userId])
-  @@index([txHash])
-  @@index([type])
-  @@index([status])
-}
-
-// ─── SECURITY EVENT (Buyer Dashboard) ──────────────────────────────────
-
-model SecurityEvent {
-  id              String   @id @default(uuid())
-  userId          String
-  eventType       String   // LOGIN | LOGOUT | PASSWORD_CHANGE | SUSPICIOUS_ACTIVITY | SESSION_EXPIRED
-  ipAddress       String?
-  userAgent       String?
-  location        String?
-  riskLevel       String   @default("LOW") // LOW | MEDIUM | HIGH | CRITICAL
-  blocked         Boolean  @default(false)
-  metadata        String?  // JSON
-  createdAt       DateTime @default(now())
-
-  @@index([userId])
-  @@index([eventType])
-  @@index([riskLevel])
-  @@index([createdAt])
-}
-// ════════════════════════════════════════════════════════════════════════════
-// WHATSAPP-LIKE CHAT SYSTEM FOR AGRIVOICE
-// Production-ready real-time messaging system for Farmers and Buyers
-// ════════════════════════════════════════════════════════════════════════════
-
-// ─── CHAT ROOM (Feature 2: Chat Room Per Order) ──────────────────────────
-
-model ChatRoom {
-  id             String   @id @default(uuid())
-  orderId        String   // Each order has ONE chat room
-  farmerId       String    // Farmer in the conversation
-  buyerId        String    // Buyer in the conversation
-  productName    String   // For quick reference
-  orderAmount    Float    // For quick reference
-  status         String   @default("ACTIVE") // ACTIVE | ARCHIVED | CLOSED
-  lastMessageAt  DateTime @default(now())
-  lastMessageBy  String?  // ID of user who sent last message
-  unreadCount    Int      @default(0) // Unread message count
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-
-  order           Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  farmer          User           @relation("ChatRoomFarmer", fields: [farmerId], references: [id])
-  buyer           User           @relation("ChatRoomBuyer", fields: [buyerId], references: [id])
-  messages        ChatRoomMessage[]
-  typingStatus    TypingIndicator[]
-  onlineStatus    UserOnlineStatus[]
-
-  @@unique([orderId])
-  @@index([farmerId])
-  @@index([buyerId])
-  @@index([status])
-  @@index([lastMessageAt])
-  @@index([createdAt])
-}
-
-// ─── CHAT ROOM MESSAGE (Feature 1 & 3: Real-time, Message Types) ─────────
-
-model ChatRoomMessage {
-  id             String   @id @default(uuid())
-  chatRoomId     String
-  senderId       String
-  content        String
-  type           String   @default("text") // text | image | file | voice
-  fileUrl        String?  // URL for image/file/voice
-  fileName       String?  // Original file name  
-  fileSize       Int?     // File size in bytes
-  mimeType       String?  // image/png, application/pdf, etc.
-
-  // Feature 6: Message Status Tracking
-  status         String   @default("SENT") // SENT | DELIVERED | SEEN
-  sentAt         DateTime @default(now())
-  deliveredAt    DateTime?
-  seenAt         DateTime?
-
-  // Message metadata
-  metadata       String?  // JSON: additional data (reactions, edits, etc.)
-  isEdited       Boolean  @default(false)
-  editedAt       DateTime?
-  isDeleted      Boolean  @default(false)
-  deletedAt      DateTime?
-
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-
-  chatRoom       ChatRoom @relation(fields: [chatRoomId], references: [id], onDelete: Cascade)
-  sender         User     @relation(fields: [senderId], references: [id])
-  reactions      MessageReaction[]
-  searchIndex    MessageSearchIndex?
-
-  @@index([chatRoomId])
+  @@index([conversationId])
   @@index([senderId])
+  @@index([receiverId])
+  @@index([isRead])
+  @@index([createdAt])
+}
+
+// ─── CONVERSATION ─────────────────────────────────────────────────────
+
+model Conversation {
+  id              String    @id @default(uuid())
+  user1Id         String
+  user2Id         String
+  lastMessageAt   DateTime?
+  createdAt       DateTime  @default(now())
+
+  // Relations
+  messages        Message[]
+  user1           User      @relation("ConversationUser1", fields: [user1Id], references: [id], onDelete: Cascade)
+  user2           User      @relation("ConversationUser2", fields: [user2Id], references: [id], onDelete: Cascade)
+
+  @@unique([user1Id, user2Id])
+  @@index([user1Id])
+  @@index([user2Id])
+}
+
+// ─── PAYMENT ───────────────────────────────────────────────────────────
+
+model Payment {
+  id              String        @id @default(uuid())
+  orderId         String        @unique
+  userId          String
+  amount          Float
+  currency        String        @default("INR")
+  status          PaymentStatus @default(PENDING)
+  paymentMethod   String?
+  razorpayOrderId String?
+  razorpayPaymentId String?
+  razorpaySignature String?
+  invoiceUrl      String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  // Relations
+  order           Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@index([userId])
   @@index([status])
+  @@index([createdAt])
+}
+
+// ─── RATING ────────────────────────────────────────────────────────────
+
+model Rating {
+  id              String    @id @default(uuid())
+  orderId         String    @unique
+  fromUserId      String
+  toUserId        String
+  stars           Int       // 1-5
+  review          String?
+  createdAt       DateTime  @default(now())
+
+  // Relations
+  order           Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  fromUser        User      @relation("RatingsGiven", fields: [fromUserId], references: [id], onDelete: Cascade)
+  toUser          User      @relation("RatingsReceived", fields: [toUserId], references: [id], onDelete: Cascade)
+
+  @@index([toUserId])
+  @@index([stars])
+  @@index([createdAt])
+}
+
+// ─── QUALITY SCAN ──────────────────────────────────────────────────────
+
+model QualityScan {
+  id              String    @id @default(uuid())
+  productId       String
+  imageUrl        String
+  grade           String    // A+, A, B+, B
+  score           Float     // 0-100
+  confidence      Float     // 0-100
+  defects         Json?     // Array of detected defects
+  certificateUrl  String?
+  createdAt       DateTime  @default(now())
+
+  // Relations
+  product         Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@index([grade])
+  @@index([createdAt])
+}
+
+// ─── NOTIFICATION ─────────────────────────────────────────────────────
+
+model Notification {
+  id              String           @id @default(uuid())
+  userId          String
+  type            NotificationType
+  title           String
+  message         String
+  metadata        Json?
+  isRead          Boolean          @default(false)
+  readAt          DateTime?
+  createdAt       DateTime         @default(now())
+
+  // Relations
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([isRead])
   @@index([type])
   @@index([createdAt])
-  @@index([chatRoomId, createdAt])
 }
 
-// ─── MESSAGE REACTIONS (Bonus: Emoji Reactions on Messages) ──────────────
+// ─── FAVORITE ─────────────────────────────────────────────────────────
 
-model MessageReaction {
-  id           String   @id @default(uuid())
-  messageId    String
-  userId       String
-  emoji        String   // ❤️🔥😂 etc
-  createdAt    DateTime @default(now())
+model Favorite {
+  id              String    @id @default(uuid())
+  buyerId         String
+  farmerId        String
+  notes           String?
+  createdAt       DateTime  @default(now())
 
-  message      ChatRoomMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
-  user         User            @relation(fields: [userId], references: [id])
+  // Relations
+  buyer           User      @relation("FavoriteBuyer", fields: [buyerId], references: [id], onDelete: Cascade)
+  farmer          User      @relation("FavoriteFarmer", fields: [farmerId], references: [id], onDelete: Cascade)
 
-  @@unique([messageId, userId, emoji])
-  @@index([messageId])
-  @@index([userId])
-}
-
-// ─── TYPING INDICATOR (Feature 5: Show typing status) ──────────────────────
-
-model TypingIndicator {
-  id           String   @id @default(uuid())
-  chatRoomId   String
-  userId       String
-  startAt      DateTime @default(now())
-  expiresAt    DateTime // Auto-expire after 3 seconds
-
-  chatRoom     ChatRoom @relation(fields: [chatRoomId], references: [id], onDelete: Cascade)
-  user         User     @relation(fields: [userId], references: [id])
-
-  @@index([chatRoomId])
-  @@index([userId])
-  @@index([expiresAt])
-}
-
-// ─── USER ONLINE STATUS (Feature 4: Online/Offline Status) ───────────────
-
-model UserOnlineStatus {
-  id             String   @id @default(uuid())
-  chatRoomId     String
-  userId         String
-  isOnline       Boolean  @default(true)
-  lastSeenAt     DateTime @default(now())
-  socketId       String?  // Socket.io connection ID
-
-  chatRoom       ChatRoom @relation(fields: [chatRoomId], references: [id], onDelete: Cascade)
-  user           User     @relation(fields: [userId], references: [id])
-
-  @@unique([chatRoomId, userId])
-  @@index([chatRoomId])
-  @@index([userId])
-  @@index([isOnline])
-}
-
-// ─── MESSAGE SEARCH INDEX (Feature 9: Search Messages) ──────────────────
-
-model MessageSearchIndex {
-  id               String   @id @default(uuid())
-  messageId        String   @unique
-  chatRoomId       String
-  searchableText   String   // Indexed for full-text search
-  createdAt        DateTime @default(now())
-
-  message          ChatRoomMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
-
-  @@index([chatRoomId])
-  // @@fulltext([searchableText])  // For full-text search if using MySQL (not supported by SQLite)
-}
-
-// ─── CHAT NOTIFICATION (Feature 7: Notifications) ────────────────────────
-
-model ChatNotification {
-  id             String   @id @default(uuid())
-  chatRoomId     String
-  userId         String
-  messageId      String
-  type           String   // NEW_MESSAGE | TYPING | ONLINE | OFFLINE
-  isRead         Boolean  @default(false)
-  soundEnabled   Boolean  @default(true)
-  pushEnabled    Boolean  @default(true)
-  createdAt      DateTime @default(now())
-
-  user           User     @relation(fields: [userId], references: [id], name: "chatNotifications")
-
-  @@index([userId])
-  @@index([chatRoomId])
-  @@index([isRead])
-}
-
-// ─── Chat Room User (For permission tracking) ──────────────────────────
-
-model ChatRoomUser {
-  id             String   @id @default(uuid())
-  chatRoomId     String
-  userId         String
-  joinedAt       DateTime @default(now())
-  leftAt         DateTime?
-
-  user           User     @relation(fields: [userId], references: [id], name: "chatRoomUsers")
-  isActive       Boolean  @default(true)
-  role           String   @default("PARTICIPANT") // PARTICIPANT | ADMIN
-
-  @@unique([chatRoomId, userId])
-  @@index([chatRoomId])
-  @@index([userId])
+  @@unique([buyerId, farmerId])
+  @@index([buyerId])
+  @@index([farmerId])
 }

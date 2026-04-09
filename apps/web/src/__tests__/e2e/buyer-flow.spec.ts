@@ -12,7 +12,7 @@ test.describe('Buyer Dashboard Flow', () => {
 
   test('should display dashboard with stats', async ({ page }) => {
     // Check if dashboard loads
-    await expect(page.locator('h1')).toContainText('Buyer Dashboard');
+    await expect(page.locator('h1')).toContainText("Buyer Dashboard");
 
     // Check if stats cards are visible
     await expect(page.locator('text=Total Orders')).toBeVisible();
@@ -27,7 +27,7 @@ test.describe('Buyer Dashboard Flow', () => {
     await page.waitForURL('/buyer/dashboard/sourcing/suppliers');
 
     // Check if supplier list loads
-    await expect(page.locator('h1')).toContainText('Smart Sourcing');
+    await expect(page.locator('h1')).toContainText("Smart Sourcing");
     await expect(page.locator('input[placeholder*="Search"]')).toBeVisible();
   });
 

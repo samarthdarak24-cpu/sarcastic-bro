@@ -38,13 +38,13 @@ export const reviewService = {
 
   // Get my reviews (received)
   async getMyReviews(): Promise<Review[]> {
-    const response = await api.get('/reviews/my-reviews');
+    const response = await api.get("/reviews/my-reviews");
     return response.data;
   },
 
   // Get reviews I gave
   async getReviewsGiven(): Promise<Review[]> {
-    const response = await api.get('/reviews/given');
+    const response = await api.get("/reviews/given");
     return response.data;
   },
 
@@ -68,7 +68,8 @@ export const reviewService = {
 
   // Get review statistics
   async getReviewStats(): Promise<any> {
-    const response = await api.get('/reviews/stats');
+    const response = await api.get("/reviews/stats");
     return response.data;
   }
 };
+

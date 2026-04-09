@@ -1,11 +1,36 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, useScroll, useTransform, useMotionValue, useSpring } from "framer-motion";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
+import { 
+  elasticBounce, 
+  slideRotate, 
+  zoomRotate, 
+  floatingContinuous,
+  blurIn,
+  slideFade,
+  cardTilt3D
+} from "@/lib/animations";
 
 export function NewHeroSection() {
   const [counters, setCounters] = useState({ farmers: 0, gmv: 0, quality: 0 });
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const heroRef = useRef<HTMLDivElement>(null);
+  
+  const { scrollYProgress } = useScroll({
+    target: heroRef,
+    offset: ["start start", "end start"]
+  });
+
+  const y = useTransform(scrollYProgress, [0, 1], [0, 300]);
+  const opacity = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
+
+  // Magnetic button effect
+  const buttonX = useMotionValue(0);
+  const buttonY = useMotionValue(0);
+  const buttonSpringX = useSpring(buttonX, { stiffness: 300, damping: 20 });
+  const buttonSpringY = useSpring(buttonY, { stiffness: 300, damping: 20 });
 
   useEffect(() => {
     const duration = 2000;
@@ -30,6 +55,35 @@ export function NewHeroSection() {
 
     return () => clearInterval(timer);
   }, []);
+
+  // Mouse move effect for spotlight
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (heroRef.current) {
+        const rect = heroRef.current.getBoundingClientRect();
+        setMousePosition({
+          x: ((e.clientX - rect.left) / rect.width) * 100,
+          y: ((e.clientY - rect.top) / rect.height) * 100
+        });
+      }
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    return () => window.removeEventListener("mousemove", handleMouseMove);
+  }, []);
+
+  const handleButtonHover = (e: React.MouseEvent<HTMLButtonElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left - rect.width / 2;
+    const y = e.clientY - rect.top - rect.height / 2;
+    buttonX.set(x * 0.3);
+    buttonY.set(y * 0.3);
+  };
+
+  const handleButtonLeave = () => {
+    buttonX.set(0);
+    buttonY.set(0);
+  };
 
   return (
     <section className="relative min-h-screen flex items-center overflow-hidden pt-[110px]">

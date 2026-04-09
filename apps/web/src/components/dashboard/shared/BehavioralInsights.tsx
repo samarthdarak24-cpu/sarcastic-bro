@@ -108,3 +108,4 @@ export function BehavioralInsights() {
     </Card>
   );
 }
+

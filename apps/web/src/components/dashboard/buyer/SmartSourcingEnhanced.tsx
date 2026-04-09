@@ -86,22 +86,8 @@ export function SmartSourcingEnhanced() {
   const categories = ["All", "Grains", "Vegetables", "Fruits", "Spices", "Pulses"];
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-        <div>
-          <h1 className="text-4xl font-black text-slate-900 mb-2 tracking-tight">Smart Sourcing</h1>
-          <p className="text-slate-500 font-medium">AI-powered supplier discovery and negotiation</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <button className="h-12 px-6 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg hover:shadow-xl flex items-center gap-2">
-            <Zap size={18} />
-            AI Match
-          </button>
-        </div>
-      </motion.div>
-
-      {/* Tab Navigation */}
+    <div className="space-y-6">
+      {/* Compact Header - Just Tab Navigation */}
       <div className="flex gap-2 border-b border-slate-200">
         {["suppliers", "features"].map((tab) => (
           <button

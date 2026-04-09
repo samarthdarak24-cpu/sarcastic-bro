@@ -15,7 +15,7 @@ export const buyerAnalyticsService = {
 
   async getDashboardAnalytics(token?: string) {
     try {
-      const response = await api.get('/buyer/analytics/dashboard');
+      const response = await api.get("/buyer/analytics/dashboard");
       return response.data?.data || response.data || {
         totalOrders: 0,
         totalSpent: 0,
@@ -39,7 +39,7 @@ export const buyerAnalyticsService = {
 
   async getInsights(token?: string) {
     try {
-      const response = await api.get('/buyer/analytics/insights');
+      const response = await api.get("/buyer/analytics/insights");
       return response.data?.data || response.data || { insights: [] };
     } catch (error) {
       console.error('Failed to get insights:', error);
@@ -47,3 +47,4 @@ export const buyerAnalyticsService = {
     }
   }
 };
+

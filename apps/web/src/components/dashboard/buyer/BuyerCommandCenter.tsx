@@ -191,12 +191,12 @@ export default function BuyerCommandCenter() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Hero Section */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-gradient-to-br from-blue-600 via-cyan-600 to-teal-600 rounded-3xl p-8 text-white shadow-2xl relative overflow-hidden"
+        className="bg-gradient-to-br from-blue-600 via-cyan-600 to-teal-600 rounded-3xl p-10 text-white shadow-2xl relative overflow-hidden"
       >
         <div className="absolute inset-0 opacity-20">
           <div className="absolute inset-0" style={{
@@ -219,27 +219,27 @@ export default function BuyerCommandCenter() {
           </div>
 
           {/* Stats Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-5">
             {stats.map((stat, idx) => (
               <motion.div
                 key={stat.label}
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: idx * 0.1 }}
-                className="bg-white/10 backdrop-blur-lg rounded-2xl p-4 border border-white/20"
+                className="bg-white rounded-2xl p-5 border-2 border-white/50 shadow-xl hover:shadow-2xl transition-all"
               >
                 <div className="flex items-center gap-3 mb-2">
-                  <div className="h-10 w-10 rounded-xl bg-white/20 flex items-center justify-center">
-                    <stat.icon size={20} />
+                  <div className="h-10 w-10 rounded-xl bg-blue-100 flex items-center justify-center">
+                    <stat.icon size={20} className="text-blue-600" />
                   </div>
                   {stat.badge && (
-                    <span className="text-xs font-bold bg-white/20 px-2 py-1 rounded-full">
+                    <span className="text-xs font-bold bg-green-100 text-green-700 px-2 py-1 rounded-full">
                       {stat.badge}
                     </span>
                   )}
                 </div>
-                <h3 className="text-2xl font-black mb-1">{stat.value}</h3>
-                <p className="text-sm text-blue-100">{stat.label}</p>
+                <h3 className="text-2xl font-black mb-1 text-slate-900">{stat.value}</h3>
+                <p className="text-sm text-slate-600 font-semibold">{stat.label}</p>
               </motion.div>
             ))}
           </div>
@@ -247,43 +247,43 @@ export default function BuyerCommandCenter() {
       </motion.div>
 
       {/* Neural Market Radar */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
-          className="lg:col-span-2 bg-white rounded-2xl border-2 border-slate-200 p-6 shadow-lg"
+          className="lg:col-span-2 bg-white rounded-3xl border-2 border-slate-200 p-8 shadow-xl"
         >
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between mb-8">
             <div>
-              <h2 className="text-2xl font-black text-slate-900 mb-1">Neural Market Radar</h2>
-              <p className="text-slate-600">Subcontinental Liquidity Scan · Active</p>
+              <h2 className="text-2xl font-black text-slate-900 mb-2">Neural Market Radar</h2>
+              <p className="text-slate-600 font-semibold">Subcontinental Liquidity Scan · Active</p>
             </div>
             <div className="text-right">
-              <div className="text-3xl font-black text-blue-600">{neuralRadar.confidence}%</div>
-              <div className="text-sm text-slate-600">CONFIDENCE</div>
+              <div className="text-4xl font-black text-blue-600">{neuralRadar.confidence}%</div>
+              <div className="text-sm text-slate-600 font-bold uppercase tracking-wider">CONFIDENCE</div>
             </div>
           </div>
 
-          <div className="grid grid-cols-4 gap-4 mb-6">
-            <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl p-4">
-              <div className="text-sm text-slate-600 mb-1">Alpha Clusters</div>
-              <div className="text-2xl font-black text-blue-600">{neuralRadar.alphaClusters}</div>
-              <div className="text-xs text-slate-500">Nodes</div>
+          <div className="grid grid-cols-4 gap-5 mb-8">
+            <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl p-5 border border-blue-100">
+              <div className="text-sm text-slate-600 font-semibold mb-2">Alpha Clusters</div>
+              <div className="text-3xl font-black text-blue-600">{neuralRadar.alphaClusters}</div>
+              <div className="text-xs text-slate-500 font-medium mt-1">Nodes</div>
             </div>
-            <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-4">
-              <div className="text-sm text-slate-600 mb-1">Price Delta</div>
-              <div className="text-2xl font-black text-green-600">{neuralRadar.priceDelta}%</div>
-              <div className="text-xs text-slate-500">Favorable</div>
+            <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl p-5 border border-green-100">
+              <div className="text-sm text-slate-600 font-semibold mb-2">Price Delta</div>
+              <div className="text-3xl font-black text-green-600">{neuralRadar.priceDelta}%</div>
+              <div className="text-xs text-slate-500 font-medium mt-1">Favorable</div>
             </div>
-            <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-4">
-              <div className="text-sm text-slate-600 mb-1">Vibe Score</div>
-              <div className="text-2xl font-black text-purple-600">{neuralRadar.vibeScore}</div>
-              <div className="text-xs text-slate-500">Market</div>
+            <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl p-5 border border-purple-100">
+              <div className="text-sm text-slate-600 font-semibold mb-2">Vibe Score</div>
+              <div className="text-3xl font-black text-purple-600">{neuralRadar.vibeScore}</div>
+              <div className="text-xs text-slate-500 font-medium mt-1">Market</div>
             </div>
-            <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-4">
-              <div className="text-sm text-slate-600 mb-1">High Activity</div>
-              <div className="text-2xl font-black text-amber-600">92%</div>
-              <div className="text-xs text-slate-500">Uptime</div>
+            <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl p-5 border border-amber-100">
+              <div className="text-sm text-slate-600 font-semibold mb-2">High Activity</div>
+              <div className="text-3xl font-black text-amber-600">92%</div>
+              <div className="text-xs text-slate-500 font-medium mt-1">Uptime</div>
             </div>
           </div>
 
@@ -307,25 +307,25 @@ export default function BuyerCommandCenter() {
         <motion.div
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
-          className="bg-white rounded-2xl border-2 border-slate-200 p-6 shadow-lg"
+          className="bg-white rounded-3xl border-2 border-slate-200 p-8 shadow-xl"
         >
-          <h2 className="text-xl font-black text-slate-900 mb-4">Feed</h2>
-          <div className="space-y-3">
+          <h2 className="text-2xl font-black text-slate-900 mb-6">Feed</h2>
+          <div className="space-y-4">
             {recentActivity.map((activity, idx) => (
               <motion.div
                 key={idx}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: idx * 0.1 }}
-                className="flex items-start gap-3 p-3 bg-slate-50 rounded-xl hover:bg-slate-100 transition-all cursor-pointer"
+                className="flex items-start gap-4 p-4 bg-slate-50 rounded-2xl hover:bg-slate-100 transition-all cursor-pointer border border-slate-100"
               >
-                <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${getStatusColor(activity.status)}`}>
-                  <activity.icon size={18} />
+                <div className={`h-12 w-12 rounded-xl flex items-center justify-center ${getStatusColor(activity.status)}`}>
+                  <activity.icon size={20} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-bold text-slate-900 text-sm">{activity.title}</h3>
-                  <p className="text-xs text-slate-600 truncate">{activity.description}</p>
-                  <p className="text-xs text-slate-400 mt-1">{activity.time}</p>
+                  <h3 className="font-bold text-slate-900 text-sm mb-1">{activity.title}</h3>
+                  <p className="text-xs text-slate-600 truncate mb-1">{activity.description}</p>
+                  <p className="text-xs text-slate-400 font-medium">{activity.time}</p>
                 </div>
               </motion.div>
             ))}
@@ -335,14 +335,14 @@ export default function BuyerCommandCenter() {
 
       {/* Sub-Features Grid */}
       <div>
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-8">
           <div>
-            <h2 className="text-2xl font-black text-slate-900">Tactical Actions</h2>
-            <p className="text-slate-600">Access all procurement tools and features</p>
+            <h2 className="text-3xl font-black text-slate-900">Tactical Actions</h2>
+            <p className="text-slate-600 font-semibold mt-2">Access all procurement tools and features</p>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
           {subFeatures.map((feature, idx) => (
             <motion.button
               key={feature.id}
@@ -352,14 +352,14 @@ export default function BuyerCommandCenter() {
               whileHover={{ scale: 1.02, y: -4 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => router.push(feature.route)}
-              className="bg-white rounded-2xl border-2 border-slate-200 hover:border-blue-500 p-6 shadow-lg hover:shadow-xl transition-all text-left group"
+              className="bg-white rounded-3xl border-2 border-slate-200 hover:border-blue-500 p-7 shadow-xl hover:shadow-2xl transition-all text-left group"
             >
-              <div className={`h-14 w-14 rounded-xl bg-${feature.color}-100 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
-                <feature.icon size={28} className={`text-${feature.color}-600`} />
+              <div className={`h-16 w-16 rounded-2xl bg-${feature.color}-100 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform`}>
+                <feature.icon size={30} className={`text-${feature.color}-600`} />
               </div>
               
-              <h3 className="font-black text-slate-900 mb-2 text-lg">{feature.title}</h3>
-              <p className="text-sm text-slate-600 mb-4 line-clamp-2">{feature.description}</p>
+              <h3 className="font-black text-slate-900 mb-3 text-lg">{feature.title}</h3>
+              <p className="text-sm text-slate-600 font-medium mb-5 line-clamp-2">{feature.description}</p>
               
               <div className="flex items-center justify-between">
                 <div className="flex gap-2">
@@ -381,7 +381,7 @@ export default function BuyerCommandCenter() {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-gradient-to-r from-purple-600 via-pink-600 to-red-600 rounded-2xl p-6 text-white shadow-xl relative overflow-hidden"
+        className="bg-gradient-to-r from-purple-600 via-pink-600 to-red-600 rounded-3xl p-10 text-white shadow-2xl relative overflow-hidden"
       >
         <div className="absolute inset-0 opacity-20">
           <div className="absolute inset-0" style={{

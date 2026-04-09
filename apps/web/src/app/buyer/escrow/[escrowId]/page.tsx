@@ -39,7 +39,7 @@ export default function EscrowDetailPage() {
       description="View escrow transaction information"
       backLink="/buyer/escrow"
       loading={loading}
-      error={error}
+      error={error || undefined}
       onRetry={handleRetry}
     >
       <div className="bg-slate-800/50 rounded-lg p-6 border border-slate-700">

@@ -554,7 +554,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({
       setShowOrderDetails(false);
     } catch (e) {
       console.error(`Error ${action}ing order:`, e);
-      alert('Action failed. Please try again.');
+      alert("Action failed. Please try again.");
     }
   };
 
@@ -678,7 +678,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({
     const chatData = messages
       .map((msg) => `${msg.sender.name}: ${msg.content}`)
       .join('\n');
-    const element = document.createElement('a');
+    const element = document.createElement("a");
     element.setAttribute(
       'href',
       'data:text/plain;charset=utf-8,' + encodeURIComponent(chatData)

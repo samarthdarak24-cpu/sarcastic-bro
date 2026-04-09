@@ -32,7 +32,7 @@ export async function apiFetch<T = any>(
   options: RequestInit & ApiRequestOptions = {}
 ): Promise<ApiResponse<T>> {
   const {
-    timeout = getTimeout('medium'),
+    timeout = getTimeout("medium"),
     retries = API_CONFIG.RETRY.MAX_ATTEMPTS,
     fallbackData,
     service = 'main',

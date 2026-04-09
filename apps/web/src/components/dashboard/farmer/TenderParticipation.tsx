@@ -975,3 +975,5 @@ export function TenderParticipation() {
     </div>
   );
 }
+
+export default TenderParticipation;

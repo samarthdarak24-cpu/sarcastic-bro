@@ -21,7 +21,7 @@ const envSchema = z.object({
   ELASTICSEARCH_URL: z.string().optional(),
   AI_SERVICE_URL: z.string().url().default("http://localhost:8000"),
   OLLAMA_URL: z.string().url().default("http://localhost:11434"),
-  OLLAMA_MODEL: z.string().default("phi"),
+  OLLAMA_MODEL: z.string().default("qwen2.5"),
 });
 
 const parsed = envSchema.parse(process.env);

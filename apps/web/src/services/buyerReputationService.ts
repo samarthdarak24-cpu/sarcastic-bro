@@ -3,7 +3,7 @@ import api from './api';
 export const buyerReputationService = {
   async getReputation(token?: string) {
     try {
-      const response = await api.get('/buyer/reputation');
+      const response = await api.get("/buyer/reputation");
       return response.data?.data || response.data || {};
     } catch (error) {
       console.error('Failed to get reputation:', error);
@@ -25,7 +25,7 @@ export const buyerReputationService = {
 
   async getReputationBreakdown(token?: string) {
     try {
-      const response = await api.get('/buyer/reputation/breakdown');
+      const response = await api.get("/buyer/reputation/breakdown");
       return response.data?.data || response.data || {};
     } catch (error) {
       console.error('Failed to get reputation breakdown:', error);
@@ -33,3 +33,4 @@ export const buyerReputationService = {
     }
   }
 };
+

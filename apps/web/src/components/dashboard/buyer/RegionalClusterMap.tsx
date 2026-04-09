@@ -12,11 +12,8 @@ export function RegionalClusterMap() {
   ];
 
   return (
-    <div className="space-y-8">
-      <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
-        <h1 className="text-4xl font-black text-slate-900 mb-2">Cluster Intelligence</h1>
-        <p className="text-slate-500 font-medium">Regional supply network analysis</p>
-      </motion.div>
+    <div className="space-y-6">
+      {/* Removed large header to save space */}
 
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-slate-900 rounded-3xl p-8 text-white">
         <h2 className="text-2xl font-black mb-6">India Supply Map</h2>

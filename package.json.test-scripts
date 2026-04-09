@@ -1,0 +1,24 @@
+{
+  "scripts": {
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:unit": "jest --testPathPattern='\\.spec\\.ts$' --testPathIgnorePatterns='(e2e|integration|performance|security)'",
+    "test:property": "jest --testPathPattern='property-based\\.spec\\.ts$'",
+    "test:integration": "jest --testPathPattern='integration\\.spec\\.ts$'",
+    "test:e2e": "jest --testPathPattern='e2e\\.spec\\.ts$'",
+    "test:performance": "jest --testPathPattern='performance\\.spec\\.ts$' --testTimeout=30000",
+    "test:security": "jest --testPathPattern='security\\.spec\\.ts$'",
+    "test:coverage": "jest --coverage --collectCoverageFrom='src/**/*.ts' --collectCoverageFrom='!src/**/*.spec.ts' --collectCoverageFrom='!src/**/*.module.ts'",
+    "test:all": "npm run test:unit && npm run test:property && npm run test:integration && npm run test:e2e && npm run test:performance && npm run test:security",
+    "test:smoke": "jest --testPathPattern='smoke\\.spec\\.ts$'",
+    "test:health": "jest --testPathPattern='health\\.spec\\.ts$'",
+    "lint": "eslint src --ext .ts",
+    "lint:fix": "eslint src --ext .ts --fix",
+    "type-check": "tsc --noEmit",
+    "build": "tsc",
+    "build:api": "cd apps/api && npm run build",
+    "build:web": "cd apps/web && npm run build",
+    "migrate:prod": "cd apps/api && npx prisma migrate deploy",
+    "restore:backup": "node scripts/restore-backup.js"
+  }
+}

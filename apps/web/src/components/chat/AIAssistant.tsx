@@ -12,7 +12,6 @@ interface Message {
 
 export default function AIAssistant() {
   const { user } = useAuth();
-  const { i18n } = useTranslation();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
@@ -55,7 +54,7 @@ export default function AIAssistant() {
           chatInput: input,
           userId: user?.id,
           userRole: user?.role,
-          language: i18n.language,
+          language: 'en',
         }),
       });
 

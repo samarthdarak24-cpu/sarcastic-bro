@@ -37,7 +37,7 @@ export function N8nChatWidget({
 }: N8nChatWidgetProps) {
   useEffect(() => {
     // Load the n8n chat script from public directory
-    const script = document.createElement('script');
+    const script = document.createElement("script");
     script.src = '/n8n-chat/index.js';
     script.async = true;
     document.body.appendChild(script);

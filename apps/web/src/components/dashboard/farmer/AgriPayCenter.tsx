@@ -312,7 +312,7 @@ export default function AgriPayCenter() {
         type: filterType,
       });
       const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
+      const a = document.createElement("a");
       a.href = url;
       a.download = `transactions_${Date.now()}.csv`;
       document.body.appendChild(a);
@@ -717,7 +717,7 @@ export default function AgriPayCenter() {
                       className="flex items-center gap-1 text-xs text-slate-500 hover:text-green-600 transition-colors"
                     >
                       <Copy size={14} />
-                      <span className="font-mono">{txn.reference.split('/').pop()}</span>
+                      <span className="font-mono">{txn.reference.split("/").pop()}</span>
                     </motion.button>
                   </div>
 

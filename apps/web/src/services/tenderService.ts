@@ -40,13 +40,13 @@ export const tenderService = {
 
   // Get my tenders (buyer)
   async getMyTenders(): Promise<Tender[]> {
-    const response = await api.get('/tenders/my-tenders');
+    const response = await api.get("/tenders/my-tenders");
     return response.data;
   },
 
   // Get my applications (farmer)
   async getMyApplications(): Promise<TenderApplication[]> {
-    const response = await api.get('/tenders/my-applications');
+    const response = await api.get("/tenders/my-applications");
     return response.data;
   },
 
@@ -92,3 +92,4 @@ export const tenderService = {
     return response.data;
   }
 };
+

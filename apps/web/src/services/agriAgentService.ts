@@ -103,7 +103,7 @@ Tasks:`
    */
   private parseTasksFromAI(aiResponse: string): AgentTask[] {
     const tasks: AgentTask[] = [];
-    const lines = aiResponse.split('\n');
+    const lines = aiResponse.split("\n");
     
     for (const line of lines) {
       // Match numbered tasks: "1. Task description" or "1) Task description"
@@ -276,3 +276,4 @@ Provide a brief result or recommendation.`
 
 export const agriAgent = new AgriAgentService();
 export default agriAgent;
+

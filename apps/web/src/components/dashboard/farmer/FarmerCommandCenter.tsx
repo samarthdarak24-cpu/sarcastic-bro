@@ -428,7 +428,7 @@ export default function FarmerCommandCenter() {
                   {Object.entries(feature.metrics).map(([key, value]) => (
                     <div key={key} className="bg-slate-100 px-2 py-1 rounded-lg">
                       <span className="text-xs font-bold text-slate-900">{value}</span>
-                      <span className="text-xs text-slate-500 ml-1">{t(`metrics.${key}`)}</span>
+                      <span className="text-xs text-slate-500 ml-1">{key.charAt(0).toUpperCase() + key.slice(1)}</span>
                     </div>
                   ))}
                 </div>

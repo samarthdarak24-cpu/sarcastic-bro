@@ -12,11 +12,8 @@ export function TrustReviews() {
   ];
 
   return (
-    <div className="space-y-8">
-      <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
-        <h1 className="text-4xl font-black text-slate-900 mb-2">Trust & Reviews</h1>
-        <p className="text-slate-500 font-medium">Community-verified supplier ratings</p>
-      </motion.div>
+    <div className="space-y-6">
+      {/* Removed large header to save space */}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {[

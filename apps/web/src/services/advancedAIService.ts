@@ -224,7 +224,7 @@ class AdvancedAIService {
           if (done) break;
 
           const chunk = new TextDecoder().decode(value);
-          const lines = chunk.split('\n');
+          const lines = chunk.split("\n");
 
           for (const line of lines) {
             if (line.startsWith('data: ')) {
@@ -276,7 +276,7 @@ class AdvancedAIService {
    * Get active sessions
    */
   async getActiveSessions(): Promise<{ active_sessions: string[]; count: number; timestamp: string }> {
-    return this.makeRequest('/sessions');
+    return this.makeRequest("/sessions");
   }
 
   /**
@@ -326,7 +326,7 @@ class AdvancedAIService {
       });
       
       const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
+      const a = document.createElement("a");
       a.href = url;
       a.download = `conversation-${sessionId}.${format}`;
       document.body.appendChild(a);

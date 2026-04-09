@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, ShieldCheck } from "lucide-react";
-import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
 export function NewNavbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -21,6 +20,7 @@ export function NewNavbar() {
     { label: "Intelligent Sourcing", href: "#features" },
     { label: "Trade Network", href: "#how-it-works" },
     { label: "Market Intel", href: "#stats" },
+    { label: "AI Analyzer", href: "/ai-analyzer", external: true },
     { label: "Contact", href: "#contact" },
   ];
 
@@ -70,29 +70,37 @@ export function NewNavbar() {
             {/* Desktop Navigation */}
             <div className="hidden lg:flex items-center gap-8">
               {navLinks.map((link) => (
-                <a
-                  key={link.href}
-                  href={link.href}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    const target = document.querySelector(link.href);
-                    if (target) {
-                      target.scrollIntoView({ behavior: 'smooth' });
-                    }
-                  }}
-                  className="text-sm font-medium text-[#6b7280] hover:text-[#22c55e] transition-colors relative group cursor-pointer"
-                >
-                  {link.label}
-                  <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#22c55e] group-hover:w-full transition-all duration-300" />
-                </a>
+                link.external ? (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className="text-sm font-medium text-[#6b7280] hover:text-[#22c55e] transition-colors relative group cursor-pointer"
+                  >
+                    {link.label}
+                    <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#22c55e] group-hover:w-full transition-all duration-300" />
+                  </Link>
+                ) : (
+                  <a
+                    key={link.href}
+                    href={link.href}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      const target = document.querySelector(link.href);
+                      if (target) {
+                        target.scrollIntoView({ behavior: 'smooth' });
+                      }
+                    }}
+                    className="text-sm font-medium text-[#6b7280] hover:text-[#22c55e] transition-colors relative group cursor-pointer"
+                  >
+                    {link.label}
+                    <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#22c55e] group-hover:w-full transition-all duration-300" />
+                  </a>
+                )
               ))}
             </div>
 
             {/* Right Actions */}
             <div className="hidden lg:flex items-center gap-4">
-              {/* Language Switcher */}
-              <LanguageSwitcher />
-
               {/* Login Button */}
               <Link href="/login">
                 <motion.button
@@ -139,32 +147,44 @@ export function NewNavbar() {
           >
             <div className="flex flex-col h-full pt-24 px-6">
               {navLinks.map((link, i) => (
-                <motion.a
-                  key={link.href}
-                  href={link.href}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: i * 0.1 }}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setMobileOpen(false);
-                    const target = document.querySelector(link.href);
-                    if (target) {
-                      target.scrollIntoView({ behavior: 'smooth' });
-                    }
-                  }}
-                  className="text-2xl font-bold text-[#111827] py-4 border-b border-gray-200 cursor-pointer"
-                >
-                  {link.label}
-                </motion.a>
+                link.external ? (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    onClick={() => setMobileOpen(false)}
+                  >
+                    <motion.div
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: i * 0.1 }}
+                      className="text-2xl font-bold text-[#111827] py-4 border-b border-gray-200 cursor-pointer"
+                    >
+                      {link.label}
+                    </motion.div>
+                  </Link>
+                ) : (
+                  <motion.a
+                    key={link.href}
+                    href={link.href}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: i * 0.1 }}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setMobileOpen(false);
+                      const target = document.querySelector(link.href);
+                      if (target) {
+                        target.scrollIntoView({ behavior: 'smooth' });
+                      }
+                    }}
+                    className="text-2xl font-bold text-[#111827] py-4 border-b border-gray-200 cursor-pointer"
+                  >
+                    {link.label}
+                  </motion.a>
+                )
               ))}
 
               <div className="mt-auto pb-8 space-y-4">
-                {/* Language Switcher for Mobile */}
-                <div className="mb-4 pb-4 border-b border-gray-200">
-                  <LanguageSwitcher />
-                </div>
-                
                 <Link href="/login" onClick={() => setMobileOpen(false)}>
                   <button className="w-full px-6 py-3 text-sm font-semibold text-[#22c55e] border-2 border-[#22c55e] rounded-lg">
                     Login

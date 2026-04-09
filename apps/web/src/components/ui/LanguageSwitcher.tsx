@@ -3,20 +3,18 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Globe, Check } from "lucide-react";
-import { SUPPORTED_LANGUAGES } from "@/lib/i18n";
 import toast from "react-hot-toast";
+
+const SUPPORTED_LANGUAGES = [
+  { code: 'en', label: 'English', nativeLabel: 'English', flag: '🇬🇧' },
+  { code: 'hi', label: 'Hindi', nativeLabel: 'हिंदी', flag: '🇮🇳' },
+  { code: 'mr', label: 'Marathi', nativeLabel: 'मराठी', flag: '🇮🇳' },
+];
 
 export function LanguageSwitcher() {
   const [open, setOpen] = useState(false);
-  const { i18n, t } = useTranslation();
-  const [currentLang, setCurrentLang] = useState(i18n.language);
+  const [currentLang, setCurrentLang] = useState('en');
   const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handleLangChange = (lng: string) => setCurrentLang(lng);
-    i18n.on("languageChanged", handleLangChange);
-    return () => { i18n.off("languageChanged", handleLangChange); };
-  }, [i18n]);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -33,14 +31,10 @@ export function LanguageSwitcher() {
   const current = SUPPORTED_LANGUAGES.find(l => l.code === currentLang) || SUPPORTED_LANGUAGES[0];
 
   const handleChange = (code: string) => {
-    i18n.changeLanguage(code);
     setCurrentLang(code);
     setOpen(false);
     const lang = SUPPORTED_LANGUAGES.find(l => l.code === code);
     toast.success(`${lang?.flag} ${lang?.nativeLabel}`, { duration: 2000 });
-    
-    // Force a full re-render by dispatching a custom event
-    window.dispatchEvent(new CustomEvent('languageChanged', { detail: code }));
   };
 
   return (
@@ -67,7 +61,7 @@ export function LanguageSwitcher() {
             style={{ zIndex: 99999 }}
           >
             <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-3 py-2 border-b border-slate-50">
-              {"Select Language"}
+              Select Language
             </p>
             {SUPPORTED_LANGUAGES.map(lang => (
               <button

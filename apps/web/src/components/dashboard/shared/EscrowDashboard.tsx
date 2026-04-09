@@ -238,3 +238,4 @@ const MOCK_ESCROWS = [
   { id: "esc-2", orderId: "ord-2", order: { orderNumber: "ORD-XYZ789GHI" }, buyerId: "b1", farmerId: "f2", buyer: { name: "AgriTech Corp" }, farmer: { name: "Sunita Devi" }, amount: 78500, status: "RELEASED", escrowAddress: "0x8b6c4d3e2f1a5b6c7d8e9f0a1b2c3d4e5f6a7b8c", depositTxHash: "0xdef...", releaseTxHash: "0xghi789release", farmerDelivered: true, buyerConfirmed: true, createdAt: "2025-01-15", releasedAt: "2025-01-20" },
   { id: "esc-3", orderId: "ord-3", order: { orderNumber: "ORD-LMN456OPQ" }, buyerId: "b1", farmerId: "f3", buyer: { name: "AgriTech Corp" }, farmer: { name: "Anil Sharma" }, amount: 45000, status: "HELD", escrowAddress: "0x9c7d5e4f3a2b1c6d7e8f9a0b1c2d3e4f5a6b7c8d", depositTxHash: "0xjkl...", farmerDelivered: false, buyerConfirmed: false, createdAt: "2025-01-25" },
 ];
+

@@ -112,12 +112,10 @@ export function PreBookingHub() {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
+      {/* Removed large header to save space */}
       <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="flex items-center justify-between">
-        <div>
-          <h1 className="text-4xl font-black text-slate-900 mb-2">Pre-Booking Hub</h1>
-          <p className="text-slate-500 font-medium">Lock prices before harvest</p>
-        </div>
+        {/* Compact header removed */}
         <button
           onClick={() => setShowCreateModal(true)}
           className="h-12 px-6 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg flex items-center gap-2"

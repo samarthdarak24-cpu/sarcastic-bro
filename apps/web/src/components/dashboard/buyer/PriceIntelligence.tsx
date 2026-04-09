@@ -62,10 +62,10 @@ export function PriceIntelligence() {
   const selectedData = priceData.find(p => p.product === selectedProduct) || priceData[0];
 
   return (
-    <div className="p-6 space-y-8">
+    <div className="p-6 space-y-6">
+      {/* Removed large header to save space */}
       <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
-        <h1 className="text-4xl font-black text-slate-900 mb-2">Market Intelligence</h1>
-        <p className="text-slate-500 font-medium">Real-time market analytics and price forecasts</p>
+        {/* Compact header removed */}
       </motion.div>
 
       {/* Price Overview Cards */}

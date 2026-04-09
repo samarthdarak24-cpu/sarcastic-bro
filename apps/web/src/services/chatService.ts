@@ -176,7 +176,7 @@ const mockMessages: { [key: string]: Message[] } = {
 export const chatService = {
   async getConversations(): Promise<Conversation[]> {
     try {
-      const response = await api.get('/messages/conversations');
+      const response = await api.get("/messages/conversations");
       const data = response.data.data || response.data || [];
       return data.length > 0 ? data : mockConversations;
     } catch (error) {
@@ -275,3 +275,4 @@ export const chatService = {
     }
   },
 };
+

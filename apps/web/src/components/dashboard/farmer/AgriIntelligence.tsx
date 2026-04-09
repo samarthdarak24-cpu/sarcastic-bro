@@ -1,56 +1,42 @@
-"use client";
+'use client';
 
-import React, { useState } from "react";
-import { motion } from "framer-motion";
-import { 
-  Sparkles, TrendingUp, Target, Zap, ShieldCheck, Globe, Activity,
-  Cpu, Brain, ArrowUpRight, BarChart3, Eye, Database, LineChart,
-  PieChart, TrendingDown, AlertTriangle, CheckCircle, Download,
-  Calendar, MapPin, Users, DollarSign, Layers, Cloud, RefreshCw
-} from "lucide-react";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { MinimalHeader } from "./shared/MinimalHeader";
-import toast from "react-hot-toast";
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  Brain, Sparkles, TrendingUp, Target, Zap, ShieldCheck,
+  Activity, Database, DollarSign, CheckCircle, AlertTriangle,
+  ArrowUpRight, Layers, Users, RefreshCw
+} from 'lucide-react';
 
 export default function AgriIntelligence() {
   const [activeTab, setActiveTab] = useState('overview');
   const [refreshing, setRefreshing] = useState(false);
 
   const tabs = [
-    { id: 'overview', label: 'Intelligence Overview', icon: Activity },
-    { id: 'predictive-analytics', label: 'Predictive', icon: Brain },
-    { id: 'market-trends', label: 'Market Trends', icon: TrendingUp },
-    { id: 'yield-forecast', label: 'Yield Forecast', icon: Target },
-    { id: 'resource-optimization', label: 'Resources', icon: Zap },
-    { id: 'risk-assessment', label: 'Risk', icon: ShieldCheck },
-    { id: 'benchmarking', label: 'Benchmarking', icon: BarChart3 },
-    { id: 'recommendations', label: 'AI Insights', icon: Sparkles },
-    { id: 'visualization', label: 'Visualization', icon: PieChart },
-    { id: 'reports', label: 'Reports', icon: Download }
+    { id: 'overview', label: 'Overview', icon: Activity },
+    { id: 'predictions', label: 'Predictions', icon: Brain },
+    { id: 'yield', label: 'Yield Forecast', icon: Target },
+    { id: 'resources', label: 'Resources', icon: Zap },
+    { id: 'risk', label: 'Risk Analysis', icon: ShieldCheck },
   ];
 
   const handleRefresh = () => {
     setRefreshing(true);
-    setTimeout(() => {
-      setRefreshing(false);
-      toast.success('Intelligence data refreshed');
-    }, 1000);
+    setTimeout(() => setRefreshing(false), 1000);
   };
 
   const overviewStats = [
-    { label: 'AI Accuracy', value: '98.2%', change: '+2.1%', icon: Brain, color: 'purple' },
-    { label: 'Data Points', value: '14.2K', change: '+1.2K', icon: Database, color: 'blue' },
-    { label: 'Predictions', value: '247', change: '+18', icon: Target, color: 'green' },
-    { label: 'Revenue Impact', value: '₹24.8K', change: '+12%', icon: DollarSign, color: 'emerald' }
+    { label: 'AI Accuracy', value: '98.2%', change: '+2.1%', icon: Brain, color: 'from-purple-500 to-pink-600' },
+    { label: 'Data Points', value: '14.2K', change: '+1.2K', icon: Database, color: 'from-blue-500 to-cyan-600' },
+    { label: 'Predictions', value: '247', change: '+18', icon: Target, color: 'from-green-500 to-emerald-600' },
+    { label: 'Revenue Impact', value: '₹24.8K', change: '+12%', icon: DollarSign, color: 'from-amber-500 to-orange-600' }
   ];
 
   const predictions = [
-    { title: 'Crop Rotation', description: 'AI suggests rotating wheat with pulses', confidence: 92, impact: 'High' },
-    { title: 'Irrigation Schedule', description: 'Optimize water usage by 25%', confidence: 88, impact: 'Medium' },
-    { title: 'Harvest Timing', description: 'Best harvest window: Next 7 days', confidence: 95, impact: 'High' },
-    { title: 'Fertilizer Mix', description: 'Adjust NPK ratio for better yield', confidence: 90, impact: 'High' }
+    { title: 'Crop Rotation', description: 'AI suggests rotating wheat with pulses for better soil health', confidence: 92, impact: 'High', icon: Sparkles, color: 'from-green-500 to-emerald-600' },
+    { title: 'Irrigation Schedule', description: 'Optimize water usage by 25% with smart scheduling', confidence: 88, impact: 'Medium', icon: Zap, color: 'from-blue-500 to-cyan-600' },
+    { title: 'Harvest Timing', description: 'Best harvest window: Next 7 days for maximum yield', confidence: 95, impact: 'High', icon: Target, color: 'from-purple-500 to-pink-600' },
+    { title: 'Fertilizer Mix', description: 'Adjust NPK ratio for 15% better yield', confidence: 90, impact: 'High', icon: CheckCircle, color: 'from-amber-500 to-orange-600' }
   ];
 
   const yieldForecasts = [
@@ -61,517 +47,310 @@ export default function AgriIntelligence() {
   ];
 
   const resourceOptimization = [
-    { resource: 'Water', current: '1200 L/day', optimized: '900 L/day', savings: '25%', cost: '₹450' },
-    { resource: 'Fertilizer', current: '45 kg/week', optimized: '38 kg/week', savings: '15%', cost: '₹280' },
-    { resource: 'Energy', current: '180 kWh', optimized: '135 kWh', savings: '25%', cost: '₹360' },
-    { resource: 'Labor', current: '40 hrs/week', optimized: '32 hrs/week', savings: '20%', cost: '₹800' }
+    { resource: 'Water', current: '1200 L/day', optimized: '900 L/day', savings: '25%', cost: '₹450', icon: Activity },
+    { resource: 'Fertilizer', current: '45 kg/week', optimized: '38 kg/week', savings: '15%', cost: '₹280', icon: Layers },
+    { resource: 'Energy', current: '180 kWh', optimized: '135 kWh', savings: '25%', cost: '₹360', icon: Zap },
+    { resource: 'Labor', current: '40 hrs/week', optimized: '32 hrs/week', savings: '20%', cost: '₹800', icon: Users }
   ];
 
   const riskAssessments = [
-    { risk: 'Pest Infestation', level: 'Low', probability: 15, impact: 'Medium', action: 'Monitor weekly' },
-    { risk: 'Water Shortage', level: 'Medium', probability: 45, impact: 'High', action: 'Install drip irrigation' },
-    { risk: 'Price Volatility', level: 'High', probability: 72, impact: 'High', action: 'Lock in contracts' },
-    { risk: 'Weather Damage', level: 'Low', probability: 22, impact: 'Medium', action: 'Use protective covers' }
-  ];
-
-  const benchmarkData = [
-    { metric: 'Yield per Acre', yourFarm: 920, avgRegion: 780, avgNational: 850, unit: 'kg' },
-    { metric: 'Water Efficiency', yourFarm: 85, avgRegion: 72, avgNational: 68, unit: '%' },
-    { metric: 'Cost per Unit', yourFarm: 42, avgRegion: 55, avgNational: 58, unit: '₹' },
-    { metric: 'Quality Score', yourFarm: 92, avgRegion: 78, avgNational: 75, unit: '/100' }
+    { risk: 'Pest Infestation', level: 'Low', probability: 15, impact: 'Medium', action: 'Monitor weekly', color: 'green' },
+    { risk: 'Water Shortage', level: 'Medium', probability: 45, impact: 'High', action: 'Install drip irrigation', color: 'amber' },
+    { risk: 'Price Volatility', level: 'High', probability: 72, impact: 'High', action: 'Lock in contracts', color: 'red' },
+    { risk: 'Weather Damage', level: 'Low', probability: 22, impact: 'Medium', action: 'Use protective covers', color: 'green' }
   ];
 
   return (
-    <div className="w-full min-h-screen bg-slate-50 p-6">
-      <div className="max-w-[1600px] mx-auto space-y-6">
-        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 pb-6 border-b-2 border-slate-200">
-          <div className="space-y-3">
-            <div className="flex items-center gap-4">
-              <h2 className="text-3xl md:text-4xl font-black tracking-tighter text-slate-900">Agri-Intelligence.</h2>
-              <Badge tone="brand" className="h-8 px-4 rounded-xl font-black gap-2 uppercase text-[9px]">
-                <Sparkles size={14} className="animate-pulse" />
-                AI POWERED
-              </Badge>
-            </div>
-            <p className="text-sm font-bold text-slate-600 uppercase tracking-widest">
-              AI-powered analytics and insights for smarter farming
-            </p>
+    <div className="space-y-6">
+      {/* Header with Refresh */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center shadow-lg">
+            <Brain size={24} className="text-white" />
           </div>
-          <Button
-            onClick={handleRefresh}
-            disabled={refreshing}
-            className="h-12 px-6 bg-white hover:bg-slate-50 text-slate-900 rounded-xl font-black border-2 border-slate-200"
-          >
-            <RefreshCw size={16} className={refreshing ? 'animate-spin mr-2' : 'mr-2'} />
-            {refreshing ? 'Refreshing...' : 'Refresh'}
-          </Button>
-        </div>
-
-        <div className="w-full bg-white rounded-2xl p-4 shadow-lg border border-slate-200">
-          <div className="flex items-center gap-3 overflow-x-auto pb-2 scrollbar-hide">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-5 py-3 rounded-xl font-black text-xs uppercase whitespace-nowrap transition-all ${
-                  activeTab === tab.id
-                    ? 'bg-emerald-600 text-white shadow-lg scale-105'
-                    : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
-                }`}
-              >
-                <tab.icon size={16} />
-                {tab.label}
-              </button>
-            ))}
+          <div>
+            <h2 className="text-2xl font-black text-slate-900">AI Intelligence</h2>
+            <p className="text-sm text-slate-500">Powered by Machine Learning</p>
           </div>
         </div>
+        <button
+          onClick={handleRefresh}
+          disabled={refreshing}
+          className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors"
+        >
+          <RefreshCw size={16} className={refreshing ? 'animate-spin' : ''} />
+          <span className="text-sm font-bold">Refresh</span>
+        </button>
+      </div>
 
-        <div className="w-full bg-white rounded-2xl p-8 shadow-lg border border-slate-200 min-h-[600px]">
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {overviewStats.map((stat, index) => (
           <motion.div
-            key={activeTab}
+            key={stat.label}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="w-full"
+            transition={{ delay: 0.1 * index }}
+            whileHover={{ y: -4, scale: 1.02 }}
+            className="bg-white rounded-2xl p-6 shadow-lg border border-slate-200 relative overflow-hidden group"
           >
-            {activeTab === 'overview' && (
-              <div className="space-y-6">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                  {overviewStats.map((stat, i) => (
-                    <Card key={i} className="p-6 border-none shadow-lg bg-white rounded-[2rem]">
-                      <div className="flex items-center justify-between mb-4">
-                        <stat.icon size={24} className={`text-${stat.color}-600`} />
-                        <TrendingUp size={20} className="text-green-600" />
+            <motion.div
+              className={`absolute inset-0 bg-gradient-to-br ${stat.color} opacity-0 group-hover:opacity-5 transition-opacity duration-300`}
+            />
+            
+            <div className="flex items-start justify-between mb-4">
+              <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${stat.color} flex items-center justify-center shadow-md`}>
+                <stat.icon size={20} className="text-white" />
+              </div>
+              <span className="text-xs font-bold text-green-600 bg-green-50 px-2 py-1 rounded-full">
+                {stat.change}
+              </span>
+            </div>
+            
+            <p className="text-3xl font-black text-slate-900 mb-1">{stat.value}</p>
+            <p className="text-sm text-slate-500 font-medium">{stat.label}</p>
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Tabs */}
+      <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+        {tabs.map((tab, index) => {
+          const isActive = activeTab === tab.id;
+          return (
+            <motion.button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 + index * 0.05 }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm whitespace-nowrap transition-all ${
+                isActive
+                  ? 'bg-gradient-to-r from-purple-500 to-pink-600 text-white shadow-lg'
+                  : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'
+              }`}
+            >
+              <tab.icon size={16} />
+              {tab.label}
+            </motion.button>
+          );
+        })}
+      </div>
+
+      {/* Content */}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={activeTab}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+          transition={{ duration: 0.3 }}
+        >
+          {activeTab === 'overview' && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="bg-white rounded-2xl p-6 shadow-lg border border-slate-200">
+                <h3 className="text-lg font-black text-slate-900 mb-4">Top Predictions</h3>
+                <div className="space-y-3">
+                  {predictions.slice(0, 3).map((pred, i) => (
+                    <div key={i} className="flex items-start gap-3 p-3 bg-slate-50 rounded-xl">
+                      <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${pred.color} flex items-center justify-center flex-shrink-0`}>
+                        <pred.icon size={18} className="text-white" />
                       </div>
-                      <p className="text-sm font-bold text-slate-400 uppercase mb-2">{stat.label}</p>
-                      <p className="text-3xl font-black text-slate-900 mb-2">{stat.value}</p>
-                      <span className="text-sm font-bold text-green-600">{stat.change}</span>
-                    </Card>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-bold text-slate-900 text-sm">{pred.title}</p>
+                        <p className="text-xs text-slate-500 mt-1">{pred.description}</p>
+                        <div className="flex items-center gap-2 mt-2">
+                          <span className="text-xs font-bold text-purple-600">{pred.confidence}% confidence</span>
+                          <span className="text-xs text-slate-400">•</span>
+                          <span className="text-xs font-bold text-green-600">{pred.impact} impact</span>
+                        </div>
+                      </div>
+                    </div>
                   ))}
                 </div>
+              </div>
 
-                <Card className="p-8 border-none shadow-lg bg-gradient-to-br from-purple-50 to-indigo-50 rounded-[3rem]">
-                  <h3 className="text-2xl font-black text-slate-900 mb-6 flex items-center gap-3">
-                    <Brain size={32} className="text-purple-600" />
-                    AI Intelligence Dashboard
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="bg-white rounded-2xl p-6">
-                      <h4 className="text-lg font-black text-slate-900 mb-4">Top Predictions</h4>
-                      <div className="space-y-3">
-                        {predictions.slice(0, 3).map((pred, idx) => (
-                          <div key={idx} className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl">
-                            <CheckCircle size={20} className="text-green-600" />
-                            <div className="flex-1">
-                              <p className="text-sm font-bold text-slate-900">{pred.title}</p>
-                              <p className="text-xs text-slate-600">{pred.confidence}% confidence</p>
-                            </div>
-                          </div>
-                        ))}
+              <div className="bg-white rounded-2xl p-6 shadow-lg border border-slate-200">
+                <h3 className="text-lg font-black text-slate-900 mb-4">Risk Overview</h3>
+                <div className="space-y-3">
+                  {riskAssessments.map((risk, i) => (
+                    <div key={i} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl">
+                      <div>
+                        <p className="font-bold text-slate-900 text-sm">{risk.risk}</p>
+                        <p className="text-xs text-slate-500 mt-1">{risk.action}</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                          risk.color === 'green' ? 'bg-green-100 text-green-700' :
+                          risk.color === 'amber' ? 'bg-amber-100 text-amber-700' :
+                          'bg-red-100 text-red-700'
+                        }`}>
+                          {risk.level}
+                        </span>
                       </div>
                     </div>
-                    <div className="bg-white rounded-2xl p-6">
-                      <h4 className="text-lg font-black text-slate-900 mb-4">Quick Insights</h4>
-                      <div className="space-y-3">
-                        <div className="p-3 bg-green-50 rounded-xl">
-                          <p className="text-sm font-bold text-green-900">Yield up 12% this season</p>
-                        </div>
-                        <div className="p-3 bg-blue-50 rounded-xl">
-                          <p className="text-sm font-bold text-blue-900">Water savings: 25%</p>
-                        </div>
-                        <div className="p-3 bg-purple-50 rounded-xl">
-                          <p className="text-sm font-bold text-purple-900">Cost reduction: ₹1,890</p>
-                        </div>
-                      </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'predictions' && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {predictions.map((pred, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: i * 0.1 }}
+                  whileHover={{ y: -4 }}
+                  className="bg-white rounded-2xl p-6 shadow-lg border border-slate-200"
+                >
+                  <div className="flex items-start gap-4 mb-4">
+                    <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${pred.color} flex items-center justify-center shadow-md`}>
+                      <pred.icon size={24} className="text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-black text-slate-900 mb-1">{pred.title}</h4>
+                      <p className="text-sm text-slate-600">{pred.description}</p>
                     </div>
                   </div>
-                </Card>
-              </div>
-            )}
-
-            {activeTab === 'predictive-analytics' && (
-              <div className="space-y-6">
-                <Card className="p-8 border-none shadow-lg bg-gradient-to-br from-purple-50 to-pink-50 rounded-[3rem]">
-                  <h3 className="text-2xl font-black text-slate-900 mb-6 flex items-center gap-3">
-                    <Brain size={32} className="text-purple-600" />
-                    AI Predictions & Insights
-                  </h3>
-                  <div className="space-y-4">
-                    {predictions.map((pred, idx) => (
-                      <div key={idx} className="bg-white rounded-2xl p-8">
-                        <div className="flex items-center justify-between mb-4">
-                          <div className="flex items-center gap-4">
-                            <div className="h-16 w-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center">
-                              <Sparkles size={32} className="text-white" />
-                            </div>
-                            <div>
-                              <h4 className="text-2xl font-black text-slate-900 mb-1">{pred.title}</h4>
-                              <p className="text-slate-600 font-medium">{pred.description}</p>
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-4xl font-black text-purple-600 mb-1">{pred.confidence}%</p>
-                            <p className="text-xs text-slate-400 font-bold">Confidence</p>
-                            <Badge tone="brand" className="mt-2">{pred.impact} Impact</Badge>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </Card>
-              </div>
-            )}
-
-            {activeTab === 'market-trends' && (
-              <div className="space-y-6">
-                <Card className="p-8 border-none shadow-lg bg-gradient-to-br from-blue-50 to-cyan-50 rounded-[3rem]">
-                  <h3 className="text-2xl font-black text-slate-900 mb-6 flex items-center gap-3">
-                    <LineChart size={32} className="text-blue-600" />
-                    Market Trend Analysis
-                  </h3>
-                  <div className="grid grid-cols-7 gap-3 mb-8">
-                    {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, idx) => {
-                      const heights = [60, 75, 85, 90, 95, 100, 105];
-                      const prices = [2400, 2450, 2500, 2550, 2600, 2650, 2700];
-                      return (
-                        <div key={idx} className="text-center bg-white rounded-2xl p-4">
-                          <p className="text-xs font-bold text-slate-400 mb-3">{day}</p>
-                          <div 
-                            className="bg-gradient-to-t from-blue-500 to-cyan-500 rounded-xl mx-auto" 
-                            style={{ height: `${heights[idx]}px`, width: '40px' }} 
-                          />
-                          <p className="text-lg font-black text-slate-900 mt-3">₹{prices[idx]}</p>
-                        </div>
-                      );
-                    })}
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="bg-white rounded-2xl p-6">
-                      <TrendingUp size={32} className="text-green-600 mb-3" />
-                      <p className="text-sm font-bold text-slate-400 uppercase mb-2">Price Trend</p>
-                      <p className="text-3xl font-black text-green-600">+12.5%</p>
+                  <div className="flex items-center justify-between pt-4 border-t border-slate-100">
+                    <div>
+                      <p className="text-xs text-slate-500">Confidence</p>
+                      <p className="text-lg font-black text-purple-600">{pred.confidence}%</p>
                     </div>
-                    <div className="bg-white rounded-2xl p-6">
-                      <Activity size={32} className="text-blue-600 mb-3" />
-                      <p className="text-sm font-bold text-slate-400 uppercase mb-2">Market Volume</p>
-                      <p className="text-3xl font-black text-blue-600">High</p>
-                    </div>
-                    <div className="bg-white rounded-2xl p-6">
-                      <Users size={32} className="text-purple-600 mb-3" />
-                      <p className="text-sm font-bold text-slate-400 uppercase mb-2">Active Buyers</p>
-                      <p className="text-3xl font-black text-purple-600">156</p>
+                    <div className="text-right">
+                      <p className="text-xs text-slate-500">Impact</p>
+                      <p className={`text-sm font-bold ${pred.impact === 'High' ? 'text-green-600' : 'text-amber-600'}`}>
+                        {pred.impact}
+                      </p>
                     </div>
                   </div>
-                </Card>
-              </div>
-            )}
+                </motion.div>
+              ))}
+            </div>
+          )}
 
-            {activeTab === 'yield-forecast' && (
-              <div className="space-y-6">
-                <Card className="p-8 border-none shadow-lg bg-gradient-to-br from-green-50 to-emerald-50 rounded-[3rem]">
-                  <h3 className="text-2xl font-black text-slate-900 mb-6 flex items-center gap-3">
-                    <Target size={32} className="text-green-600" />
-                    Yield Predictions by Crop
-                  </h3>
-                  <div className="space-y-4">
-                    {yieldForecasts.map((item, idx) => (
-                      <div key={idx} className="bg-white rounded-2xl p-8">
-                        <div className="flex items-center justify-between mb-4">
-                          <h4 className="text-2xl font-black text-slate-900">{item.crop}</h4>
-                          <Badge tone="brand" className="text-sm">+{item.change}%</Badge>
-                        </div>
-                        <div className="flex items-center gap-8 mb-4">
-                          <div>
-                            <p className="text-sm font-bold text-slate-400 uppercase mb-2">Current Yield</p>
-                            <p className="text-3xl font-black text-slate-900">{item.current} {item.unit}</p>
-                          </div>
-                          <ArrowUpRight size={32} className="text-green-600" />
-                          <div>
-                            <p className="text-sm font-bold text-slate-400 uppercase mb-2">Predicted Yield</p>
-                            <p className="text-3xl font-black text-green-600">{item.predicted} {item.unit}</p>
-                          </div>
-                        </div>
-                        <div className="w-full bg-slate-200 rounded-full h-3">
-                          <div 
-                            className="bg-gradient-to-r from-green-500 to-emerald-500 h-3 rounded-full" 
-                            style={{ width: `${item.confidence}%` }} 
-                          />
-                        </div>
-                        <p className="text-sm font-bold text-slate-600 mt-2">Confidence: {item.confidence}%</p>
-                      </div>
-                    ))}
-                  </div>
-                </Card>
-              </div>
-            )}
-
-            {activeTab === 'resource-optimization' && (
-              <div className="space-y-6">
-                <Card className="p-8 border-none shadow-lg bg-gradient-to-br from-orange-50 to-amber-50 rounded-[3rem]">
-                  <h3 className="text-2xl font-black text-slate-900 mb-6 flex items-center gap-3">
-                    <Zap size={32} className="text-orange-600" />
-                    Resource Optimization Recommendations
-                  </h3>
-                  <div className="space-y-4">
-                    {resourceOptimization.map((resource, idx) => (
-                      <div key={idx} className="bg-white rounded-2xl p-8">
-                        <div className="flex items-center justify-between mb-6">
-                          <h4 className="text-2xl font-black text-slate-900">{resource.resource}</h4>
-                          <div className="text-right">
-                            <p className="text-3xl font-black text-green-600">{resource.savings}</p>
-                            <p className="text-sm font-bold text-slate-400">Savings</p>
-                          </div>
-                        </div>
-                        <div className="grid grid-cols-3 gap-6">
-                          <div>
-                            <p className="text-sm font-bold text-slate-400 uppercase mb-2">Current Usage</p>
-                            <p className="text-xl font-black text-slate-900">{resource.current}</p>
-                          </div>
-                          <div>
-                            <p className="text-sm font-bold text-slate-400 uppercase mb-2">Optimized Usage</p>
-                            <p className="text-xl font-black text-blue-600">{resource.optimized}</p>
-                          </div>
-                          <div>
-                            <p className="text-sm font-bold text-slate-400 uppercase mb-2">Cost Savings</p>
-                            <p className="text-xl font-black text-green-600">{resource.cost}</p>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </Card>
-              </div>
-            )}
-
-            {activeTab === 'risk-assessment' && (
-              <div className="space-y-6">
-                <Card className="p-8 border-none shadow-lg bg-gradient-to-br from-red-50 to-rose-50 rounded-[3rem]">
-                  <h3 className="text-2xl font-black text-slate-900 mb-6 flex items-center gap-3">
-                    <ShieldCheck size={32} className="text-red-600" />
-                    Risk Assessment & Mitigation
-                  </h3>
-                  <div className="space-y-4">
-                    {riskAssessments.map((risk, idx) => (
-                      <div key={idx} className="bg-white rounded-2xl p-8">
-                        <div className="flex items-center justify-between mb-4">
-                          <div className="flex items-center gap-4">
-                            <div className={`h-16 w-16 rounded-2xl flex items-center justify-center ${
-                              risk.level === 'High' ? 'bg-red-100' :
-                              risk.level === 'Medium' ? 'bg-yellow-100' :
-                              'bg-green-100'
-                            }`}>
-                              <AlertTriangle size={32} className={
-                                risk.level === 'High' ? 'text-red-600' :
-                                risk.level === 'Medium' ? 'text-yellow-600' :
-                                'text-green-600'
-                              } />
-                            </div>
-                            <div>
-                              <h4 className="text-2xl font-black text-slate-900 mb-1">{risk.risk}</h4>
-                              <p className="text-sm font-bold text-slate-600">Impact: {risk.impact}</p>
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <Badge tone={risk.level === 'High' ? 'destructive' : 'brand'} className="mb-2">
-                              {risk.level} Risk
-                            </Badge>
-                            <p className="text-3xl font-black text-slate-900">{risk.probability}%</p>
-                            <p className="text-xs text-slate-400 font-bold">Probability</p>
-                          </div>
-                        </div>
-                        <div className="p-4 bg-blue-50 rounded-xl">
-                          <p className="text-sm font-bold text-blue-900">Recommended Action: {risk.action}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </Card>
-              </div>
-            )}
-
-            {activeTab === 'benchmarking' && (
-              <div className="space-y-6">
-                <Card className="p-8 border-none shadow-lg bg-gradient-to-br from-cyan-50 to-teal-50 rounded-[3rem]">
-                  <h3 className="text-2xl font-black text-slate-900 mb-6 flex items-center gap-3">
-                    <BarChart3 size={32} className="text-cyan-600" />
-                    Performance Benchmarking
-                  </h3>
-                  <div className="space-y-6">
-                    {benchmarkData.map((metric, idx) => (
-                      <div key={idx} className="bg-white rounded-2xl p-8">
-                        <h4 className="text-xl font-black text-slate-900 mb-6">{metric.metric}</h4>
-                        <div className="grid grid-cols-3 gap-6">
-                          <div className="text-center p-6 bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl">
-                            <p className="text-sm font-bold text-slate-400 uppercase mb-2">Your Farm</p>
-                            <p className="text-4xl font-black text-green-600 mb-1">{metric.yourFarm}</p>
-                            <p className="text-xs font-bold text-slate-600">{metric.unit}</p>
-                          </div>
-                          <div className="text-center p-6 bg-slate-50 rounded-2xl">
-                            <p className="text-sm font-bold text-slate-400 uppercase mb-2">Regional Avg</p>
-                            <p className="text-4xl font-black text-slate-900 mb-1">{metric.avgRegion}</p>
-                            <p className="text-xs font-bold text-slate-600">{metric.unit}</p>
-                          </div>
-                          <div className="text-center p-6 bg-slate-50 rounded-2xl">
-                            <p className="text-sm font-bold text-slate-400 uppercase mb-2">National Avg</p>
-                            <p className="text-4xl font-black text-slate-900 mb-1">{metric.avgNational}</p>
-                            <p className="text-xs font-bold text-slate-600">{metric.unit}</p>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </Card>
-              </div>
-            )}
-
-            {activeTab === 'recommendations' && (
-              <div className="space-y-6">
-                <Card className="p-8 border-none shadow-lg bg-gradient-to-br from-indigo-50 to-purple-50 rounded-[3rem]">
-                  <h3 className="text-2xl font-black text-slate-900 mb-6 flex items-center gap-3">
-                    <Sparkles size={32} className="text-indigo-600" />
-                    AI-Powered Recommendations
-                  </h3>
-                  <div className="space-y-4">
-                    <div className="bg-white rounded-2xl p-8">
-                      <div className="flex items-start gap-4 mb-4">
-                        <div className="h-16 w-16 bg-gradient-to-br from-green-500 to-emerald-500 rounded-2xl flex items-center justify-center shrink-0">
-                          <CheckCircle size={32} className="text-white" />
-                        </div>
-                        <div>
-                          <h4 className="text-2xl font-black text-slate-900 mb-2">Increase Tomato Planting</h4>
-                          <p className="text-slate-600 font-medium mb-3">Market analysis shows 25% price increase expected. Recommend increasing tomato cultivation by 30%.</p>
-                          <Badge tone="brand">High Priority</Badge>
-                        </div>
-                      </div>
+          {activeTab === 'yield' && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {yieldForecasts.map((forecast, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.1 }}
+                  className="bg-white rounded-2xl p-6 shadow-lg border border-slate-200"
+                >
+                  <h4 className="font-black text-slate-900 mb-4">{forecast.crop}</h4>
+                  <div className="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                      <p className="text-xs text-slate-500 mb-1">Current</p>
+                      <p className="text-2xl font-black text-slate-900">{forecast.current} {forecast.unit}</p>
                     </div>
-                    <div className="bg-white rounded-2xl p-8">
-                      <div className="flex items-start gap-4 mb-4">
-                        <div className="h-16 w-16 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-2xl flex items-center justify-center shrink-0">
-                          <Zap size={32} className="text-white" />
-                        </div>
-                        <div>
-                          <h4 className="text-2xl font-black text-slate-900 mb-2">Optimize Irrigation Schedule</h4>
-                          <p className="text-slate-600 font-medium mb-3">AI detected water wastage. Switch to drip irrigation to save 25% water and reduce costs by ₹450/month.</p>
-                          <Badge tone="brand">Medium Priority</Badge>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="bg-white rounded-2xl p-8">
-                      <div className="flex items-start gap-4 mb-4">
-                        <div className="h-16 w-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center shrink-0">
-                          <Target size={32} className="text-white" />
-                        </div>
-                        <div>
-                          <h4 className="text-2xl font-black text-slate-900 mb-2">Adjust Fertilizer Mix</h4>
-                          <p className="text-slate-600 font-medium mb-3">Soil analysis suggests increasing nitrogen by 15% and reducing phosphorus by 10% for optimal yield.</p>
-                          <Badge tone="brand">High Priority</Badge>
-                        </div>
-                      </div>
+                    <div>
+                      <p className="text-xs text-slate-500 mb-1">Predicted</p>
+                      <p className="text-2xl font-black text-green-600">{forecast.predicted} {forecast.unit}</p>
                     </div>
                   </div>
-                </Card>
-              </div>
-            )}
-
-            {activeTab === 'visualization' && (
-              <div className="space-y-6">
-                <Card className="p-8 border-none shadow-lg bg-gradient-to-br from-pink-50 to-rose-50 rounded-[3rem]">
-                  <h3 className="text-2xl font-black text-slate-900 mb-6 flex items-center gap-3">
-                    <PieChart size={32} className="text-pink-600" />
-                    Data Visualization Dashboard
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="bg-white rounded-2xl p-8">
-                      <h4 className="text-xl font-black text-slate-900 mb-6">Crop Distribution</h4>
-                      <div className="space-y-4">
-                        {[
-                          { crop: 'Tomatoes', percentage: 35, color: 'red' },
-                          { crop: 'Wheat', percentage: 28, color: 'amber' },
-                          { crop: 'Rice', percentage: 22, color: 'green' },
-                          { crop: 'Corn', percentage: 15, color: 'yellow' }
-                        ].map((item, idx) => (
-                          <div key={idx}>
-                            <div className="flex items-center justify-between mb-2">
-                              <span className="text-sm font-bold text-slate-900">{item.crop}</span>
-                              <span className="text-sm font-bold text-slate-600">{item.percentage}%</span>
-                            </div>
-                            <div className="w-full bg-slate-200 rounded-full h-3">
-                              <div 
-                                className={`bg-${item.color}-500 h-3 rounded-full`}
-                                style={{ width: `${item.percentage}%` }}
-                              />
-                            </div>
-                          </div>
-                        ))}
-                      </div>
+                  <div className="flex items-center justify-between pt-4 border-t border-slate-100">
+                    <div className="flex items-center gap-2">
+                      <ArrowUpRight size={16} className="text-green-600" />
+                      <span className="text-sm font-bold text-green-600">+{forecast.change}%</span>
                     </div>
-                    <div className="bg-white rounded-2xl p-8">
-                      <h4 className="text-xl font-black text-slate-900 mb-6">Resource Usage</h4>
-                      <div className="space-y-4">
-                        {[
-                          { resource: 'Water', usage: 75, color: 'blue' },
-                          { resource: 'Fertilizer', usage: 62, color: 'green' },
-                          { resource: 'Energy', usage: 58, color: 'yellow' },
-                          { resource: 'Labor', usage: 80, color: 'purple' }
-                        ].map((item, idx) => (
-                          <div key={idx}>
-                            <div className="flex items-center justify-between mb-2">
-                              <span className="text-sm font-bold text-slate-900">{item.resource}</span>
-                              <span className="text-sm font-bold text-slate-600">{item.usage}%</span>
-                            </div>
-                            <div className="w-full bg-slate-200 rounded-full h-3">
-                              <div 
-                                className={`bg-${item.color}-500 h-3 rounded-full`}
-                                style={{ width: `${item.usage}%` }}
-                              />
-                            </div>
-                          </div>
-                        ))}
-                      </div>
+                    <span className="text-xs text-slate-500">{forecast.confidence}% confidence</span>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          )}
+
+          {activeTab === 'resources' && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {resourceOptimization.map((resource, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: i * 0.1 }}
+                  className="bg-white rounded-2xl p-6 shadow-lg border border-slate-200"
+                >
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                      <resource.icon size={20} className="text-blue-600" />
+                    </div>
+                    <h4 className="font-black text-slate-900">{resource.resource}</h4>
+                  </div>
+                  <div className="space-y-3">
+                    <div className="flex justify-between">
+                      <span className="text-sm text-slate-500">Current</span>
+                      <span className="text-sm font-bold text-slate-900">{resource.current}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-slate-500">Optimized</span>
+                      <span className="text-sm font-bold text-green-600">{resource.optimized}</span>
+                    </div>
+                    <div className="flex justify-between pt-3 border-t border-slate-100">
+                      <span className="text-sm font-bold text-purple-600">Savings: {resource.savings}</span>
+                      <span className="text-sm font-bold text-green-600">{resource.cost}/month</span>
                     </div>
                   </div>
-                </Card>
-              </div>
-            )}
+                </motion.div>
+              ))}
+            </div>
+          )}
 
-            {activeTab === 'reports' && (
-              <div className="space-y-6">
-                <Card className="p-8 border-none shadow-lg bg-gradient-to-br from-slate-50 to-gray-50 rounded-[3rem]">
-                  <h3 className="text-2xl font-black text-slate-900 mb-6 flex items-center gap-3">
-                    <Download size={32} className="text-slate-600" />
-                    Export Analytics & Reports
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {[
-                      { title: 'Monthly Performance Report', description: 'Complete analysis of farm performance', format: 'PDF' },
-                      { title: 'Yield Forecast Report', description: 'AI-powered yield predictions', format: 'Excel' },
-                      { title: 'Resource Optimization Report', description: 'Detailed resource usage analysis', format: 'PDF' },
-                      { title: 'Risk Assessment Report', description: 'Comprehensive risk analysis', format: 'PDF' },
-                      { title: 'Market Trends Report', description: 'Market analysis and trends', format: 'Excel' },
-                      { title: 'Benchmarking Report', description: 'Performance comparison report', format: 'PDF' }
-                    ].map((report, idx) => (
-                      <div key={idx} className="bg-white rounded-2xl p-8 hover:shadow-xl transition-all cursor-pointer">
-                        <div className="flex items-start gap-4 mb-4">
-                          <div className="h-12 w-12 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center shrink-0">
-                            <Download size={24} className="text-white" />
-                          </div>
-                          <div className="flex-1">
-                            <h4 className="text-lg font-black text-slate-900 mb-2">{report.title}</h4>
-                            <p className="text-sm text-slate-600 font-medium mb-3">{report.description}</p>
-                            <Badge tone="brand">{report.format}</Badge>
-                          </div>
-                        </div>
-                        <Button className="w-full h-12 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-xl font-black">
-                          Download Report
-                        </Button>
-                      </div>
-                    ))}
+          {activeTab === 'risk' && (
+            <div className="space-y-4">
+              {riskAssessments.map((risk, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: i * 0.1 }}
+                  className="bg-white rounded-2xl p-6 shadow-lg border border-slate-200"
+                >
+                  <div className="flex items-start justify-between mb-4">
+                    <div>
+                      <h4 className="font-black text-slate-900 mb-1">{risk.risk}</h4>
+                      <p className="text-sm text-slate-600">{risk.action}</p>
+                    </div>
+                    <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                      risk.color === 'green' ? 'bg-green-100 text-green-700' :
+                      risk.color === 'amber' ? 'bg-amber-100 text-amber-700' :
+                      'bg-red-100 text-red-700'
+                    }`}>
+                      {risk.level}
+                    </span>
                   </div>
-                </Card>
-              </div>
-            )}
-          </motion.div>
-        </div>
-      </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-xs text-slate-500 mb-2">Probability</p>
+                      <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                        <div
+                          className={`h-full rounded-full ${
+                            risk.color === 'green' ? 'bg-green-500' :
+                            risk.color === 'amber' ? 'bg-amber-500' :
+                            'bg-red-500'
+                          }`}
+                          style={{ width: `${risk.probability}%` }}
+                        />
+                      </div>
+                      <p className="text-sm font-bold text-slate-900 mt-1">{risk.probability}%</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-slate-500 mb-2">Impact</p>
+                      <p className="text-sm font-bold text-slate-900">{risk.impact}</p>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          )}
+        </motion.div>
+      </AnimatePresence>
     </div>
   );
 }

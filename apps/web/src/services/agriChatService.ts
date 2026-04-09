@@ -63,12 +63,12 @@ class AgriChatService {
 
     this.socket.on('connect', () => {
       console.log('Chat connected');
-      this.emit('connected');
+      this.emit("connected");
     });
 
     this.socket.on('disconnect', () => {
       console.log('Chat disconnected');
-      this.emit('disconnected');
+      this.emit("disconnected");
     });
 
     this.socket.on('message_received', (message: ChatMessage) => {

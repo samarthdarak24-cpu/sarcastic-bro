@@ -185,13 +185,13 @@ router.post('/trust/quality-scan', authMiddleware, upload.single('file'), async 
       const formData = new FormData();
       formData.append('file', fs.createReadStream(file.path));
 
-      const aiServiceUrl = process.env.AI_SERVICE_URL || 'http://localhost:8001';
+      const aiServiceUrl = process.env.AI_SERVICE_URL || 'http://localhost:8000';
       const response = await axios.post(
-        `${aiServiceUrl}/api/v1/trust/quality-scan?crop_type=${crop_type || 'Tomato'}`,
+        `${aiServiceUrl}/analyze`,
         formData,
         {
           headers: formData.getHeaders(),
-          timeout: 10000 // 10 second timeout
+          timeout: 30000 // 30 second timeout for advanced AI
         }
       );
 

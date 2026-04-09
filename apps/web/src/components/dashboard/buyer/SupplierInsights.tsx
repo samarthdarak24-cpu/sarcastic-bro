@@ -47,11 +47,11 @@ export function SupplierInsights() {
   ];
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
+      {/* Removed large header to save space */}
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
-        <h1 className="text-4xl font-black text-slate-900 mb-2 tracking-tight">Supplier Intelligence</h1>
-        <p className="text-slate-500 font-medium">Deep insights into supplier performance</p>
+        {/* Compact header removed */}
       </motion.div>
 
       {/* Stats Overview */}

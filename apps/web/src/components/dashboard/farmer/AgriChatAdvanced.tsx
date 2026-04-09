@@ -77,6 +77,23 @@ export function AgriChatAdvanced() {
     scrollToBottom();
   }, [messages]);
 
+  useEffect(() => {
+    // Simulate initial AI message
+    if (messages.length === 0) {
+      setTimeout(() => {
+        const welcomeMsg: Message = {
+          id: 'welcome',
+          sender: 'AgriVoice AI',
+          senderRole: 'agent',
+          content: 'Hello! I am your AI Advisor. I can help you with market prices, crop health analysis, and negotiation strategies. How can I assist you today?',
+          type: 'text',
+          timestamp: new Date(),
+        };
+        setMessages([welcomeMsg]);
+      }, 1000);
+    }
+  }, []);
+
   // ============================================
   // SUBFEATURE 1: Real-time Messaging
   // ============================================

@@ -34,7 +34,7 @@ export const financeService = {
   // Get payment history
   async getPayments(): Promise<Payment[]> {
     try {
-      const response = await api.get('/finance/payments');
+      const response = await api.get("/finance/payments");
       return response.data.data || response.data || [];
     } catch (error) {
       console.error('getPayments error:', error);
@@ -57,7 +57,7 @@ export const financeService = {
   // Get my insurance policies
   async getMyPolicies(): Promise<any[]> {
     try {
-      const response: any = await api.get('/finance/insurance/my-policies');
+      const response: any = await api.get("/finance/insurance/my-policies");
       const data = response.data || response || [];
       return Array.isArray(data) ? data : [];
     } catch (error) {
@@ -68,7 +68,7 @@ export const financeService = {
   // Get insurance policies
   async getInsurancePolicies(): Promise<Insurance[]> {
     try {
-      const response = await api.get('/finance/insurance');
+      const response = await api.get("/finance/insurance");
       return response.data.data || response.data || [];
     } catch (error) {
       console.error('getInsurancePolicies error:', error);
@@ -117,7 +117,7 @@ export const financeService = {
   // Get price protection contracts
   async getPriceProtections(): Promise<PriceProtection[]> {
     try {
-      const response = await api.get('/finance/price-protection');
+      const response = await api.get("/finance/price-protection");
       return response.data.data || response.data || [];
     } catch (error) {
       console.error('getPriceProtections error:', error);
@@ -181,3 +181,4 @@ export const financeService = {
     }
   }
 };
+

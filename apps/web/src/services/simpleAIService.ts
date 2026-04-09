@@ -127,7 +127,7 @@ class SimpleAIService {
         if (done) break;
 
         const chunk = decoder.decode(value);
-        const lines = chunk.split('\n');
+        const lines = chunk.split("\n");
 
         for (const line of lines) {
           if (line.startsWith('data: ')) {
@@ -172,3 +172,4 @@ class SimpleAIService {
 
 // Export singleton instance
 export const simpleAIService = new SimpleAIService();
+

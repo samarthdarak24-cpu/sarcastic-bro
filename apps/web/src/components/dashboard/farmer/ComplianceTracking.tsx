@@ -686,3 +686,5 @@ export function ComplianceTracking() {
     </div>
   );
 }
+
+export default ComplianceTracking;

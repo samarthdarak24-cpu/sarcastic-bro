@@ -534,3 +534,5 @@ export function PriceProtectionHub() {
     </div>
   );
 }
+
+export default PriceProtectionHub;

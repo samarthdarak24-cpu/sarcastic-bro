@@ -41,7 +41,7 @@ export default function TradeDetailPage() {
       description="View bulk trade order information"
       backLink="/buyer/bulk-trade"
       loading={loading}
-      error={error}
+      error={error || undefined}
       onRetry={handleRetry}
     >
       <div className="bg-slate-800/50 rounded-lg p-6 border border-slate-700">

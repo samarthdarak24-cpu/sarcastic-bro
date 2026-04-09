@@ -2,6 +2,7 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
+
 export function TestimonialsCarousel() {
     const [activeIndex, setActiveIndex] = useState(0);
 
@@ -10,25 +11,25 @@ export function TestimonialsCarousel() {
       name: "Rajesh Kumar",
       role: "Tomato Farmer, Nashik",
       image: "https://images.unsplash.com/photo-1595273670150-bd0c3c392e46?w=200&q=80",
-      quote: t("landing.testimonials.quote1", "My income increased by 45% with AI quality grading and direct buyer connections!"),
+      quote: "My income increased by 45% with AI quality grading and direct buyer connections!",
       metric: "45%",
-      metricLabel: t("landing.testimonials.income_increase"),
+      metricLabel: "Income Increase",
     },
     {
       name: "Priya Deshmukh",
       role: "Organic Farmer, Pune",
       image: "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=200&q=80",
-      quote: t("landing.testimonials.quote2", "The AI quality detection is amazing! I get A+ grades consistently."),
+      quote: "The AI quality detection is amazing! I get A+ grades consistently.",
       metric: "A+",
-      metricLabel: t("landing.testimonials.quality_grade"),
+      metricLabel: "Quality Grade",
     },
     {
       name: "Amit Patil",
       role: "Rice Farmer, Solapur",
       image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&q=80",
-      quote: t("landing.testimonials.quote3", "Real-time market prices help me plan better. Blockchain tracking builds trust."),
+      quote: "Real-time market prices help me plan better. Blockchain tracking builds trust.",
       metric: "₹12L",
-      metricLabel: t("landing.testimonials.monthly_gmv"),
+      metricLabel: "Monthly GMV",
     },
   ];
 
@@ -63,11 +64,11 @@ export function TestimonialsCarousel() {
             className="inline-block mb-4"
           >
             <div className="px-4 py-2 bg-yellow-100 text-yellow-700 rounded-full text-sm font-bold">
-              ⭐ {t("landing.testimonials.badge")}
+              ⭐ Success Stories
             </div>
           </motion.div>
           <h2 className="text-4xl md:text-5xl font-black text-gray-900">
-            {t("landing.testimonials.title")}
+            Trusted by Thousands
           </h2>
         </motion.div>
 

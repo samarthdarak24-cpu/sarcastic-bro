@@ -30,7 +30,7 @@ export const orderService = {
   // Get all orders
   async getAll(): Promise<Order[]> {
     try {
-      const response = await api.get('/orders');
+      const response = await api.get("/orders");
       const data = response.data.data || response.data || [];
       return Array.isArray(data) ? data : (data.orders || []);
     } catch (error) {
@@ -42,7 +42,7 @@ export const orderService = {
   // Get all orders for current user
   async getMyOrders(): Promise<Order[]> {
     try {
-      const response: any = await api.get('/orders');
+      const response: any = await api.get("/orders");
       const data = response.data || response || [];
       return Array.isArray(data) ? data : [];
     } catch (error) {
@@ -54,7 +54,7 @@ export const orderService = {
   // Get farmer orders
   async getFarmerOrders(): Promise<Order[]> {
     try {
-      const response: any = await api.get('/orders');
+      const response: any = await api.get("/orders");
       const data = response.data || response || [];
       return Array.isArray(data) ? data : [];
     } catch (error) {
@@ -65,7 +65,7 @@ export const orderService = {
   // Get buyer orders
   async getBuyerOrders(): Promise<Order[]> {
     try {
-      const response: any = await api.get('/orders');
+      const response: any = await api.get("/orders");
       const data = response.data || response || [];
       return Array.isArray(data) ? data : [];
     } catch (error) {
@@ -110,7 +110,7 @@ export const orderService = {
   // Get order statistics
   async getOrderStats(): Promise<any> {
     try {
-      const response = await api.get('/orders/stats');
+      const response = await api.get("/orders/stats");
       return response.data.data || response.data;
     } catch (error) {
       console.error('getOrderStats error:', error);
@@ -135,3 +135,4 @@ export const orderService = {
     return response.data.data || response.data;
   }
 };
+

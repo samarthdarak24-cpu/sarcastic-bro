@@ -145,7 +145,7 @@ export class AudioRecorderService {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onloadend = () => {
-        const base64 = (reader.result as string).split(',')[1];
+        const base64 = (reader.result as string).split(",")[1];
         resolve(base64);
       };
       reader.onerror = reject;
@@ -162,3 +162,4 @@ export class AudioRecorderService {
 }
 
 export const audioRecorderService = new AudioRecorderService();
+

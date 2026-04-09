@@ -270,7 +270,7 @@ export default function QualityScannerPage() {
                         <div className='flex justify-between items-start mb-3'>
                           <div>
                             <h4 className='font-bold text-gray-900'>Detection #{detection.detection_id + 1}</h4>
-                            <p className={`text-sm font-semibold ${getGradeColor(detection.quality_grade).split(' ')[0]}`}>
+                            <p className={`text-sm font-semibold ${getGradeColor(detection.quality_grade).split(" ")[0]}`}>
                               {detection.quality_grade}
                             </p>
                           </div>

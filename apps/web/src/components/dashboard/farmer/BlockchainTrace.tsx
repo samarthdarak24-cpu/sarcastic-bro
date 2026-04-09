@@ -448,3 +448,5 @@ export function BlockchainTrace() {
     </div>
   );
 }
+
+export default BlockchainTrace;

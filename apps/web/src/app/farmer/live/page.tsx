@@ -26,7 +26,7 @@ function FarmerLiveContent() {
     setIsSearching(true);
     setTimeout(() => {
       setSearchResults([
-        `${searchQuery.split(' ')[0] || 'Crop'} Match in Tokyo Port`,
+        `${searchQuery.split(" ")[0] || 'Crop'} Match in Tokyo Port`,
         `Direct Buyer: ${searchQuery} (UK route)`,
         `Surplus Node: ${searchQuery} (Lasalgaon)`
       ]);
@@ -211,7 +211,7 @@ function FarmerLiveContent() {
                                              animate={{ opacity: 1, x: 0 }}
                                              className={`${textColor} flex items-center gap-3`}
                                           >
-                                             <span className="text-[10px] opacity-50">{new Date().toISOString().split('T')[1].slice(0,8)}</span>
+                                             <span className="text-[10px] opacity-50">{new Date().toISOString().split("T")[1].slice(0,8)}</span>
                                              <span>{log.replace("[DATA]", "[EXPORT MATCHER]").replace("[ALERT]", "[PRICE ARBITRAGE]")}</span>
                                           </motion.div>
                                        )
@@ -501,7 +501,7 @@ function LiveMarketTerminalWidget() {
                     animate={{ opacity: 1, x: 0 }}
                     className="flex gap-4 items-start"
                   >
-                    <span className="text-[10px] opacity-40 whitespace-nowrap mt-0.5">{new Date().toISOString().split('T')[1].slice(0,8)}</span>
+                    <span className="text-[10px] opacity-40 whitespace-nowrap mt-0.5">{new Date().toISOString().split("T")[1].slice(0,8)}</span>
                     <span className={`${textColor} leading-tight`}>{log}</span>
                   </motion.div>
                 );

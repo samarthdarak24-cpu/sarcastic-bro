@@ -381,3 +381,5 @@ export function BehavioralInsights() {
     </div>
   );
 }
+
+export default BehavioralInsights;

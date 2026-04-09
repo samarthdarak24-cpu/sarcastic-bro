@@ -24,23 +24,23 @@ export const buyerFeatureService = {
   // Cockpit Live
   cockpit: {
     getLiveDashboard: async () => {
-      const { data } = await api.get('/buyer/cockpit/live-dashboard');
+      const { data } = await api.get("/buyer/cockpit/live-dashboard");
       return data.data;
     },
     getKPICards: async () => {
-      const { data } = await api.get('/buyer/cockpit/kpi-cards');
+      const { data } = await api.get("/buyer/cockpit/kpi-cards");
       return data.data;
     },
     getMarketRadar: async () => {
-      const { data } = await api.get('/buyer/cockpit/market-radar');
+      const { data } = await api.get("/buyer/cockpit/market-radar");
       return data.data;
     },
     getQuickActions: async () => {
-      const { data } = await api.get('/buyer/cockpit/quick-actions');
+      const { data } = await api.get("/buyer/cockpit/quick-actions");
       return data.data;
     },
     getAlerts: async () => {
-      const { data } = await api.get('/buyer/cockpit/alerts');
+      const { data } = await api.get("/buyer/cockpit/alerts");
       return data.data;
     },
   },
@@ -56,11 +56,11 @@ export const buyerFeatureService = {
       return data.data;
     },
     getPredictiveAnalytics: async () => {
-      const { data } = await api.get('/buyer/ai-procurement/predictive-analytics');
+      const { data } = await api.get("/buyer/ai-procurement/predictive-analytics");
       return data.data;
     },
     getSmartAlerts: async () => {
-      const { data } = await api.get('/buyer/ai-procurement/smart-alerts');
+      const { data } = await api.get("/buyer/ai-procurement/smart-alerts");
       return data.data;
     },
   },
@@ -94,19 +94,19 @@ export const buyerFeatureService = {
   // Reputation
   reputation: {
     getScore: async () => {
-      const { data } = await api.get('/buyer/reputation/score');
+      const { data } = await api.get("/buyer/reputation/score");
       return data.data;
     },
     getMetrics: async () => {
-      const { data } = await api.get('/buyer/reputation/metrics');
+      const { data } = await api.get("/buyer/reputation/metrics");
       return data.data;
     },
     getBuilding: async () => {
-      const { data } = await api.get('/buyer/reputation/building');
+      const { data } = await api.get("/buyer/reputation/building");
       return data.data;
     },
     getTransparency: async () => {
-      const { data } = await api.get('/buyer/reputation/transparency');
+      const { data } = await api.get("/buyer/reputation/transparency");
       return data.data;
     },
   },
@@ -128,7 +128,7 @@ export const buyerFeatureService = {
       return data.data;
     },
     getRelationships: async () => {
-      const { data } = await api.get('/buyer/suppliers/relationships');
+      const { data } = await api.get("/buyer/suppliers/relationships");
       return data.data;
     },
     getRiskAssessment: async (supplierId: string) => {
@@ -156,7 +156,7 @@ export const buyerFeatureService = {
       return data.data;
     },
     getAnalytics: async () => {
-      const { data } = await api.get('/buyer/reviews/analytics');
+      const { data } = await api.get("/buyer/reviews/analytics");
       return data.data;
     },
   },
@@ -172,7 +172,7 @@ export const buyerFeatureService = {
       return data.data;
     },
     getAlerts: async () => {
-      const { data } = await api.get('/buyer/prices/alerts');
+      const { data } = await api.get("/buyer/prices/alerts");
       return data.data;
     },
     createAlert: async (alert: any) => {
@@ -180,7 +180,7 @@ export const buyerFeatureService = {
       return data.data;
     },
     getDashboard: async () => {
-      const { data } = await api.get('/buyer/prices/dashboard');
+      const { data } = await api.get("/buyer/prices/dashboard");
       return data.data;
     },
   },
@@ -188,7 +188,7 @@ export const buyerFeatureService = {
   // Escrow
   escrow: {
     getEscrows: async () => {
-      const { data } = await api.get('/buyer/escrow');
+      const { data } = await api.get("/buyer/escrow");
       return data.data;
     },
     createEscrow: async (escrow: any) => {
@@ -212,7 +212,7 @@ export const buyerFeatureService = {
   // Negotiation
   negotiation: {
     getBids: async () => {
-      const { data } = await api.get('/buyer/negotiation/bids');
+      const { data } = await api.get("/buyer/negotiation/bids");
       return data.data;
     },
     submitBid: async (bid: any) => {
@@ -220,7 +220,7 @@ export const buyerFeatureService = {
       return data.data;
     },
     getAuctions: async () => {
-      const { data } = await api.get('/buyer/negotiation/auctions');
+      const { data } = await api.get("/buyer/negotiation/auctions");
       return data.data;
     },
     participateAuction: async (auctionId: string, bid: number) => {
@@ -228,7 +228,7 @@ export const buyerFeatureService = {
       return data.data;
     },
     getDeals: async () => {
-      const { data } = await api.get('/buyer/negotiation/deals');
+      const { data } = await api.get("/buyer/negotiation/deals");
       return data.data;
     },
   },
@@ -236,15 +236,15 @@ export const buyerFeatureService = {
   // Intelligence
   intelligence: {
     getMarketIntelligence: async () => {
-      const { data } = await api.get('/buyer/intelligence/market');
+      const { data } = await api.get("/buyer/intelligence/market");
       return data.data;
     },
     getAnalytics: async () => {
-      const { data } = await api.get('/buyer/intelligence/analytics');
+      const { data } = await api.get("/buyer/intelligence/analytics");
       return data.data;
     },
     getRecommendations: async () => {
-      const { data } = await api.get('/buyer/intelligence/recommendations');
+      const { data } = await api.get("/buyer/intelligence/recommendations");
       return data.data;
     },
     getReports: async (filters?: any) => {
@@ -260,11 +260,11 @@ export const buyerFeatureService = {
       return data.data;
     },
     getConversations: async () => {
-      const { data } = await api.get('/buyer/chat/conversations');
+      const { data } = await api.get("/buyer/chat/conversations");
       return data.data;
     },
     getSupplierChats: async () => {
-      const { data } = await api.get('/buyer/chat/suppliers');
+      const { data } = await api.get("/buyer/chat/suppliers");
       return data.data;
     },
     sendSupplierMessage: async (supplierId: string, message: string) => {
@@ -304,7 +304,7 @@ export const buyerFeatureService = {
       return data.data;
     },
     getSmartContracts: async () => {
-      const { data } = await api.get('/buyer/blockchain/contracts');
+      const { data } = await api.get("/buyer/blockchain/contracts");
       return data.data;
     },
   },
@@ -312,19 +312,19 @@ export const buyerFeatureService = {
   // Security
   security: {
     getAccountSecurity: async () => {
-      const { data } = await api.get('/buyer/security/account');
+      const { data } = await api.get("/buyer/security/account");
       return data.data;
     },
     getTransactionSecurity: async () => {
-      const { data } = await api.get('/buyer/security/transactions');
+      const { data } = await api.get("/buyer/security/transactions");
       return data.data;
     },
     getDataProtection: async () => {
-      const { data } = await api.get('/buyer/security/data');
+      const { data } = await api.get("/buyer/security/data");
       return data.data;
     },
     getCompliance: async () => {
-      const { data } = await api.get('/buyer/security/compliance');
+      const { data } = await api.get("/buyer/security/compliance");
       return data.data;
     },
   },
@@ -332,11 +332,11 @@ export const buyerFeatureService = {
   // Bulk Trade
   bulkTrade: {
     getTerminal: async () => {
-      const { data } = await api.get('/buyer/bulk-trade/terminal');
+      const { data } = await api.get("/buyer/bulk-trade/terminal");
       return data.data;
     },
     getOrders: async () => {
-      const { data } = await api.get('/buyer/bulk-trade/orders');
+      const { data } = await api.get("/buyer/bulk-trade/orders");
       return data.data;
     },
     createOrder: async (order: any) => {
@@ -344,7 +344,7 @@ export const buyerFeatureService = {
       return data.data;
     },
     getAnalysis: async () => {
-      const { data } = await api.get('/buyer/bulk-trade/analysis');
+      const { data } = await api.get("/buyer/bulk-trade/analysis");
       return data.data;
     },
   },
@@ -356,18 +356,19 @@ export const buyerFeatureService = {
       return data.data;
     },
     getOptimization: async () => {
-      const { data } = await api.get('/buyer/cluster/optimization');
+      const { data } = await api.get("/buyer/cluster/optimization");
       return data.data;
     },
     getCompetitiveAnalysis: async () => {
-      const { data } = await api.get('/buyer/cluster/competitive');
+      const { data } = await api.get("/buyer/cluster/competitive");
       return data.data;
     },
     getStrategicPlanning: async () => {
-      const { data } = await api.get('/buyer/cluster/planning');
+      const { data } = await api.get("/buyer/cluster/planning");
       return data.data;
     },
   },
 };
 
 export default buyerFeatureService;
+

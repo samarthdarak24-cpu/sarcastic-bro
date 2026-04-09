@@ -2,7 +2,6 @@
 
 import { Suspense } from 'react';
 import { LiveNotificationBell } from '@/components/ui/LiveNotificationBell';
-import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher';
 
 export default function BuyerDashboardLayout({
   children,
@@ -21,9 +20,6 @@ export default function BuyerDashboardLayout({
       
       {/* Global Components - Available on all buyer dashboard pages */}
       <LiveNotificationBell />
-      <div className="fixed top-4 right-4 z-40">
-        <LanguageSwitcher />
-      </div>
     </>
   );
 }

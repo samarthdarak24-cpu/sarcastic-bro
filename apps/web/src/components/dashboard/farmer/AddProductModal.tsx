@@ -15,7 +15,7 @@ import toast from "react-hot-toast";
 import dynamic from 'next/dynamic';
 import { CropQualityDetector } from "./CropQualityDetector";
 
-const MapPicker = dynamic(() => import('./MapPicker'), { 
+const MapPicker = dynamic(() => import("./MapPicker"), { 
   ssr: false,
   loading: () => <div className="h-48 w-full bg-neut-50 flex items-center justify-center rounded-[2rem] animate-pulse text-[10px] font-black text-neut-300 uppercase tracking-widest">Initializing Geo-Service...</div>
 });

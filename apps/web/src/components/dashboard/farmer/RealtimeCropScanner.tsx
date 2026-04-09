@@ -290,7 +290,7 @@ export function RealtimeCropScanner() {
 
     const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    const a = document.createElement("a");
     a.href = url;
     a.download = `crop-scan-${Date.now()}.json`;
     a.click();

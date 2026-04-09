@@ -41,8 +41,7 @@ export default function FinancialHub() {
     { id: 'refunds', label: 'Refunds & Disputes', icon: AlertCircle },
   ];
 
-  // Mock financial data
-  const financialSummary = {
+  const [financialSummary, setFinancialSummary] = useState({
     totalBalance: 245680,
     pendingPayments: 45200,
     escrowBalance: 89500,
@@ -51,6 +50,21 @@ export default function FinancialHub() {
     successfulTransactions: 154,
     pendingTransactions: 8,
     failedTransactions: 2,
+  });
+
+  const handleRefresh = () => {
+    setRefreshing(true);
+    // Simulate API Call
+    setTimeout(() => {
+      setRefreshing(false);
+      setFinancialSummary(prev => ({
+        ...prev,
+        totalBalance: prev.totalBalance + Math.floor(Math.random() * 5000),
+        monthlyRevenue: prev.monthlyRevenue + Math.floor(Math.random() * 2000),
+        revenueGrowth: parseFloat((prev.revenueGrowth + (Math.random() * 0.5)).toFixed(1))
+      }));
+      toast.success('Financial systems synchronized with blockchain');
+    }, 1500);
   };
 
   const recentTransactions = [
@@ -66,13 +80,7 @@ export default function FinancialHub() {
     { id: 'PAY003', amount: 52000, dueDate: '2024-04-15', buyer: 'Green Valley', status: 'scheduled' },
   ];
 
-  const handleRefresh = () => {
-    setRefreshing(true);
-    setTimeout(() => {
-      setRefreshing(false);
-      toast.success('Financial data refreshed');
-    }, 1000);
-  };
+
 
   const handleActionClick = (id: string) => {
     switch (id) {
@@ -470,7 +478,7 @@ export default function FinancialHub() {
                   </div>
                   <div className="space-y-2">
                     <label className="text-xs font-bold text-slate-500 uppercase">Issue Date</label>
-                    <input type="date" defaultValue={new Date().toISOString().split('T')[0]} className="w-full h-12 px-4 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none font-medium" />
+                    <input type="date" defaultValue={new Date().toISOString().split("T")[0]} className="w-full h-12 px-4 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none font-medium" />
                   </div>
                 </div>
 

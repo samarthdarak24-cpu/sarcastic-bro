@@ -591,11 +591,11 @@ class JarvisAssistantService {
       switch (intent.action) {
         case 'fetch_market_prices':
           // Trigger market price fetch
-          window.dispatchEvent(new CustomEvent('jarvis:open-market-prices'));
+          window.dispatchEvent(new CustomEvent("jarvis:open-market-prices"));
           break;
 
         case 'open_product_form':
-          window.dispatchEvent(new CustomEvent('jarvis:open-product-form'));
+          window.dispatchEvent(new CustomEvent("jarvis:open-product-form"));
           break;
 
         case 'open_search':
@@ -605,23 +605,23 @@ class JarvisAssistantService {
           break;
 
         case 'open_orders':
-          window.dispatchEvent(new CustomEvent('jarvis:open-orders'));
+          window.dispatchEvent(new CustomEvent("jarvis:open-orders"));
           break;
 
         case 'fetch_weather':
-          window.dispatchEvent(new CustomEvent('jarvis:open-weather'));
+          window.dispatchEvent(new CustomEvent("jarvis:open-weather"));
           break;
 
         case 'open_farm_insights':
-          window.dispatchEvent(new CustomEvent('jarvis:open-farm-insights'));
+          window.dispatchEvent(new CustomEvent("jarvis:open-farm-insights"));
           break;
 
         case 'open_payments':
-          window.dispatchEvent(new CustomEvent('jarvis:open-payments'));
+          window.dispatchEvent(new CustomEvent("jarvis:open-payments"));
           break;
 
         case 'show_help':
-          window.dispatchEvent(new CustomEvent('jarvis:show-help'));
+          window.dispatchEvent(new CustomEvent("jarvis:show-help"));
           break;
       }
     } catch (error) {

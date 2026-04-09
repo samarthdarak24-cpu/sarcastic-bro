@@ -363,3 +363,5 @@ export function EscrowHub() {
     </div>
   );
 }
+
+export default EscrowHub;

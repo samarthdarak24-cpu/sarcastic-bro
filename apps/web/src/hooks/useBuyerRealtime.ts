@@ -339,7 +339,7 @@ export const useMarketDataUpdates = (callback?: (data: any) => void) => {
   useEffect(() => {
     const socket = getSocket();
     
-    socket.emit('subscribe:market-intelligence');
+    socket.emit("subscribe:market-intelligence");
     
     const handleMarketUpdate = (data: any) => {
       console.log('[Socket] Market data updated:', data);
@@ -350,7 +350,7 @@ export const useMarketDataUpdates = (callback?: (data: any) => void) => {
     
     return () => {
       socket.off('market:updated', handleMarketUpdate);
-      socket.emit('unsubscribe:market-intelligence');
+      socket.emit("unsubscribe:market-intelligence");
     };
   }, [callback]);
 };
