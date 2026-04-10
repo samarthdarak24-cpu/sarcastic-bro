@@ -1,12 +1,14 @@
 import { Router } from "express";
 import { AnalyticsController } from "../controllers/analyticsController";
-import { authMiddleware } from "../middleware/auth.middleware";
+import { authenticateToken } from "../middleware/auth.middleware";
 
 const router = Router();
 
 // Protected routes
-router.use(authMiddleware);
+router.use(authenticateToken);
 
 router.get("/farmer", AnalyticsController.getFarmerInsights);
+router.get("/buyer", AnalyticsController.getBuyerInsights);
+router.get("/fpo", AnalyticsController.getFPOInsights);
 
 export default router;

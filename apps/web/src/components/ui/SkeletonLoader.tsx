@@ -92,3 +92,9 @@ export function SkeletonGrid() {
     </div>
   );
 }
+
+export function SkeletonLoader({ className = "", height = "h-4", width = "w-full" }: { className?: string, height?: string, width?: string }) {
+  return (
+    <div className={`animate-pulse bg-slate-200 rounded-lg ${height} ${width} ${className}`} />
+  );
+}

@@ -1,4 +1,4 @@
-import { PrismaClient, OrderStatus, EscrowStatus } from '@prisma/client';
+import { PrismaClient, OrderStatus, EscrowStatus, PaymentStatus } from '@prisma/client';
 import { BuyerWalletService } from './wallet.service';
 
 const prisma = new PrismaClient();
@@ -211,20 +211,25 @@ export class BulkOrderService {
   async confirmDelivery(orderId: string, buyerId: string) {
     const order = await this.getOrderDetails(orderId, buyerId);
 
-    if (order.status === OrderStatus.DELIVERED) {
-      throw new Error('Order already delivered');
+    if (order.confirmedByBuyer) {
+      throw new Error('Delivery already confirmed');
+    }
+
+    if (order.status !== OrderStatus.DELIVERED) {
+      throw new Error('Order is not ready for delivery confirmation');
     }
 
     if (order.escrowStatus !== EscrowStatus.HELD) {
       throw new Error('Escrow funds not in HELD status');
     }
 
-    // Update order status
     const updatedOrder = await prisma.order.update({
       where: { id: orderId },
       data: {
-        status: OrderStatus.DELIVERED,
-        escrowStatus: EscrowStatus.RELEASED
+        escrowStatus: EscrowStatus.RELEASED,
+        paymentStatus: PaymentStatus.COMPLETED,
+        confirmedByBuyer: true,
+        confirmedAt: new Date()
       }
     });
 

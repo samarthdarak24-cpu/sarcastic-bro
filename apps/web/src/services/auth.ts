@@ -42,7 +42,7 @@ export const authService = {
     // If mock auth is explicitly enabled, use it
     if (USE_MOCK_AUTH) {
       console.log('🔧 Using mock authentication (NEXT_PUBLIC_USE_MOCK_AUTH=true)');
-      return mockAuthService.login(credentials.email, credentials.password);
+      return mockAuthService.login(credentials.email || credentials.phone || '', credentials.password);
     }
 
     try {

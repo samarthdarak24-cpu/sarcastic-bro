@@ -182,7 +182,7 @@ export default function FarmerEarnings() {
                     <XAxis dataKey="month" />
                     <YAxis />
                     <Tooltip 
-                      formatter={(value: number) => `₹${value.toLocaleString('en-IN')}`}
+                      formatter={(value: any) => `₹${Number(value).toLocaleString('en-IN')}`}
                       labelStyle={{ color: '#000' }}
                     />
                     <Bar dataKey="amount" fill="#10b981" radius={[8, 8, 0, 0]} />

@@ -72,7 +72,7 @@ export default function AIQualityShieldPremium() {
         <motion.div
           className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent"
           animate={{ x: ['-100%', '100%'] }}
-          transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
+          transition={{ duration: 3, repeat: Infinity, ease: 'linear' as any }}
         />
       </motion.div>
 
@@ -215,7 +215,7 @@ function MetricBar({ label, value, color }: { label: string; value: number; colo
         <motion.div
           initial={{ width: 0 }}
           animate={{ width: `${value}%` }}
-          transition={{ duration: 1, ease: 'easeOut' }}
+          transition={{ duration: 1, ease: 'easeOut' as any }}
           className={`h-full bg-gradient-to-r ${color} rounded-full`}
         />
       </div>

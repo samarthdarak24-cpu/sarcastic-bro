@@ -1,90 +1,25 @@
-// ========================================================================
-// Market Price Routes — /api/market-prices/*
-// ========================================================================
-
-import { Router, Request, Response, NextFunction } from 'express';
-import prisma from '../config/database';
+import { Router } from 'express';
+import { MarketController } from '../controllers/market.controller';
 
 const router = Router();
 
-// ─── GET /api/market-prices — Public price transparency data ──────────
-router.get('/', async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const { cropName, variety, grade, district, from, to } = req.query;
+// ─── PUBLIC ROUTES ──────────────────────────────────────────────────────
 
-    const where: any = {};
-    if (cropName) where.cropName = { contains: cropName as string, mode: 'insensitive' };
-    if (variety) where.variety = { contains: variety as string, mode: 'insensitive' };
-    if (grade) where.grade = grade;
-    if (district) where.district = { contains: district as string, mode: 'insensitive' };
-    if (from || to) {
-      where.recordedAt = {};
-      if (from) where.recordedAt.gte = new Date(from as string);
-      if (to) where.recordedAt.lte = new Date(to as string);
-    }
+// Get latest prices with filters
+router.get('/', MarketController.getPrices);
 
-    const prices = await prisma.marketPrice.findMany({
-      where,
-      orderBy: { recordedAt: 'desc' },
-      take: 500,
-    });
+// Get distinct crops for filters
+router.get('/crops', MarketController.getDistinctCrops);
 
-    res.json(prices);
-  } catch (error) {
-    next(error);
-  }
-});
+// Get distinct districts for filters
+router.get('/districts', MarketController.getDistinctDistricts);
 
-// ─── GET /api/market-prices/summary — Current averages ─────────────────
-router.get('/summary', async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+// Get price trends and AI recommendations
+router.get('/trends', MarketController.getTrends);
 
-    const averages = await prisma.marketPrice.groupBy({
-      by: ['cropName', 'district'],
-      _avg: { pricePerKg: true },
-      _min: { pricePerKg: true },
-      _max: { pricePerKg: true },
-      _count: true,
-      where: {
-        recordedAt: { gte: thirtyDaysAgo },
-      },
-    });
+// ─── ADMINISTRATIVE / SYSTEM ROUTES ─────────────────────────────────────
 
-    res.json(averages);
-  } catch (error) {
-    next(error);
-  }
-});
-
-// ─── GET /api/market-prices/crops — List distinct crops ────────────────
-router.get('/crops', async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const crops = await prisma.marketPrice.findMany({
-      distinct: ['cropName'],
-      select: { cropName: true },
-      orderBy: { cropName: 'asc' },
-    });
-
-    res.json(crops.map(c => c.cropName));
-  } catch (error) {
-    next(error);
-  }
-});
-
-// ─── GET /api/market-prices/districts — List distinct districts ────────
-router.get('/districts', async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const districts = await prisma.marketPrice.findMany({
-      distinct: ['district'],
-      select: { district: true },
-      orderBy: { district: 'asc' },
-    });
-
-    res.json(districts.map(d => d.district));
-  } catch (error) {
-    next(error);
-  }
-});
+// Trigger manual fetch from external source (Agmarknet)
+router.post('/fetch', MarketController.fetchPrices);
 
 export default router;

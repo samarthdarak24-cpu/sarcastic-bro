@@ -10,7 +10,7 @@ export class AggregationService {
         id: { in: cropIds },
         fpoId,
         isAggregated: false,
-        status: CropStatus.LISTED,
+        status: { in: [CropStatus.LISTED, CropStatus.ACCEPTED] },
       },
     });
 

@@ -23,6 +23,9 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" className={cn("scroll-smooth", "font-sans", geist.variable)} suppressHydrationWarning>
+      <head>
+        <script src="https://checkout.razorpay.com/v1/checkout.js" async></script>
+      </head>
       <body className={`${geist.variable} ${heading.variable} font-sans antialiased text-neut-900 bg-app-bg`}>
         {children}
         <Toaster

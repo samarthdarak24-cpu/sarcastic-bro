@@ -19,7 +19,13 @@ export function AuthGuard({ children, allowedRoles }: AuthGuardProps) {
       const token = authService.getToken();
       const user = authService.getUser();
 
-      console.log('🔐 AuthGuard check:', { hasToken: !!token, user, allowedRoles });
+      console.log('🔐 AuthGuard check:', { 
+        hasToken: !!token, 
+        user, 
+        userRole: user?.role,
+        allowedRoles,
+        timestamp: new Date().toISOString()
+      });
 
       if (!token || !user) {
         console.log('❌ No token or user, redirecting to login');
@@ -27,22 +33,32 @@ export function AuthGuard({ children, allowedRoles }: AuthGuardProps) {
         return;
       }
 
+      console.log('🔍 Checking if role is allowed:', {
+        userRole: user.role,
+        allowedRoles,
+        isIncluded: allowedRoles.includes(user.role)
+      });
+
       if (!allowedRoles.includes(user.role)) {
         console.log('❌ User role not allowed:', user.role, 'Allowed:', allowedRoles);
         // Redirect to correct dashboard based on role
         if (user.role === 'FARMER') {
+          console.log('↪️ Redirecting to farmer dashboard');
           router.push('/farmer/dashboard');
         } else if (user.role === 'BUYER') {
+          console.log('↪️ Redirecting to buyer dashboard');
           router.push('/buyer/dashboard');
         } else if (user.role === 'FPO') {
+          console.log('↪️ Redirecting to FPO dashboard');
           router.push('/fpo/dashboard');
         } else {
+          console.log('↪️ Unknown role, redirecting to login');
           router.push('/login');
         }
         return;
       }
 
-      console.log('✅ User authorized');
+      console.log('✅ User authorized for this page');
       setIsAuthorized(true);
       setIsLoading(false);
     };

@@ -1,6 +1,7 @@
 'use client';
 
 import { Suspense, useState, useEffect } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Sparkles, Truck, DollarSign, TrendingUp as TrendingUpIcon,
@@ -10,6 +11,16 @@ import {
 } from "lucide-react";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import AIQualityShield from "@/components/dashboard/farmer/AIQualityShield";
+import CropListing from "@/components/dashboard/farmer/CropListing";
+import QualityCertificate from "@/components/dashboard/farmer/QualityCertificate";
+import MarketPrices from "@/components/dashboard/farmer/MarketPrices";
+import Earnings from "@/components/dashboard/farmer/Earnings";
+import Orders from "@/components/dashboard/farmer/Orders";
+import KYC from "@/components/dashboard/farmer/KYC";
+import FPOLinking from "@/components/dashboard/farmer/FPOLinking";
+import Logistics from "@/components/dashboard/farmer/Logistics";
+import Certificates from "@/components/dashboard/farmer/Certificates";
+import LanguageSettings from "@/components/dashboard/farmer/LanguageSettings";
 
 const navItems = [
   { label: 'Dashboard', href: '/farmer/dashboard', section: 'dashboard', icon: <Home /> },
@@ -18,7 +29,10 @@ const navItems = [
   { label: 'Quality Certificate', href: '/farmer/dashboard', section: 'certificate', icon: <FileCheck /> },
   { label: 'FPO Linking', href: '/farmer/dashboard', section: 'fpo', icon: <Building2 /> },
   { label: 'Market Prices', href: '/farmer/dashboard', section: 'market', icon: <BarChart3 /> },
+  { label: 'My Orders', href: '/farmer/dashboard', section: 'myorders', icon: <ShoppingCart /> },
   { label: 'Order Tracking', href: '/farmer/dashboard', section: 'orders', icon: <MapPin /> },
+  { label: 'Wallet', href: '/farmer/dashboard', section: 'wallet', icon: <Wallet /> },
+  { label: 'Analytics', href: '/farmer/dashboard', section: 'analytics', icon: <Activity /> },
   { label: 'Escrow Payments', href: '/farmer/dashboard', section: 'escrow', icon: <DollarSign /> },
   { label: 'Earnings', href: '/farmer/dashboard', section: 'earnings', icon: <Wallet /> },
   { label: 'Logistics', href: '/farmer/dashboard', section: 'logistics', icon: <Truck /> },
@@ -26,7 +40,9 @@ const navItems = [
 ];
 
 function FarmerDashboardContent() {
-  const [selectedSection, setSelectedSection] = useState('dashboard');
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const selectedSection = searchParams.get('section') || 'dashboard';
   
   const [userData, setUserData] = useState({
     name: "Rajesh Kumar",
@@ -36,6 +52,13 @@ function FarmerDashboardContent() {
     email: "rajesh@farmguard.in",
     phone: "+91 9876543210",
     farmSize: "12 Acres",
+  });
+
+  const [stats, setStats] = useState({
+    activeOrders: '0',
+    revenueToday: '₹0',
+    productsListed: '0',
+    pendingPayments: '0'
   });
 
   const [revenueData] = useState([65, 78, 85, 72, 90, 88, 95]);
@@ -50,11 +73,34 @@ function FarmerDashboardContent() {
     { name: 'Carrots', price: 38, change: 6.8, available: '1.5T' }
   ]);
 
+  const fetchStats = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch('http://localhost:3001/api/farmer/dashboard-stats', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const data = await res.json();
+      if (data) {
+        setStats({
+          activeOrders: String(data.pendingOrders || 0),
+          revenueToday: `₹${((data.totalEarnings || 0) / 1000).toFixed(1)}k`,
+          productsListed: String(data.totalCrops || 0),
+          pendingPayments: String(data.pendingOrders || 0)
+        });
+      }
+    } catch (err) {
+      console.error("Failed to fetch dashboard stats", err);
+    }
+  };
+
   useEffect(() => {
     const userString = localStorage.getItem('user');
     if (userString) {
       setUserData({ ...userData, ...JSON.parse(userString) });
     }
+    fetchStats();
 
     const interval = setInterval(() => {
       setCurrentTemp(prev => {
@@ -79,6 +125,19 @@ function FarmerDashboardContent() {
 
   const showDashboard = selectedSection === 'dashboard';
   const showAI = selectedSection === 'ai';
+  const showCrops = selectedSection === 'crops';
+  const showCertificate = selectedSection === 'certificate';
+  const showMarket = selectedSection === 'market';
+  const showEarnings = selectedSection === 'earnings';
+  const showOrders = selectedSection === 'orders';
+  const showMyOrders = selectedSection === 'myorders';
+  const showKYC = selectedSection === 'kyc';
+  const showFPO = selectedSection === 'fpo';
+  const showLogistics = selectedSection === 'logistics';
+  const showWallet = selectedSection === 'wallet';
+  const showAnalytics = selectedSection === 'analytics';
+  const showEscrow = selectedSection === 'escrow';
+  const showLang = selectedSection === 'language';
 
   return (
     <DashboardLayout navItems={navItems} userRole="farmer">
@@ -106,10 +165,10 @@ function FarmerDashboardContent() {
 
                 <div className="grid grid-cols-4 gap-4 mt-8">
                   {[
-                    { label: 'Active Orders', value: '24', icon: ShoppingCart, color: 'from-blue-400 to-cyan-500' },
-                    { label: 'Revenue Today', value: '₹45.2k', icon: TrendingUpIcon, color: 'from-amber-400 to-orange-500' },
-                    { label: 'Products Listed', value: '156', icon: Box, color: 'from-purple-400 to-pink-500' },
-                    { label: 'Pending Payments', value: '8', icon: Clock, color: 'from-rose-400 to-red-500' },
+                    { label: 'Active Orders', value: stats.activeOrders, icon: ShoppingCart, color: 'from-blue-400 to-cyan-500' },
+                    { label: 'Revenue Today', value: stats.revenueToday, icon: TrendingUpIcon, color: 'from-amber-400 to-orange-500' },
+                    { label: 'Products Listed', value: stats.productsListed, icon: Box, color: 'from-purple-400 to-pink-500' },
+                    { label: 'Pending Payments', value: stats.pendingPayments, icon: Clock, color: 'from-rose-400 to-red-500' },
                   ].map((stat, index) => (
                     <motion.div
                       key={stat.label}
@@ -135,7 +194,7 @@ function FarmerDashboardContent() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               whileHover={{ scale: 1.01 }}
-              onClick={() => setSelectedSection('ai')}
+              onClick={() => router.push('/farmer/dashboard?section=ai')}
               className="bg-white rounded-3xl p-6 shadow-lg border border-slate-200 cursor-pointer"
             >
               <div className="flex items-center gap-6">
@@ -237,7 +296,165 @@ function FarmerDashboardContent() {
           </motion.div>
         )}
 
-        {!showDashboard && !showAI && (
+        {showCrops && (
+          <motion.div
+            key="crops"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+          >
+            <CropListing />
+          </motion.div>
+        )}
+
+        {showCertificate && (
+          <motion.div
+            key="certificate"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+          >
+            <QualityCertificate />
+          </motion.div>
+        )}
+
+        {showMarket && (
+          <motion.div
+            key="market"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+          >
+            <MarketPrices />
+          </motion.div>
+        )}
+
+        {showEarnings && (
+          <motion.div
+            key="earnings"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+          >
+            <Earnings />
+          </motion.div>
+        )}
+
+        {showOrders && (
+          <motion.div
+            key="orders"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+          >
+            <Orders />
+          </motion.div>
+        )}
+
+        {showKYC && (
+          <motion.div
+            key="kyc"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+          >
+            <KYC />
+          </motion.div>
+        )}
+
+        {showFPO && (
+          <motion.div
+            key="fpo"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+          >
+            <FPOLinking />
+          </motion.div>
+        )}
+
+        {showMyOrders && (
+          <motion.div
+            key="myorders"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+          >
+            <Orders />
+          </motion.div>
+        )}
+
+        {showLogistics && (
+          <motion.div
+            key="logistics"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+          >
+            <Logistics />
+          </motion.div>
+        )}
+
+        {showWallet && (
+          <motion.div
+            key="wallet"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            className="bg-white rounded-3xl p-12 shadow-lg border border-slate-200 text-center"
+          >
+            <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Wallet size={40} className="text-green-600" />
+            </div>
+            <h3 className="text-2xl font-black text-slate-900 mb-2">Wallet Coming Soon</h3>
+            <p className="text-slate-500">Digital wallet feature is under development.</p>
+          </motion.div>
+        )}
+
+        {showAnalytics && (
+          <motion.div
+            key="analytics"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            className="bg-white rounded-3xl p-12 shadow-lg border border-slate-200 text-center"
+          >
+            <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Activity size={40} className="text-blue-600" />
+            </div>
+            <h3 className="text-2xl font-black text-slate-900 mb-2">Analytics Coming Soon</h3>
+            <p className="text-slate-500">Advanced analytics dashboard is under development.</p>
+          </motion.div>
+        )}
+
+        {showEscrow && (
+          <motion.div
+            key="escrow"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            className="bg-white rounded-3xl p-12 shadow-lg border border-slate-200 text-center"
+          >
+            <div className="w-20 h-20 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <DollarSign size={40} className="text-purple-600" />
+            </div>
+            <h3 className="text-2xl font-black text-slate-900 mb-2">Escrow Payments Coming Soon</h3>
+            <p className="text-slate-500">Secure escrow payment system is under development.</p>
+          </motion.div>
+        )}
+
+        {showLang && (
+          <motion.div
+            key="language"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+          >
+            <LanguageSettings />
+          </motion.div>
+        )}
+
+        {!showDashboard && !showAI && !showCrops && !showCertificate && !showMarket && !showEarnings && !showOrders && !showMyOrders && !showKYC && !showFPO && !showLogistics && !showWallet && !showAnalytics && !showEscrow && !showLang && (
            <motion.div
              key="other"
              initial={{ opacity: 0 }}

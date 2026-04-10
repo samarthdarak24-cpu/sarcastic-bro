@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   Users, Package, Truck, DollarSign, TrendingUp, TrendingDown,
-  Clock, CheckCircle, AlertCircle, Building2, Leaf, BarChart3
+  Clock, CheckCircle, AlertCircle, Building2, Leaf, BarChart3,
+  RefreshCw
 } from 'lucide-react';
 
 interface DashboardStats {
@@ -15,56 +16,78 @@ interface DashboardStats {
   activeAggregations: number;
   pendingOrders: number;
   completedOrders: number;
+  inTransitOrders: number;
   totalRevenue: number;
   commissionEarned: number;
 }
 
+interface ActivityItem {
+  id: string;
+  icon: string;
+  message: string;
+  timestamp: string;
+}
+
 export default function FPODashboardMain() {
-  const [stats, setStats] = useState<DashboardStats>({
-    totalFarmers: 25,
-    activeFarmers: 20,
-    totalCropsCollected: 45,
-    totalQuantityKg: 3500,
-    activeAggregations: 5,
-    pendingOrders: 3,
-    completedOrders: 12,
-    totalRevenue: 245000,
-    commissionEarned: 6125,
-  });
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [activity, setActivity] = useState<ActivityItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const [revenueData, setRevenueData] = useState([65, 78, 85, 72, 90, 88, 95]);
-  const [marketTrends, setMarketTrends] = useState([
-    { name: 'Tomatoes', price: 42, change: 8.4 },
-    { name: 'Potatoes', price: 28, change: -3.1 },
-    { name: 'Wheat', price: 35, change: 5.2 },
-    { name: 'Rice', price: 48, change: 12.5 },
-  ]);
-
-  // Real-time updates
   useEffect(() => {
-    const interval = setInterval(() => {
-      setRevenueData(prev => {
-        const newData = [...prev];
-        const lastIndex = newData.length - 1;
-        const fluctuation = (Math.random() * 6 - 3);
-        newData[lastIndex] = Math.max(85, Math.min(105, newData[lastIndex] + fluctuation));
-        return newData;
-      });
+    const fetchData = async () => {
+      try {
+        setLoading(true);
 
-      setMarketTrends(prev => prev.map(trend => {
-        const priceFluctuation = (Math.random() * 2 - 1);
-        const newPrice = Math.max(15, trend.price * (1 + (priceFluctuation / 100)));
-        const newChange = trend.change + (Math.random() * 0.4 - 0.2);
-        return { 
-          ...trend, 
-          price: Number(newPrice.toFixed(0)),
-          change: Number(newChange.toFixed(1))
-        };
-      }));
-    }, 4000);
+        const [statsRes, activityRes] = await Promise.allSettled([
+          fetch('/api/fpo/dashboard-stats'),
+          fetch('/api/fpo/recent-activity'),
+        ]);
 
+        if (statsRes.status === 'fulfilled' && statsRes.value.ok) {
+          const data = await statsRes.value.json();
+          setStats({
+            totalFarmers: data.totalFarmers || 0,
+            activeFarmers: data.totalFarmers || 0,
+            totalCropsCollected: data.totalCrops || 0,
+            totalQuantityKg: data.totalQuantity || 0,
+            activeAggregations: data.activeLots || 0,
+            pendingOrders: data.pendingOrders || 0,
+            completedOrders: data.completedOrders || 0,
+            inTransitOrders: data.inTransitOrders || 0,
+            totalRevenue: data.escrowHeld || 0,
+            commissionEarned: (data.escrowHeld || 0) * 0.05,
+          });
+        }
+
+        if (activityRes.status === 'fulfilled' && activityRes.value.ok) {
+          const actData = await activityRes.value.json();
+          setActivity(actData);
+        }
+      } catch (error) {
+        console.error('Error fetching FPO dashboard:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+    const interval = setInterval(fetchData, 30000);
     return () => clearInterval(interval);
   }, []);
+
+  if (loading && !stats) {
+    return (
+      <div className="h-96 w-full flex items-center justify-center">
+        <RefreshCw size={48} className="text-purple-600 animate-spin" />
+      </div>
+    );
+  }
+
+  const s = stats || {
+    totalFarmers: 0, activeFarmers: 0, totalCropsCollected: 0,
+    totalQuantityKg: 0, activeAggregations: 0, pendingOrders: 0,
+    completedOrders: 0, inTransitOrders: 0, totalRevenue: 0, commissionEarned: 0,
+  };
 
   return (
     <div className="space-y-8">
@@ -82,7 +105,7 @@ export default function FPODashboardMain() {
             Welcome to FPO Portal
           </h1>
           <p className="text-white/90 text-lg md:text-xl font-medium">
-            Manage {stats.totalFarmers} farmers, {stats.totalQuantityKg}kg crops collected
+            Manage {s.totalFarmers} farmers, {s.totalQuantityKg}kg crops collected
           </p>
         </div>
       </motion.div>
@@ -91,172 +114,109 @@ export default function FPODashboardMain() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard
           title="Total Farmers"
-          value={stats.totalFarmers}
-          subtitle={`${stats.activeFarmers} active`}
+          value={s.totalFarmers}
+          subtitle={`${s.activeFarmers} active`}
           icon={Users}
           gradient="from-blue-500 to-cyan-600"
           trend="+12%"
         />
         <StatCard
           title="Crops Collected"
-          value={`${stats.totalQuantityKg} kg`}
-          subtitle={`${stats.totalCropsCollected} batches`}
+          value={`${s.totalQuantityKg} kg`}
+          subtitle={`${s.totalCropsCollected} batches`}
           icon={Leaf}
           gradient="from-purple-500 to-indigo-600"
           trend="+8%"
         />
         <StatCard
           title="Active Aggregations"
-          value={stats.activeAggregations}
-          subtitle={`${stats.pendingOrders} pending orders`}
+          value={s.activeAggregations}
+          subtitle={`${s.pendingOrders} pending orders`}
           icon={Package}
           gradient="from-purple-500 to-indigo-600"
           trend="+5%"
         />
         <StatCard
           title="Commission Earned"
-          value={`₹${stats.commissionEarned.toLocaleString()}`}
-          subtitle={`Total: ₹${stats.totalRevenue.toLocaleString()}`}
+          value={`₹${s.commissionEarned.toLocaleString()}`}
+          subtitle={`Total: ₹${s.totalRevenue.toLocaleString()}`}
           icon={DollarSign}
           gradient="from-amber-500 to-orange-600"
           trend="+15%"
         />
       </div>
 
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Revenue Chart */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="lg:col-span-2 bg-white rounded-3xl p-8 shadow-lg border-2 border-slate-200"
-        >
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-2xl font-black text-slate-900">Revenue Overview</h2>
-              <p className="text-sm text-slate-500 mt-1">Last 7 days performance</p>
-            </div>
-            <div className="flex items-center gap-2 px-4 py-2 bg-purple-50 rounded-xl">
-              <TrendingUp size={20} className="text-purple-600" />
-              <span className="text-sm font-bold text-purple-600">+18.2%</span>
-            </div>
-          </div>
-          
-          <div className="flex items-end justify-between h-64 gap-4">
-            {revenueData.map((value, index) => (
-              <motion.div
-                key={index}
-                initial={{ height: 0 }}
-                animate={{ height: `${value}%` }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-                className="flex-1 bg-gradient-to-t from-purple-500 to-indigo-400 rounded-t-xl relative group cursor-pointer hover:from-purple-600 hover:to-indigo-500 transition-all"
-              >
-                <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900 text-white px-3 py-1 rounded-lg text-xs font-bold whitespace-nowrap">
-                  ₹{(value * 1000).toLocaleString()}
-                </div>
-              </motion.div>
-            ))}
-          </div>
-          
-          <div className="flex justify-between mt-4 text-xs text-slate-500 font-medium">
-            {['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'].map((day) => (
-              <span key={day}>{day}</span>
-            ))}
-          </div>
-        </motion.div>
-
-        {/* Market Trends */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="bg-white rounded-3xl p-8 shadow-lg border-2 border-slate-200"
-        >
-          <h2 className="text-2xl font-black text-slate-900 mb-6">Market Trends</h2>
-          <div className="space-y-4">
-            {marketTrends.map((trend, index) => (
-              <motion.div
-                key={trend.name}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.4 + index * 0.1 }}
-                className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl hover:bg-slate-100 transition-colors"
-              >
-                <div>
-                  <p className="font-bold text-slate-900">{trend.name}</p>
-                  <p className="text-sm text-slate-500">₹{trend.price}/kg</p>
-                </div>
-                <div className={`flex items-center gap-1 px-3 py-1 rounded-xl ${
-                  trend.change >= 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                }`}>
-                  {trend.change >= 0 ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
-                  <span className="text-sm font-bold">{Math.abs(trend.change)}%</span>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </motion.div>
-      </div>
-
       {/* Orders Overview */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.4 }}
+        transition={{ delay: 0.2 }}
         className="bg-white rounded-3xl p-8 shadow-lg border-2 border-slate-200"
       >
         <h2 className="text-2xl font-black text-slate-900 mb-6">Orders Overview</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <OrderStatusCard
             status="Pending"
-            count={stats.pendingOrders}
+            count={s.pendingOrders}
             icon={Clock}
             color="from-yellow-500 to-amber-600"
           />
           <OrderStatusCard
             status="In Transit"
-            count={5}
+            count={s.inTransitOrders}
             icon={Truck}
             color="from-blue-500 to-cyan-600"
           />
           <OrderStatusCard
             status="Completed"
-            count={stats.completedOrders}
+            count={s.completedOrders}
             icon={CheckCircle}
             color="from-purple-500 to-indigo-600"
           />
         </div>
       </motion.div>
 
-      {/* Recent Activity */}
+      {/* Recent Activity — from API */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.5 }}
+        transition={{ delay: 0.3 }}
         className="bg-white rounded-3xl p-8 shadow-lg border-2 border-slate-200"
       >
         <h2 className="text-2xl font-black text-slate-900 mb-6">Recent Activity</h2>
         <div className="space-y-4">
-          <ActivityItem
-            icon="🌾"
-            message="New crop added: 200kg Tomatoes"
-            time="2 hours ago"
-          />
-          <ActivityItem
-            icon="📦"
-            message="Order accepted from Buyer ABC"
-            time="5 hours ago"
-          />
-          <ActivityItem
-            icon="💰"
-            message="Payment distributed to 3 farmers"
-            time="1 day ago"
-          />
+          {activity.length > 0 ? (
+            activity.map((item) => (
+              <ActivityRow
+                key={item.id}
+                icon={item.icon}
+                message={item.message}
+                time={formatTimeAgo(item.timestamp)}
+              />
+            ))
+          ) : (
+            <>
+              <ActivityRow icon="🌾" message="No recent activity yet" time="—" />
+              <p className="text-sm text-slate-400 italic pl-16">Activity from crop submissions, orders, and payouts will appear here.</p>
+            </>
+          )}
         </div>
       </motion.div>
     </div>
   );
+}
+
+function formatTimeAgo(dateStr: string): string {
+  const now = new Date();
+  const d = new Date(dateStr);
+  const diffMs = now.getTime() - d.getTime();
+  const mins = Math.floor(diffMs / 60000);
+  if (mins < 1) return 'Just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  return `${days}d ago`;
 }
 
 function StatCard({ title, value, subtitle, icon: Icon, gradient, trend }: any) {
@@ -297,7 +257,7 @@ function OrderStatusCard({ status, count, icon: Icon, color }: any) {
   );
 }
 
-function ActivityItem({ icon, message, time }: any) {
+function ActivityRow({ icon, message, time }: any) {
   return (
     <div className="flex items-start gap-4 p-4 bg-slate-50 rounded-2xl hover:bg-slate-100 transition-colors">
       <div className="text-3xl">{icon}</div>

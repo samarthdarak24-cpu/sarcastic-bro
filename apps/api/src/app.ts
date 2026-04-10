@@ -10,6 +10,7 @@ import fpoRoutes from './modules/fpo/fpo.routes';
 import farmerRoutes from './modules/farmer/farmer.routes';
 import farmerNewRoutes from './modules/farmer/farmer-new.routes';
 import buyerRoutes from './modules/buyer/buyer.routes';
+import logisticsRoutes from './modules/logistics/logistics.routes';
 
 const app = express();
 
@@ -36,6 +37,7 @@ app.use('/api/fpo', fpoRoutes);
 app.use('/api/farmer', farmerRoutes);
 app.use('/api/farmers', farmerNewRoutes);
 app.use('/api/buyer', buyerRoutes);
+app.use('/api/logistics', logisticsRoutes);
 
 // Error handling
 app.use(errorMiddleware);

@@ -2,6 +2,7 @@ import { Router } from "express";
 import { FarmerDashboardController } from "./farmer.controller";
 import { authMiddleware } from "../../middleware/auth.middleware";
 import { asyncHandler } from "../../utils/asyncHandler";
+import escrowController from "./escrow.controller";
 
 const router = Router();
 
@@ -21,5 +22,8 @@ router.get("/recent-activity", authMiddleware, asyncHandler(FarmerDashboardContr
 router.get("/crops", authMiddleware, asyncHandler(FarmerDashboardController.getCrops));
 router.get("/orders", authMiddleware, asyncHandler(FarmerDashboardController.getOrders));
 router.get("/production-overview", authMiddleware, asyncHandler(FarmerDashboardController.getProductionOverview));
+
+// Escrow Payments
+router.use("/escrow", escrowController);
 
 export default router;

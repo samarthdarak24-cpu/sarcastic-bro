@@ -1,177 +1,267 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import farmerService from '@/services/farmer';
-import { Truck, ArrowLeft } from 'lucide-react';
+import { useLogisticsList } from '@/hooks/useLogistics';
+import { logisticsService } from '@/services/logistics';
+import { useTranslation } from 'react-i18next';
+import { 
+  Truck, 
+  Package, 
+  MapPin, 
+  Plus,
+  Box,
+  LayoutDashboard,
+  Phone,
+  User,
+  Clock,
+  Navigation
+} from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import { LogisticsCard } from '@/components/logistics/LogisticsCard';
+import { StatusTimeline } from '@/components/logistics/StatusTimeline';
+import { format } from 'date-fns';
+import { toast } from 'react-hot-toast';
 
-export default function LogisticsPage() {
+const statusColors: Record<string, string> = {
+  REQUESTED: 'bg-yellow-100 text-yellow-800 border-yellow-300',
+  ASSIGNED: 'bg-blue-100 text-blue-800 border-blue-300',
+  PICKED_UP: 'bg-purple-100 text-purple-800 border-purple-300',
+  IN_TRANSIT: 'bg-indigo-100 text-indigo-800 border-indigo-300',
+  OUT_FOR_DELIVERY: 'bg-orange-100 text-orange-800 border-orange-300',
+  DELIVERED: 'bg-green-100 text-green-800 border-green-300',
+  CANCELLED: 'bg-red-100 text-red-800 border-red-300',
+};
+
+export default function FarmerLogisticsPage() {
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
+  const { t } = useTranslation();
+  const { logisticsList, loading, error, refresh } = useLogisticsList('farmer');
+  const [view, setView] = useState<'tracking' | 'request'>('tracking');
+  const [selectedLogistics, setSelectedLogistics] = useState<any>(null);
+  
+  const [requestLoading, setRequestLoading] = useState(false);
   const [formData, setFormData] = useState({
-    cropId: '',
-    address: '',
-    contactPhone: '',
+    orderId: '',
+    pickupLocation: '',
+    pickupLat: undefined as number | undefined,
+    pickupLng: undefined as number | undefined,
+    dropLocation: '',
+    dropLat: undefined as number | undefined,
+    dropLng: undefined as number | undefined,
     notes: ''
   });
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  useEffect(() => {
+    // Auto-refresh every 30 seconds for live updates
+    const interval = setInterval(() => {
+      if (view === 'tracking') {
+        refresh();
+      }
+    }, 30000);
+
+    return () => clearInterval(interval);
+  }, [view, refresh]);
+
+  const handleRequestPickup = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!formData.orderId) {
+      toast.error('Please select an order');
+      return;
+    }
+
     try {
-      setLoading(true);
-      const result = await farmerService.requestPickup(formData);
-      setSubmitted(true);
-      alert(`Pickup request submitted! Estimated pickup: ${new Date(result.estimatedPickup).toLocaleDateString()}`);
+      setRequestLoading(true);
+      await logisticsService.requestPickup(formData);
+      toast.success('Pickup request submitted successfully!');
+      setFormData({
+        orderId: '',
+        pickupLocation: '',
+        pickupLat: undefined,
+        pickupLng: undefined,
+        dropLocation: '',
+        dropLat: undefined,
+        dropLng: undefined,
+        notes: ''
+      });
+      setView('tracking');
+      refresh();
     } catch (error: any) {
-      alert(error.response?.data?.error || 'Failed to request pickup');
+      toast.error(error.message || 'Failed to request pickup');
     } finally {
-      setLoading(false);
+      setRequestLoading(false);
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  if (submitted) {
-    return (
-      <div className="p-6 max-w-2xl mx-auto">
-        <div className="bg-green-50 border border-green-200 rounded-lg p-8 text-center">
-          <Truck className="w-16 h-16 text-green-600 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-green-900 mb-2">Pickup Request Submitted!</h2>
-          <p className="text-green-700 mb-6">
-            Your pickup request has been submitted successfully. The FPO will contact you soon.
-          </p>
-          <div className="flex gap-4 justify-center">
-            <button
-              onClick={() => setSubmitted(false)}
-              className="px-6 py-2 border border-green-600 text-green-600 rounded-lg hover:bg-green-50"
-            >
-              Submit Another
-            </button>
-            <button
-              onClick={() => router.push('/farmer/dashboard')}
-              className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-            >
-              Go to Dashboard
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="p-6 max-w-2xl mx-auto">
-      <button
-        onClick={() => router.back()}
-        className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6"
-      >
-        <ArrowLeft className="w-5 h-5" />
-        Back
-      </button>
-
-      <div className="bg-white rounded-lg shadow p-6">
-        <div className="flex items-center gap-3 mb-6">
-          <Truck className="w-8 h-8 text-green-600" />
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Request Pickup</h1>
-            <p className="text-gray-600">Schedule pickup from FPO</p>
-          </div>
+    <div className="p-4 md:p-10 max-w-7xl mx-auto space-y-8 animate-in fade-in duration-700">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+        <div>
+          <h1 className="text-4xl font-black text-slate-900 tracking-tight flex items-center gap-3">
+             <div className="p-2 bg-emerald-600 rounded-2xl text-white shadow-lg shadow-emerald-200">
+               <Truck className="w-8 h-8" />
+             </div>
+             {t('logistics.hub_title', 'Agri-Logistics Hub')}
+          </h1>
+          <p className="text-slate-500 font-medium mt-1">{t('logistics.hub_desc', 'Track your harvests from farm-gate to buyer-door.')}</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Crop ID *
-            </label>
-            <input
-              type="text"
-              name="cropId"
-              required
-              value={formData.cropId}
-              onChange={handleChange}
-              placeholder="Enter crop ID"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-            />
-            <p className="text-xs text-gray-500 mt-1">
-              You can find crop ID in "My Crops" section
-            </p>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Pickup Address *
-            </label>
-            <textarea
-              name="address"
-              required
-              rows={3}
-              value={formData.address}
-              onChange={handleChange}
-              placeholder="Enter complete pickup address"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Contact Phone *
-            </label>
-            <input
-              type="tel"
-              name="contactPhone"
-              required
-              value={formData.contactPhone}
-              onChange={handleChange}
-              placeholder="10-digit mobile number"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Additional Notes
-            </label>
-            <textarea
-              name="notes"
-              rows={2}
-              value={formData.notes}
-              onChange={handleChange}
-              placeholder="Any special instructions..."
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-            />
-          </div>
-
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <h3 className="font-semibold text-blue-900 mb-2">Pickup Information</h3>
-            <ul className="text-sm text-blue-800 space-y-1">
-              <li>• Pickup will be scheduled within 2-3 business days</li>
-              <li>• FPO will contact you to confirm timing</li>
-              <li>• Ensure crops are ready for collection</li>
-              <li>• Quality check will be done at pickup</li>
-            </ul>
-          </div>
-
-          <div className="flex gap-4 pt-4">
-            <button
-              type="button"
-              onClick={() => router.back()}
-              className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={loading}
-              className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
-            >
-              {loading ? 'Submitting...' : 'Request Pickup'}
-            </button>
-          </div>
-        </form>
+        <div className="flex gap-3 bg-white p-1.5 rounded-2xl shadow-sm border border-slate-100">
+           <button 
+             onClick={() => setView('tracking')}
+             className={`px-6 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center gap-2 ${view === 'tracking' ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-500 hover:bg-slate-50'}`}
+           >
+             <LayoutDashboard className="w-4 h-4" />
+             Active Tracking
+           </button>
+           <button 
+             onClick={() => setView('request')}
+             className={`px-6 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center gap-2 ${view === 'request' ? 'bg-emerald-600 text-white shadow-lg' : 'text-slate-500 hover:bg-slate-50'}`}
+           >
+             <Plus className="w-4 h-4" />
+             Request Pickup
+           </button>
+        </div>
       </div>
+
+      {view === 'tracking' ? (
+        <div className="space-y-6">
+          {loading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {[1, 2, 3, 4].map(i => (
+                <Skeleton key={i} className="h-64 w-full rounded-2xl" />
+              ))}
+            </div>
+          ) : error ? (
+            <Card className="border-red-200 bg-red-50">
+              <CardContent className="p-6 text-center">
+                <p className="text-red-600 font-medium">{error}</p>
+                <Button onClick={() => refresh()} className="mt-4" variant="outline">
+                  Retry
+                </Button>
+              </CardContent>
+            </Card>
+          ) : logisticsList.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-24 bg-white rounded-3xl border-2 border-dashed border-slate-200 glass-card">
+              <Box className="w-16 h-16 text-slate-300 mb-4" />
+              <h3 className="text-xl font-bold text-slate-600">No active shipments</h3>
+              <p className="text-sm text-slate-500 mt-2">Schedule your first pickup to get started</p>
+              <Button 
+                className="mt-4 bg-emerald-600 hover:bg-emerald-700"
+                onClick={() => setView('request')}
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Request Pickup
+              </Button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {logisticsList.map((item: any) => (
+                <LogisticsCard
+                  key={item.id}
+                  id={item.id}
+                  orderId={item.orderId}
+                  status={item.status}
+                  driverName={item.driverName}
+                  driverPhone={item.driverPhone}
+                  vehicleNumber={item.vehicleNumber}
+                  pickupLocation={item.pickupLocation}
+                  dropLocation={item.dropLocation}
+                  estimatedDelivery={item.estimatedDelivery}
+                  cropName={item.order?.crop?.cropName}
+                  buyerName={item.order?.buyer?.name}
+                  quantity={item.order?.quantity}
+                  onClick={() => {
+                    setSelectedLogistics(item);
+                    router.push(`/farmer/logistics/${item.orderId}`);
+                  }}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      ) : (
+        <Card className="border-none shadow-2xl bg-white rounded-2xl overflow-hidden max-w-2xl mx-auto glass-card">
+          <CardContent className="p-8">
+            <h2 className="text-2xl font-bold text-slate-900 mb-6 flex items-center gap-3">
+              <div className="p-2 bg-emerald-100 rounded-xl">
+                <Plus className="w-6 h-6 text-emerald-600" />
+              </div>
+              Request Pickup
+            </h2>
+            
+            <form onSubmit={handleRequestPickup} className="space-y-5">
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-slate-700">Order ID *</label>
+                <input 
+                  required
+                  placeholder="Enter the order ID for pickup"
+                  className="w-full h-12 bg-slate-50 border border-slate-200 rounded-xl px-4 font-medium text-slate-900 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 outline-none transition-all"
+                  value={formData.orderId}
+                  onChange={(e) => setFormData({...formData, orderId: e.target.value})}
+                />
+                <p className="text-xs text-slate-500">Only confirmed orders can request pickup</p>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-slate-700">Pickup Location *</label>
+                <textarea 
+                  required
+                  rows={2}
+                  placeholder="Complete farm address for vehicle access..."
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 font-medium text-slate-900 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 outline-none transition-all resize-none"
+                  value={formData.pickupLocation}
+                  onChange={(e) => setFormData({...formData, pickupLocation: e.target.value})}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-slate-700">Drop Location *</label>
+                <input 
+                  required
+                  placeholder="Buyer address or FPO warehouse"
+                  className="w-full h-12 bg-slate-50 border border-slate-200 rounded-xl px-4 font-medium text-slate-900 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 outline-none transition-all"
+                  value={formData.dropLocation}
+                  onChange={(e) => setFormData({...formData, dropLocation: e.target.value})}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-slate-700">Additional Notes</label>
+                <textarea 
+                  rows={2}
+                  placeholder="Any special instructions for the driver..."
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 font-medium text-slate-900 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 outline-none transition-all resize-none"
+                  value={formData.notes}
+                  onChange={(e) => setFormData({...formData, notes: e.target.value})}
+                />
+              </div>
+
+              <Button 
+                type="submit" 
+                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white h-14 rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transition-all"
+                disabled={requestLoading}
+              >
+                {requestLoading ? (
+                  <div className="flex items-center gap-2">
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                    <span>Submitting...</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <Truck className="w-5 h-5" />
+                    <span>Request Pickup</span>
+                  </div>
+                )}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

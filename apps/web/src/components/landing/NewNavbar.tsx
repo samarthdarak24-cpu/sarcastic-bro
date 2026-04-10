@@ -58,7 +58,7 @@ export function NewNavbar() {
                 <motion.span 
                   className="bg-clip-text text-transparent bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-500 tracking-tighter text-3xl font-black inline-block"
                   animate={{ backgroundPosition: ['0% center', '200% center'] }}
-                  transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
+                  transition={{ duration: 4, repeat: Infinity, ease: 'linear' as any }}
                   style={{ backgroundSize: '200% auto' }}
                 >
                   Farm

@@ -95,3 +95,10 @@ export const uploadVoice = multer({
   storage: voiceStorage,
   limits: { fileSize: env.MAX_FILE_SIZE },
 });
+
+// Memory storage for Cloudinary-bound uploads (prevents undefined buffer errors)
+export const memoryUpload = multer({
+  storage: multer.memoryStorage(),
+  fileFilter,
+  limits: { fileSize: env.MAX_FILE_SIZE },
+});

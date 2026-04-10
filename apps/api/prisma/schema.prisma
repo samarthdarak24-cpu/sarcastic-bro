@@ -34,6 +34,9 @@ enum CropGrade {
 
 enum CropStatus {
   LISTED
+  SENT_TO_FPO
+  ACCEPTED
+  REJECTED
   SOLD
   PENDING
 }
@@ -58,6 +61,43 @@ enum PaymentStatus {
   FAILED
 }
 
+enum FPOLinkStatus {
+  NONE
+  PENDING
+  LINKED
+}
+
+enum LinkRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum KYCStatus {
+  NOT_SUBMITTED
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+enum KYCDocumentType {
+  AADHAAR
+  PAN_CARD
+  GST_CERTIFICATE
+  FPO_REGISTRATION
+  BANK_PASSBOOK
+}
+
+enum LogisticsStatus {
+  REQUESTED
+  ASSIGNED
+  PICKED_UP
+  IN_TRANSIT
+  OUT_FOR_DELIVERY
+  DELIVERED
+  CANCELLED
+}
+
 // ─── USER ──────────────────────────────────────────────────────────────
 
 model User {
@@ -68,21 +108,29 @@ model User {
   passwordHash      String
   role              Role
   
-  // KYC Fields
+  // KYC General Info
+  kycStatus         KYCStatus @default(NOT_SUBMITTED)
+  rejectionReason   String?
   aadhaar           String?   // For Farmers
-  gst               String?   // For Buyers
+  gst               String?   // For Buyers/FPOs
+  pan               String?
   bankAccount       String?
   ifsc              String?
   bankName          String?
   
   // Preferences
   language          Language  @default(en)
-  kycVerified       Boolean   @default(false)
+  kycVerified       Boolean   @default(false) // Deprecated in favor of kycStatus but keeping for compatibility
+  
+  // FPO Linking (for farmers)
+  linkedFpoId       String?
+  fpoLinkStatus     FPOLinkStatus @default(NONE)
   
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 
   // Relations
+  kycDocuments      KYCDocument[]
   farm              Farm?
   fpo               FPO?
   crops             Crop[]
@@ -93,9 +141,24 @@ model User {
   farmerEarnings    FarmerEarning[]
   fpoChats          FPOChat[]
   fpoChatMessages   FPOChatMessage[]
+  fpoLinkRequests   FPOLinkRequest[]
 
   @@index([phone])
   @@index([role])
+}
+
+model KYCDocument {
+  id                String          @id @default(uuid())
+  userId            String
+  type              KYCDocumentType
+  documentUrl       String
+  verifiedAt        DateTime?
+  createdAt         DateTime        @default(now())
+
+  // Relations
+  user              User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 // ─── FARM ──────────────────────────────────────────────────────────────
@@ -181,6 +244,8 @@ model Crop {
   fpoId             String?
   
   cropName          String
+  images            String[]    @default([])
+  expectedHarvestDate DateTime?
   category          String      // Vegetables, Fruits, Grains
   variety           String
   quantity          Float       // in kg
@@ -200,6 +265,7 @@ model Crop {
   aggregatedLot     AggregatedLot? @relation(fields: [aggregatedLotId], references: [id])
   aggregatedLotId   String?
   payoutSplits      FPOPayoutSplit[]
+  qualityCertificates QualityCertificate[]
 
   @@index([farmerId])
   @@index([fpoFarmerId])
@@ -226,6 +292,7 @@ model AggregatedLot {
   fpo               FPO         @relation(fields: [fpoId], references: [id], onDelete: Cascade)
   crops             Crop[]
   orders            Order[]
+  qualityCertificates QualityCertificate[]
 
   @@index([fpoId])
   @@index([cropName])
@@ -243,8 +310,18 @@ model Order {
   quantity          Float
   totalAmount       Float
   status            OrderStatus   @default(PENDING)
+  paymentStatus     PaymentStatus @default(PENDING) // Payment tracking
   escrowStatus      EscrowStatus  @default(HELD)
   deliveryAddress   String
+  
+  // Tracking fields
+  trackingNumber    String?
+  estimatedDelivery DateTime?
+  actualDelivery    DateTime?
+  deliveryProof     String[]      @default([]) // Array of photo URLs
+  deliveryNotes     String?
+  confirmedByBuyer  Boolean       @default(false)
+  confirmedAt       DateTime?
   
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
@@ -256,12 +333,15 @@ model Order {
   escrowTransaction EscrowTransaction?
   logistics         FPOLogistics?
   payoutSplits      FPOPayoutSplit[]
+  trackingEvents    OrderTrackingEvent[]
 
   @@index([buyerId])
   @@index([cropId])
   @@index([lotId])
   @@index([status])
+  @@index([paymentStatus])
   @@index([escrowStatus])
+  @@index([trackingNumber])
 }
 
 // ─── ESCROW TRANSACTION ────────────────────────────────────────────────
@@ -273,9 +353,13 @@ model EscrowTransaction {
   sellerId          String        // Farmer or FPO ID
   amount            Float
   status            EscrowStatus  @default(HELD)
-  razorpayPaymentId String?
+  razorpayOrderId   String?       // Razorpay order ID
+  razorpayPaymentId String?       // Razorpay payment ID
+  razorpaySignature String?       // Payment signature
   heldAt            DateTime      @default(now())
   releasedAt        DateTime?
+  refundedAt        DateTime?
+  refundReason      String?
 
   // Relations
   order             Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
@@ -284,6 +368,7 @@ model EscrowTransaction {
   @@index([buyerId])
   @@index([sellerId])
   @@index([status])
+  @@index([razorpayOrderId])
 }
 
 // ─── WALLET ────────────────────────────────────────────────────────────
@@ -292,6 +377,7 @@ model Wallet {
   id                String    @id @default(uuid())
   userId            String    @unique
   balance           Float     @default(0)
+  heldBalance       Float     @default(0) // Amount held in escrow
   currency          String    @default("INR")
   
   createdAt         DateTime  @default(now())
@@ -329,18 +415,19 @@ model WalletTransaction {
 // ─── MARKET PRICE ──────────────────────────────────────────────────────
 
 model MarketPrice {
-  id                String    @id @default(uuid())
-  cropName          String
-  variety           String
-  grade             CropGrade
-  pricePerKg        Float
-  district          String
-  recordedAt        DateTime  @default(now())
+  id              String   @id @default(uuid())
+  cropName        String
+  variety         String
+  district        String
+  state           String
+  minPrice        Float
+  maxPrice        Float
+  modalPrice      Float
+  arrivalQuantity Float
+  date            DateTime
+  createdAt       DateTime @default(now())
 
-  @@index([cropName])
-  @@index([variety])
-  @@index([district])
-  @@index([recordedAt])
+  @@index([cropName, district, date])
 }
 
 // ─── MESSAGE (Chat) ────────────────────────────────────────────────────
@@ -367,20 +454,43 @@ model Message {
 
 // ─── QUALITY CERTIFICATE ───────────────────────────────────────────────
 
+enum CertificateType {
+  LAB_TEST
+  FPO_VERIFIED
+  ORGANIC
+  GOVERNMENT
+  AI_GENERATED
+}
+
 model QualityCertificate {
-  id                String    @id @default(uuid())
+  id                String          @id @default(uuid())
   cropId            String?
   lotId             String?
   uploadedBy        String
+  certificateType   CertificateType @default(FPO_VERIFIED)
+  certificateNumber String?
+  issuerName        String?
+  issueDate         DateTime?
+  expiryDate        DateTime?
   fileUrl           String
-  verifiedByFPO     Boolean   @default(false)
+  verifiedByFPO     Boolean         @default(false)
+  verifiedBy        String?         // FPO admin user ID who verified
+  verifiedAt        DateTime?
   aiScore           Float?
+  notes             String?
   
-  uploadedAt        DateTime  @default(now())
+  uploadedAt        DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  // Relations
+  crop              Crop?           @relation(fields: [cropId], references: [id])
+  lot               AggregatedLot?  @relation(fields: [lotId], references: [id])
 
   @@index([cropId])
   @@index([lotId])
   @@index([uploadedBy])
+  @@index([certificateType])
+  @@index([verifiedByFPO])
 }
 
 // ─── FARMER EARNING ────────────────────────────────────────────────────
@@ -450,11 +560,35 @@ model FPOLogistics {
   fpoId             String
   trackingNumber    String?
   carrier           String?
-  status            String    @default("PENDING") // PENDING, PICKED_UP, IN_TRANSIT, OUT_FOR_DELIVERY, DELIVERED
-  currentLocation   String?
+  status            LogisticsStatus @default(REQUESTED)
+  
+  // Driver & Vehicle Info
+  driverName        String?
+  driverPhone       String?
+  vehicleNumber     String?
+  
+  // Location Coordinates
+  pickupLocation    String?
+  pickupLat         Float?
+  pickupLng         Float?
+  dropLocation      String?
+  dropLat           Float?
+  dropLng           Float?
+  currentLat        Float?
+  currentLng        Float?
+  
+  // Timestamps for each status
+  assignedAt        DateTime?
+  pickedUpAt        DateTime?
+  inTransitAt       DateTime?
+  outForDeliveryAt  DateTime?
   estimatedDelivery DateTime?
   actualDelivery    DateTime?
+  
   notes             String?
+  deliveryProof     String[]  @default([]) // Array of photo URLs
+  deliveryNotes     String?
+  
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 
@@ -465,6 +599,9 @@ model FPOLogistics {
 
   @@index([orderId])
   @@index([fpoId])
+  @@index([status])
+  @@index([driverPhone])
+  @@index([vehicleNumber])
 }
 
 model LogisticsEvent {
@@ -505,4 +642,54 @@ model FPOPayoutSplit {
   @@index([orderId])
   @@index([fpoId])
   @@index([fpoFarmerId])
+}
+
+// ─── FPO LINK REQUEST ──────────────────────────────────────────────────
+
+model FPOLinkRequest {
+  id                String            @id @default(uuid())
+  farmerId          String
+  fpoId             String
+  status            LinkRequestStatus @default(PENDING)
+  farmerName        String
+  farmerPhone       String
+  farmerDistrict    String?
+  farmerAadhaar     String?
+  message           String?           // Optional message from farmer
+  rejectionReason   String?           // Reason if rejected
+  reviewedBy        String?           // FPO admin user ID who reviewed
+  reviewedAt        DateTime?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  // Relations
+  farmer            User              @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+
+  @@index([farmerId])
+  @@index([fpoId])
+  @@index([status])
+  @@unique([farmerId, fpoId]) // Prevent duplicate requests
+}
+
+// ─── ORDER TRACKING EVENT ──────────────────────────────────────────────
+
+model OrderTrackingEvent {
+  id                String    @id @default(uuid())
+  orderId           String
+  status            String    // PLACED, CONFIRMED, PACKED, PICKED_UP, IN_TRANSIT, OUT_FOR_DELIVERY, DELIVERED
+  location          String?
+  latitude          Float?
+  longitude         Float?
+  description       String?
+  updatedBy         String    // User ID who created this event
+  updatedByRole     Role      // Role of the user
+  photos            String[]  @default([])
+  timestamp         DateTime  @default(now())
+
+  // Relations
+  order             Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@index([status])
+  @@index([timestamp])
 }

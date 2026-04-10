@@ -72,6 +72,43 @@ export const setupSocketHandlers = (io: Server) => {
       });
     });
 
+    // ==================== LOGISTICS EVENTS ====================
+
+    // Join logistics tracking room
+    socket.on('join:logistics', (logisticsId: string) => {
+      socket.join(`logistics:${logisticsId}`);
+      console.log(`User ${socket.user?.id} joined logistics room: ${logisticsId}`);
+    });
+
+    // Driver sends location update (live tracking)
+    socket.on('logistics:update-location', async (data: { logisticsId: string; lat: number; lng: number; status?: string }) => {
+      try {
+        // Emit location update to all users tracking this logistics
+        io.to(`logistics:${data.logisticsId}`).emit('logistics:location-updated', {
+          lat: data.lat,
+          lng: data.lng,
+          status: data.status,
+          timestamp: new Date(),
+          updatedBy: socket.user?.id,
+        });
+
+        console.log(`Location updated for logistics ${data.logisticsId}:`, { lat: data.lat, lng: data.lng });
+      } catch (error) {
+        console.error('Error updating logistics location:', error);
+        socket.emit('error', { message: 'Failed to update location' });
+      }
+    });
+
+    // Request status update for logistics
+    socket.on('logistics:request-status', (logisticsId: string) => {
+      // This could trigger a push notification to driver/FPO for status update
+      io.to(`logistics:${logisticsId}`).emit('logistics:status-requested', {
+        logisticsId,
+        requestedBy: socket.user?.id,
+        timestamp: new Date(),
+      });
+    });
+
     socket.on('disconnect', () => {
       console.log(`User disconnected: ${socket.user?.id}`);
     });

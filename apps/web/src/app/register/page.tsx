@@ -56,7 +56,7 @@ export default function RegisterPage() {
     visible: {
       opacity: 1,
       y: 0,
-      transition: { duration: 0.6, ease: 'easeOut' },
+      transition: { duration: 0.6, ease: 'easeOut' as any },
     },
   };
 
@@ -67,7 +67,7 @@ export default function RegisterPage() {
       transition: {
         duration: 4,
         repeat: Infinity,
-        ease: 'easeInOut',
+        ease: 'easeInOut' as any,
       },
     },
   };
@@ -227,7 +227,7 @@ export default function RegisterPage() {
             rotate: [0, 15, 0],
             scale: [1, 1.15, 1],
           }}
-          transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut' }}
+          transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut' as any }}
         >
           <div className="relative">
             <div className="absolute inset-0 bg-emerald-400 blur-3xl opacity-50 rounded-full" />
@@ -242,7 +242,7 @@ export default function RegisterPage() {
             rotate: [0, -10, 0],
             scale: [1, 1.1, 1],
           }}
-          transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut', delay: 1.2 }}
+          transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' as any, delay: 1.2 }}
         >
           <div className="relative">
             <div className="absolute inset-0 bg-green-400 blur-3xl opacity-50 rounded-full" />
@@ -257,7 +257,7 @@ export default function RegisterPage() {
             rotate: [0, 25, 0],
             x: [0, 15, 0],
           }}
-          transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut', delay: 0.6 }}
+          transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' as any, delay: 0.6 }}
         >
           <div className="relative">
             <div className="absolute inset-0 bg-green-400 blur-2xl opacity-40 rounded-full" />
@@ -282,7 +282,7 @@ export default function RegisterPage() {
               duration: 3,
               repeat: Infinity,
               delay: i * 0.5,
-              ease: 'easeInOut',
+              ease: 'easeInOut' as any,
             }}
           />
         ))}
@@ -320,7 +320,7 @@ export default function RegisterPage() {
               duration: particle.duration,
               repeat: Infinity,
               delay: particle.delay,
-              ease: 'easeOut',
+              ease: 'easeOut' as any,
             }}
           />
         ))}

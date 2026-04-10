@@ -1,147 +1,178 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import farmerService from '@/services/farmer';
-import { Wallet, TrendingUp, TrendingDown, Clock } from 'lucide-react';
+import { useWallet } from '@/hooks/useWallet';
+import { 
+  Loader2, Wallet as WalletIcon, ArrowDownCircle, 
+  ArrowUpCircle, IndianRupee, Calendar 
+} from 'lucide-react';
 
-export default function WalletPage() {
-  const [wallet, setWallet] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+export default function FarmerWalletPage() {
+  const { wallet, transactions, loading, fetchWallet, withdrawFunds } = useWallet();
+  const [withdrawAmount, setWithdrawAmount] = useState('');
+  const [showWithdrawModal, setShowWithdrawModal] = useState(false);
+  const [withdrawing, setWithdrawing] = useState(false);
 
   useEffect(() => {
-    loadWallet();
-  }, []);
+    fetchWallet();
+  }, [fetchWallet]);
 
-  const loadWallet = async () => {
+  const handleWithdraw = async () => {
+    const amount = parseFloat(withdrawAmount);
+    if (!amount || amount <= 0) {
+      return;
+    }
+
+    if (wallet && amount > wallet.balance) {
+      alert('Insufficient balance');
+      return;
+    }
+
+    setWithdrawing(true);
     try {
-      const data = await farmerService.getWallet();
-      setWallet(data);
+      await withdrawFunds(amount);
+      setWithdrawAmount('');
+      setShowWithdrawModal(false);
     } catch (error) {
-      console.error('Failed to load wallet:', error);
+      console.error('Withdrawal failed:', error);
     } finally {
-      setLoading(false);
+      setWithdrawing(false);
     }
   };
 
-  if (loading) {
+  const getTransactionIcon = (type: string) => {
+    if (type === 'ADD_FUNDS' || type === 'ESCROW_RELEASE') {
+      return <ArrowDownCircle className="w-5 h-5 text-green-600" />;
+    }
+    return <ArrowUpCircle className="w-5 h-5 text-red-600" />;
+  };
+
+  const getTransactionColor = (type: string) => {
+    if (type === 'ADD_FUNDS' || type === 'ESCROW_RELEASE') {
+      return 'text-green-600';
+    }
+    return 'text-red-600';
+  };
+
+  if (loading && !wallet) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
+        <Loader2 className="w-8 h-8 animate-spin text-green-600" />
       </div>
     );
   }
 
-  if (!wallet) {
-    return <div className="p-6">Failed to load wallet</div>;
-  }
-
   return (
-    <div className="p-6 space-y-6">
-      <h1 className="text-3xl font-bold text-gray-900">Escrow Wallet</h1>
+    <div className="container mx-auto px-4 py-8 max-w-4xl">
+      <h1 className="text-3xl font-bold mb-6">My Wallet</h1>
 
-      {/* Balance Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-gray-600">Available Balance</span>
-            <Wallet className="w-5 h-5 text-green-600" />
+      {/* Balance Card */}
+      <div className="bg-gradient-to-br from-green-600 to-green-700 rounded-lg shadow-lg p-8 mb-8 text-white">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-green-100 mb-2">Available Balance</p>
+            <p className="text-4xl font-bold">
+              ₹{wallet?.balance.toLocaleString() || 0}
+            </p>
           </div>
-          <p className="text-3xl font-bold text-green-600">
-            ₹{wallet.availableBalance.toLocaleString()}
-          </p>
-          <p className="text-xs text-gray-500 mt-1">Ready to withdraw</p>
+          <WalletIcon className="w-16 h-16 text-green-200 opacity-50" />
         </div>
 
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-gray-600">Held in Escrow</span>
-            <Clock className="w-5 h-5 text-yellow-600" />
-          </div>
-          <p className="text-3xl font-bold text-yellow-600">
-            ₹{wallet.heldAmount.toLocaleString()}
-          </p>
-          <p className="text-xs text-gray-500 mt-1">Pending delivery</p>
-        </div>
-
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-gray-600">Total Released</span>
-            <TrendingUp className="w-5 h-5 text-blue-600" />
-          </div>
-          <p className="text-3xl font-bold text-blue-600">
-            ₹{wallet.releasedAmount.toLocaleString()}
-          </p>
-          <p className="text-xs text-gray-500 mt-1">All time</p>
+        <div className="mt-6">
+          <button
+            onClick={() => setShowWithdrawModal(true)}
+            disabled={!wallet || wallet.balance <= 0}
+            className="bg-white text-green-600 px-6 py-2 rounded-lg font-medium hover:bg-green-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Withdraw to Bank
+          </button>
         </div>
       </div>
 
-      {/* Recent Transactions */}
-      <div className="bg-white rounded-lg shadow">
-        <div className="p-6 border-b">
-          <h2 className="text-xl font-semibold">Recent Transactions</h2>
-        </div>
-        <div className="divide-y">
-          {wallet.wallet.transactions && wallet.wallet.transactions.length > 0 ? (
-            wallet.wallet.transactions.map((txn: any) => (
-              <div key={txn.id} className="p-6 flex items-center justify-between hover:bg-gray-50">
+      {/* Transactions */}
+      <div className="bg-white rounded-lg shadow p-6">
+        <h2 className="text-xl font-bold mb-4">Transaction History</h2>
+
+        {transactions.length === 0 ? (
+          <p className="text-gray-600 text-center py-8">No transactions yet</p>
+        ) : (
+          <div className="space-y-3">
+            {transactions.map((transaction) => (
+              <div
+                key={transaction.id}
+                className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition"
+              >
                 <div className="flex items-center gap-4">
-                  <div className={`p-3 rounded-full ${
-                    txn.type === 'ADD_FUNDS' || txn.type === 'ESCROW_RELEASE' 
-                      ? 'bg-green-100' 
-                      : 'bg-red-100'
-                  }`}>
-                    {txn.type === 'ADD_FUNDS' || txn.type === 'ESCROW_RELEASE' ? (
-                      <TrendingUp className="w-5 h-5 text-green-600" />
-                    ) : (
-                      <TrendingDown className="w-5 h-5 text-red-600" />
-                    )}
-                  </div>
+                  {getTransactionIcon(transaction.type)}
                   <div>
                     <p className="font-medium text-gray-900">
-                      {txn.type.replace('_', ' ')}
+                      {transaction.description || transaction.type.replace(/_/g, ' ')}
                     </p>
-                    <p className="text-sm text-gray-500">
-                      {new Date(txn.createdAt).toLocaleString()}
+                    <p className="text-sm text-gray-500 flex items-center gap-1">
+                      <Calendar className="w-3 h-3" />
+                      {new Date(transaction.createdAt).toLocaleString()}
                     </p>
-                    {txn.description && (
-                      <p className="text-sm text-gray-600 mt-1">{txn.description}</p>
-                    )}
                   </div>
                 </div>
+
                 <div className="text-right">
-                  <p className={`text-lg font-semibold ${
-                    txn.type === 'ADD_FUNDS' || txn.type === 'ESCROW_RELEASE'
-                      ? 'text-green-600'
-                      : 'text-red-600'
-                  }`}>
-                    {txn.type === 'ADD_FUNDS' || txn.type === 'ESCROW_RELEASE' ? '+' : '-'}
-                    ₹{txn.amount.toLocaleString()}
+                  <p className={`text-lg font-bold ${getTransactionColor(transaction.type)}`}>
+                    {transaction.type === 'DEBIT' || transaction.type === 'ESCROW_HOLD' ? '-' : '+'}
+                    ₹{transaction.amount.toLocaleString()}
                   </p>
-                  <p className="text-sm text-gray-500">
-                    Balance: ₹{txn.balanceAfter.toLocaleString()}
+                  <p className="text-xs text-gray-500">
+                    Balance: ₹{transaction.balanceAfter.toLocaleString()}
                   </p>
                 </div>
               </div>
-            ))
-          ) : (
-            <div className="p-12 text-center text-gray-500">
-              <Wallet className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-              <p>No transactions yet</p>
-            </div>
-          )}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
 
-      {/* Info Box */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <h3 className="font-semibold text-blue-900 mb-2">How Escrow Works</h3>
-        <ul className="text-sm text-blue-800 space-y-1">
-          <li>• Payment is held in escrow when buyer places order</li>
-          <li>• Funds are released after successful delivery</li>
-          <li>• Available balance can be withdrawn to your bank account</li>
-          <li>• All transactions are secure and tracked</li>
-        </ul>
-      </div>
+      {/* Withdraw Modal */}
+      {showWithdrawModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full">
+            <h3 className="text-xl font-bold mb-4">Withdraw Funds</h3>
+            
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Amount (₹)
+              </label>
+              <input
+                type="number"
+                value={withdrawAmount}
+                onChange={(e) => setWithdrawAmount(e.target.value)}
+                placeholder="Enter amount"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+              />
+              <p className="text-sm text-gray-500 mt-1">
+                Available: ₹{wallet?.balance.toLocaleString() || 0}
+              </p>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={handleWithdraw}
+                disabled={withdrawing || !withdrawAmount}
+                className="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {withdrawing ? 'Processing...' : 'Withdraw'}
+              </button>
+              <button
+                onClick={() => {
+                  setShowWithdrawModal(false);
+                  setWithdrawAmount('');
+                }}
+                className="flex-1 bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

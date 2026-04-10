@@ -32,7 +32,7 @@ export function DashboardLayout({ children, navItems, userRole }: DashboardLayou
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const currentSection = searchParams.get("section");
+  const currentSection = searchParams.get("section") || "dashboard";
   
   // Get real user data from localStorage
   const user = authService.getUser();
@@ -80,7 +80,7 @@ export function DashboardLayout({ children, navItems, userRole }: DashboardLayou
           {navItems.map((item, index) => {
             const isCurrentPath = pathname === item.href;
             const isActive = item.section 
-              ? (currentSection === item.section || (!currentSection && (item.section === "Overview" || item.section === "Cockpit"))) && isCurrentPath
+              ? currentSection === item.section && isCurrentPath
               : isCurrentPath;
               
             const linkHref = item.section && item.href?.includes("dashboard") 

@@ -68,7 +68,7 @@ export default function LoginPage() {
     visible: {
       opacity: 1,
       y: 0,
-      transition: { duration: 0.6, ease: 'easeOut' },
+      transition: { duration: 0.6, ease: 'easeOut' as any },
     },
   };
 
@@ -89,9 +89,21 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
+      // Clear any existing auth data BEFORE login to prevent stale data issues
+      if (typeof window !== 'undefined') {
+        console.log('🧹 Clearing old localStorage data before login');
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        localStorage.removeItem('refreshToken');
+      }
+
+      console.log('🔵 Starting login with email:', email);
       const response = await authService.login({ email, password });
 
-      console.log('✅ Login successful:', response);
+      console.log('✅ Login successful - Full response:', JSON.stringify(response, null, 2));
+      console.log('✅ User object:', JSON.stringify(response.user, null, 2));
+      console.log('✅ User role:', response.user.role);
+      console.log('✅ User role type:', typeof response.user.role);
 
       // Ensure data is stored
       if (typeof window !== 'undefined' && response.token) {
@@ -100,21 +112,36 @@ export default function LoginPage() {
         if (response.tokens?.refreshToken) {
           localStorage.setItem('refreshToken', response.tokens.refreshToken);
         }
+        
+        // Verify what was stored
+        const storedUser = localStorage.getItem('user');
+        console.log('💾 Stored user in localStorage:', storedUser);
+        if (storedUser) {
+          const parsedUser = JSON.parse(storedUser);
+          console.log('💾 Parsed stored user role:', parsedUser.role);
+        }
       }
 
       // Route based on user role
       const role = response.user.role;
       console.log('🔀 Routing user with role:', role);
+      console.log('🔀 Role comparison - FARMER:', role === 'FARMER');
+      console.log('🔀 Role comparison - BUYER:', role === 'BUYER');
+      console.log('🔀 Role comparison - FPO:', role === 'FPO');
 
       // Use window.location for reliable redirect
       if (role === 'FARMER') {
+        console.log('➡️ Redirecting to /farmer/dashboard');
         window.location.href = '/farmer/dashboard';
       } else if (role === 'BUYER') {
+        console.log('➡️ Redirecting to /buyer/dashboard');
         window.location.href = '/buyer/dashboard';
       } else if (role === 'FPO') {
+        console.log('➡️ Redirecting to /fpo/dashboard');
         window.location.href = '/fpo/dashboard';
       } else {
-        throw new Error('Invalid user role');
+        console.error('❌ Unknown role:', role);
+        throw new Error(`Invalid user role: ${role}`);
       }
     } catch (err: any) {
       console.error('❌ Login error:', err);
@@ -294,7 +321,7 @@ export default function LoginPage() {
               duration: particle.duration,
               repeat: Infinity,
               delay: particle.delay,
-              ease: 'easeOut',
+              ease: 'easeOut' as any,
             }}
           />
         ))}
@@ -347,7 +374,7 @@ export default function LoginPage() {
               duration: 4 + Math.random() * 4,
               repeat: Infinity,
               delay: Math.random() * 3,
-              ease: 'easeOut',
+              ease: 'easeOut' as any,
             }}
           />
         ))}
@@ -753,7 +780,7 @@ export default function LoginPage() {
                     transition={{ duration: 0.6 }}
                   />
                   <p className="text-sm font-mono text-white relative z-10">
-                    <span className="font-black text-purple-200">🚜 FPO:</span> fpo@test.com / Fpo123
+                    <span className="font-black text-purple-200">🚜 FPO:</span> fpo@test.com / Farmer123
                   </p>
                 </motion.div>
               </div>

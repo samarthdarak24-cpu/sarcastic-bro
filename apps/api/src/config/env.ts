@@ -17,15 +17,15 @@ const envSchema = z.object({
   JWT_REFRESH_EXPIRY: z.string().min(2).default("7d"),
   UPLOAD_DIR: z.string().min(1).default("./uploads"),
   MAX_FILE_SIZE: z.coerce.number().int().positive().default(10 * 1024 * 1024),
-  CORS_ORIGIN: z.string().min(1).default("http://localhost:3000"),
   ELASTICSEARCH_URL: z.string().optional(),
   AI_SERVICE_URL: z.string().url().default("http://localhost:8000"),
   OLLAMA_URL: z.string().url().default("http://localhost:11434"),
   OLLAMA_MODEL: z.string().default("qwen2.5"),
+  CORS_ORIGINS: z.string().min(1).default("http://localhost:3000"),
 });
 
 const parsed = envSchema.parse(process.env);
-const corsOrigins = parsed.CORS_ORIGIN.split(",")
+const corsOrigins = parsed.CORS_ORIGINS.split(",")
   .map((origin) => origin.trim())
   .filter(Boolean);
 
