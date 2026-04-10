@@ -1,0 +1,44 @@
+{
+  "name": "farmer-ai-features",
+  "version": "1.0.0",
+  "description": "AI Quality Scan and AI Chatbot features for Farmer Dashboard",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "ai",
+    "quality-scan",
+    "chatbot",
+    "farmer",
+    "agriculture",
+    "agritech"
+  ],
+  "author": "AgriVoice Team",
+  "license": "ISC",
+  "peerDependencies": {
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0",
+    "next": "^13.0.0 || ^14.0.0",
+    "framer-motion": "^10.0.0",
+    "lucide-react": "^0.263.0",
+    "react-hot-toast": "^2.4.0"
+  },
+  "dependencies": {
+    "axios": "^1.6.0",
+    "@prisma/client": "^5.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.0.0",
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-repo/farmer-ai-features"
+  },
+  "bugs": {
+    "url": "https://github.com/your-repo/farmer-ai-features/issues"
+  },
+  "homepage": "https://github.com/your-repo/farmer-ai-features#readme"
+}

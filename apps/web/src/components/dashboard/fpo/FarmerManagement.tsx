@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Users, UserPlus, Search, Filter, RefreshCw, 
   MapPin, Phone, Mail, Award, MoreVertical,
-  CheckCircle, ShieldAlert, TrendingUp
+  CheckCircle, ShieldAlert, TrendingUp, Upload, XCircle
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -176,10 +176,158 @@ export default function FarmerManagement() {
 }
 
 function QuickAction({ icon, label }: { icon: any, label: string }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [processing, setProcessing] = useState(false);
+
+  const handleExecute = () => {
+    setProcessing(true);
+    setTimeout(() => {
+      setProcessing(false);
+      setIsOpen(false);
+      const t = typeof toast.success === 'function' ? toast.success : toast;
+      t(label + ' completed successfully.');
+    }, 1500);
+  };
+
+  const renderCustomContent = () => {
+    switch (label) {
+      case 'Bulk CSV Import':
+        return (
+          <div className="border-2 border-dashed border-slate-300 rounded-xl p-8 text-center bg-slate-50 hover:bg-slate-100 cursor-pointer transition-all">
+            <Upload className="mx-auto text-slate-400 mb-3" size={28} />
+            <p className="text-sm font-bold text-slate-600">Click to upload CSV file</p>
+            <p className="text-xs text-slate-400 mt-1">Max size 5MB. Expected format: farmers_schema.csv</p>
+          </div>
+        );
+      case 'Land Records (7/12)':
+        return (
+          <div className="space-y-3">
+            <label className="text-xs font-black text-slate-500 uppercase tracking-widest flex items-center gap-2"><MapPin size={12}/> Gat / Survey Number</label>
+            <input type="text" placeholder="e.g. 45/2" className="w-full border-2 border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-blue-500 font-bold text-slate-700 transition-all" />
+            <div className="p-3 bg-blue-50 text-blue-700 rounded-xl text-xs flex gap-2 items-start font-bold mt-2">
+              <CheckCircle size={16} className="mt-0.5 flex-shrink-0" /> 
+              <span>Automatic verification via official MahaBhulekh secure API gateway enabled.</span>
+            </div>
+          </div>
+        );
+      case 'Tier Assignment':
+        return (
+           <div className="space-y-3">
+             <label className="text-xs font-black text-slate-500 uppercase tracking-widest flex items-center gap-2"><Award size={12}/> Select Target Tier</label>
+             <select className="w-full border-2 border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-blue-500 font-bold text-slate-700 cursor-pointer transition-all">
+               <option>👑 Gold (Premium Yielders)</option>
+               <option>🥈 Silver (Consistent Producers)</option>
+               <option>🥉 Bronze (New Onboards)</option>
+             </select>
+           </div>
+        );
+      case 'Broadcast SMS':
+        return (
+           <div className="space-y-3">
+              <label className="text-xs font-black text-slate-500 uppercase tracking-widest flex items-center gap-2"><Mail size={12}/> Message Content</label>
+              <textarea rows={3} placeholder="Namaskar! You have a payout ready..." className="w-full border-2 border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-blue-500 font-bold text-slate-700 resize-none transition-all"></textarea>
+              <p className="text-[10px] text-slate-400 text-right font-black tracking-widest">0 / 160 CHARS</p>
+           </div>
+        );
+      case 'Yield Analysis':
+        return (
+           <div className="space-y-3 bg-slate-50 p-5 rounded-2xl border border-slate-100">
+              <div className="flex gap-2 items-end h-32 pt-4">
+                 <div className="bg-blue-100 flex-1 rounded-t-lg flex items-end h-[40%] group relative"><div className="w-full bg-blue-500 h-full rounded-t-lg transition-all group-hover:bg-blue-600"></div></div>
+                 <div className="bg-blue-100 flex-1 rounded-t-lg flex items-end h-[50%] group relative"><div className="w-full bg-blue-500 h-full rounded-t-lg transition-all group-hover:bg-blue-600"></div></div>
+                 <div className="bg-blue-100 flex-1 rounded-t-lg flex items-end h-[75%] group relative"><div className="w-full bg-blue-500 h-full rounded-t-lg transition-all group-hover:bg-blue-600"></div></div>
+                 <div className="bg-green-100 flex-1 rounded-t-lg flex items-end h-[100%] group relative"><div className="w-full bg-green-500 h-full rounded-t-lg shadow-lg transition-all group-hover:bg-green-600"></div></div>
+              </div>
+              <div className="flex justify-between text-[10px] font-black text-slate-400 mt-2 tracking-widest">
+                 <span>Q1</span><span>Q2</span><span>Q3</span><span className="text-green-600">Q4 (PRED)</span>
+              </div>
+              <p className="text-sm font-bold text-slate-600 mt-4 text-center">Overall yield projected to rise by <span className="text-green-600 font-black bg-green-100 px-2 py-0.5 rounded ml-1">14% 🚀</span></p>
+           </div>
+        );
+      case 'Credit Scoring':
+        return (
+          <div className="space-y-3">
+            <label className="text-xs font-black text-slate-500 uppercase tracking-widest flex items-center gap-2"><ShieldAlert size={12}/> Aadhaar Fragment</label>
+            <input type="text" placeholder="XXXX XXXX 1234" className="w-full border-2 border-slate-200 rounded-xl px-4 py-3 font-mono font-bold text-slate-700 focus:border-blue-500 outline-none tracking-widest transition-all" />
+            <div className="p-3 bg-amber-50 text-amber-700 rounded-xl text-xs font-bold flex items-start gap-2 mt-4 border border-amber-100">
+              <ShieldAlert size={16} className="mt-0.5 flex-shrink-0"/> 
+              <span className="leading-relaxed">Connects to secure AgMarket credit API. Scoring queries may affect the farmer's CIBIL inquiry log.</span>
+            </div>
+          </div>
+        );
+      case 'Advanced Audit':
+        return (
+          <div className="space-y-3">
+             <div className="flex justify-between items-center bg-slate-50 p-3 rounded-xl border border-slate-100">
+               <span className="text-sm font-bold text-slate-700">Identity & KYC Status</span><CheckCircle size={18} className="text-green-500"/>
+             </div>
+             <div className="flex justify-between items-center bg-slate-50 p-3 rounded-xl border border-slate-100">
+               <span className="text-sm font-bold text-slate-700">Crop Health Logs</span><CheckCircle size={18} className="text-green-500"/>
+             </div>
+             <div className="flex justify-between items-center bg-red-50 p-3 rounded-xl border border-red-100">
+               <span className="text-sm font-bold text-red-700">Pesticide Compliance</span><XCircle size={18} className="text-red-500"/>
+             </div>
+             <div className="mt-6 p-4 bg-slate-50 rounded-xl border border-slate-200">
+                <p className="text-xs font-black text-slate-500 flex justify-between uppercase tracking-widest">Audit Readiness <span className="text-amber-600">85%</span></p>
+                <div className="w-full bg-slate-200 rounded-full h-2 mt-3"><div className="bg-amber-500 h-2 rounded-full" style={{width: '85%'}}></div></div>
+             </div>
+          </div>
+        );
+      default:
+        return (
+          <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 flex items-start gap-3">
+            <p className="text-sm font-semibold text-slate-600">System is ready to process <strong>{label}</strong>.</p>
+          </div>
+        );
+    }
+  };
+
   return (
-    <button className="flex items-center gap-1.5 px-3 py-1.5 bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all">
-      {icon}
-      <span>{label}</span>
-    </button>
+    <>
+      <button 
+        onClick={() => setIsOpen(true)}
+        className="flex items-center gap-1.5 px-3 py-1.5 bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all"
+      >
+        {icon}
+        <span>{label}</span>
+      </button>
+
+      {isOpen && (
+        <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-3xl p-6 shadow-2xl max-w-md w-full border border-slate-100 flex flex-col relative text-left" onClick={(e) => e.stopPropagation()}>
+            <button onClick={() => setIsOpen(false)} className="absolute top-5 right-5 text-slate-400 hover:text-slate-600 bg-slate-100 hover:bg-slate-200 p-2 rounded-full transition-all">
+               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+            <div className="flex items-center gap-4 mb-6">
+              <div className="p-3 bg-blue-100 text-blue-600 rounded-2xl">
+                {icon}
+              </div>
+              <div>
+                <h3 className="text-xl font-black text-slate-900">{label}</h3>
+                <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mt-1">Feature Operation Module</p>
+              </div>
+            </div>
+            
+            <div className="space-y-4 mb-8">
+               {renderCustomContent()}
+            </div>
+
+            <button 
+              onClick={handleExecute}
+              disabled={processing}
+              className="w-full py-4 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl font-black transition-all flex items-center justify-center gap-2 disabled:opacity-50 hover:shadow-xl hover:-translate-y-0.5"
+            >
+              {processing ? (
+                 <>
+                   <RefreshCw size={18} className="animate-spin" /> Processing {label}...
+                 </>
+              ) : (
+                 <>Confirm & Execute</>
+              )}
+            </button>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

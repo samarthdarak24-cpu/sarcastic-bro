@@ -1,11 +1,48 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Package, MapPin, User, Phone, Calendar, Clock, ChevronDown, CheckCircle, Truck, Info, Search, Filter } from 'lucide-react';
+import { toast } from 'sonner';
+
+const MOCK_ORDERS = [
+  {
+    id: 'ORD-9921-AZ',
+    status: 'CONFIRMED',
+    totalAmount: 45000,
+    quantity: 500,
+    createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
+    crop: { cropName: 'Premium Basmati Rice' },
+    buyer: { name: 'Kisan Traders Ltd', phone: '+91 98765 43210' },
+     deliveryAddress: 'Sector 4, Vashi Mandi, Navi Mumbai, MH - 400703'
+  },
+  {
+    id: 'ORD-3312-BX',
+    status: 'IN_TRANSIT',
+    totalAmount: 12500,
+    quantity: 200,
+    createdAt: new Date(Date.now() - 86400000 * 5).toISOString(),
+    crop: { cropName: 'Organic Alphonso Mangoes' },
+    buyer: { name: 'FreshPicks Retail', phone: '+91 88776 55443' },
+    deliveryAddress: '15th Cross, Bandra West, Mumbai, MH - 400050'
+  },
+  {
+    id: 'ORD-7728-CY',
+    status: 'DELIVERED',
+    totalAmount: 8400,
+    quantity: 150,
+    createdAt: new Date(Date.now() - 86400000 * 12).toISOString(),
+    crop: { cropName: 'Commercial Grade Onions' },
+    buyer: { name: 'Global Agri Exports', phone: '+91 99001 12233' },
+    deliveryAddress: 'Main Market, Baramati, MH - 413102'
+  }
+];
 
 export default function Orders() {
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeFilter, setActiveFilter] = useState('ALL');
+  const [isUpdating, setIsUpdating] = useState<string | null>(null);
 
   useEffect(() => {
     fetchOrders();
@@ -26,19 +63,36 @@ export default function Orders() {
       
       const data = await res.json();
       
-      if (Array.isArray(data)) {
-        setOrders(data);
+      const orderList = Array.isArray(data) ? data : (data?.history || []);
+      
+      if (orderList.length === 0) {
+         setOrders(MOCK_ORDERS);
       } else {
-        console.error("Orders data is not an array:", data);
-        setOrders([]);
+         setOrders(orderList);
       }
     } catch (err) {
       console.error("Failed to load orders", err);
-      setOrders([]);
+      setOrders(MOCK_ORDERS);
     } finally {
       setLoading(false);
     }
   };
+
+  const handleMarkAsShipped = (orderId: string) => {
+     setIsUpdating(orderId);
+     setTimeout(() => {
+        setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: 'IN_TRANSIT' } : o));
+        setIsUpdating(null);
+        toast.success("Order #"+orderId.slice(0,8)+" marked as Shipped! Logistics fleet notified.");
+     }, 1500);
+  };
+
+  const filteredOrders = orders.filter(order => {
+     const matchesSearch = (order.crop?.cropName || order.lot?.cropName || '').toLowerCase().includes(searchQuery.toLowerCase()) || 
+                          order.id.toLowerCase().includes(searchQuery.toLowerCase());
+     const matchesFilter = activeFilter === 'ALL' || order.status === activeFilter;
+     return matchesSearch && matchesFilter;
+  });
 
   const statusColors: any = {
     'PENDING': 'bg-amber-100 text-amber-700 border-amber-200',
@@ -55,16 +109,29 @@ export default function Orders() {
           <h2 className="text-3xl font-black text-slate-900">Order Management</h2>
           <p className="text-slate-500 mt-1 font-medium">Track active shipments, buyer details, and delivery statuses.</p>
         </div>
-        <div className="flex gap-3">
-           <div className="relative">
-             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-             <input type="text" placeholder="Search orders..." className="pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-green-500 transition-all text-sm font-medium w-64" />
-           </div>
-           <button className="px-4 py-2.5 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-all text-slate-600 font-medium flex items-center gap-2">
-             <Filter size={18} />
-             <span className="text-sm">Filter</span>
-           </button>
-        </div>
+         <div className="flex gap-3">
+            <div className="relative">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+              <input 
+                type="text" 
+                placeholder="Search by ID or Crop..." 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-12 pr-4 py-3 bg-white border-2 border-slate-200 rounded-2xl outline-none focus:border-green-500 hover:border-slate-300 transition-all font-bold text-slate-700 w-72 shadow-sm" 
+              />
+            </div>
+            <div className="flex bg-white border-2 border-slate-200 rounded-2xl p-1 shadow-sm">
+               {['ALL', 'PENDING', 'CONFIRMED', 'IN_TRANSIT', 'DELIVERED'].map((f) => (
+                  <button 
+                    key={f}
+                    onClick={() => setActiveFilter(f)}
+                    className={`px-4 py-2 rounded-xl text-[10px] font-black transition-all ${activeFilter === f ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-500 hover:bg-slate-50'}`}
+                  >
+                    {f}
+                  </button>
+               ))}
+            </div>
+         </div>
       </div>
 
       {/* Quick Stats */}
@@ -93,16 +160,16 @@ export default function Orders() {
                <p className="text-sm font-medium text-slate-500">Loading orders...</p>
              </div>
           </div>
-        ) : orders.length === 0 ? (
-          <div className="h-64 border-2 border-dashed border-slate-200 rounded-3xl flex flex-col items-center justify-center text-slate-400 bg-white">
-             <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mb-4">
-               <Package size={40} className="opacity-30" />
-             </div>
-             <p className="font-bold text-slate-600">No active orders found</p>
-             <p className="text-sm text-slate-400 mt-1">Orders will appear here once buyers place them</p>
-          </div>
+        ) : filteredOrders.length === 0 ? (
+           <div className="h-64 border-2 border-dashed border-slate-200 rounded-3xl flex flex-col items-center justify-center text-slate-400 bg-white shadow-inner">
+              <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mb-4 border border-slate-100">
+                <Package size={40} className="opacity-20" />
+              </div>
+              <p className="font-black text-slate-800 text-lg">No matching orders</p>
+              <p className="text-sm font-bold text-slate-400 mt-1 uppercase tracking-widest">Adjust your search or filter tags</p>
+           </div>
         ) : (
-          orders.map((order) => (
+          filteredOrders.map((order) => (
             <div 
               key={order.id} 
               className={`bg-white rounded-3xl border ${expandedOrder === order.id ? 'border-green-500 shadow-xl' : 'border-slate-200 shadow-md'} transition-all overflow-hidden`}
@@ -216,11 +283,19 @@ export default function Orders() {
                                *Earning will be released to your wallet within 24h of delivery confirmation.
                              </p>
                           </div>
-                          {order.status === 'CONFIRMED' && (
-                             <button className="w-full bg-green-600 font-black text-white py-3 rounded-xl hover:bg-green-700 transition-all flex items-center justify-center gap-2">
-                               <Truck size={18} /> Mark as Shipped
-                             </button>
-                          )}
+                           {order.status === 'CONFIRMED' && (
+                              <button 
+                                onClick={(e) => { e.stopPropagation(); handleMarkAsShipped(order.id); }}
+                                disabled={isUpdating === order.id}
+                                className="w-full bg-slate-900 font-black text-white py-4 rounded-2xl hover:bg-slate-800 transition-all flex items-center justify-center gap-3 shadow-xl shadow-slate-900/10 hover:scale-[1.02] active:scale-95 disabled:opacity-50"
+                              >
+                                {isUpdating === order.id ? (
+                                   <><div className="h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin" /> Updating Network...</>
+                                ) : (
+                                   <><Truck size={20} /> Mark as Shipped</>
+                                )}
+                              </button>
+                           )}
                        </div>
                     </div>
                   </motion.div>

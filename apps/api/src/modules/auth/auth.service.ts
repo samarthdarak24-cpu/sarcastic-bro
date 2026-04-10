@@ -11,7 +11,7 @@ type UserRecord = {
   id: string;
   name: string;
   email: string;
-  password: string;
+  passwordHash: string;
   role: string;
   phone: string | null;
   district: string | null;
@@ -31,8 +31,8 @@ export class AuthService {
     return new Date(decoded.exp * 1000);
   }
 
-  private static sanitizeUser<T extends { password?: string }>(user: T) {
-    const { password: _password, ...safeUser } = user;
+  private static sanitizeUser<T extends { passwordHash?: string }>(user: T) {
+    const { passwordHash: _passwordHash, ...safeUser } = user;
     return safeUser;
   }
 
@@ -86,7 +86,7 @@ export class AuthService {
       data: {
         name: data.name,
         email: normalizedEmail,
-        password: hashedPassword,
+        passwordHash: hashedPassword,
         role: data.role,
         phone: data.phone,
         district: data.district,
@@ -123,7 +123,7 @@ export class AuthService {
         id: true,
         name: true,
         email: true,
-        password: true,
+        passwordHash: true,
         role: true,
         phone: true,
         district: true,
@@ -142,7 +142,7 @@ export class AuthService {
       throw ApiError.forbidden("Your account has been deactivated");
     }
 
-    const isValid = await bcrypt.compare(data.password, user.password);
+    const isValid = await bcrypt.compare(data.password, user.passwordHash);
     if (!isValid) {
       throw ApiError.unauthorized("Invalid email/phone or password");
     }

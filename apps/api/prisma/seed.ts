@@ -33,7 +33,9 @@ async function main() {
 
   // ─── AUTHENTICATION ────────────────────────────────────────────────
   console.log('👤 Creating users...');
-  const passwordHash = await bcrypt.hash('Farmer123', 10);
+  const farmerPasswordHash = await bcrypt.hash('Farmer123', 10);
+  const buyerPasswordHash = await bcrypt.hash('Buyer123', 10);
+  const fpoPasswordHash = await bcrypt.hash('FPO123', 10);
 
   // FPO Admin
   const fpoAdmin = await prisma.user.create({
@@ -41,7 +43,7 @@ async function main() {
       name: 'Rajendra Patil',
       phone: '9876543210',
       email: 'fpo@test.com',
-      passwordHash,
+      passwordHash: fpoPasswordHash,
       role: 'FPO',
       language: 'mr',
       kycVerified: true,
@@ -68,7 +70,7 @@ async function main() {
         name: f.name,
         phone: f.phone,
         email: f.email,
-        passwordHash,
+        passwordHash: farmerPasswordHash,
         role: 'FARMER',
         language: f.lang,
         kycVerified: true,
@@ -118,7 +120,7 @@ async function main() {
         name: b.name,
         phone: b.phone,
         email: b.email,
-        passwordHash,
+        passwordHash: buyerPasswordHash,
         role: 'BUYER',
         gst: b.gst,
         kycVerified: true,
@@ -710,7 +712,7 @@ async function main() {
         name: f.name,
         phone: f.phone,
         email: f.email,
-        passwordHash,
+        passwordHash: farmerPasswordHash,
         role: 'FARMER',
         language: 'mr',
         kycVerified: true,
@@ -1149,11 +1151,10 @@ async function main() {
   });
   console.log('\n✅ Seeding complete!\n');
   console.log('═══════════════════════════════════════════');
-  console.log('  📋 Login Credentials (all password: Test@1234)');
-  console.log('═══════════════════════════════════════════');
-  console.log('  FPO Admin:  fpo@test.com    / 9876543210');
-  console.log('  Farmer 1:   farmer@test.com / 9876543211');
-  console.log('  Buyer 1:    buyer@test.com  / 9876543220');
+  console.log('  📋 Login Credentials:');
+  console.log('  Farmer: farmer@test.com / Farmer123');
+  console.log('  Buyer:  buyer@test.com  / Buyer123');
+  console.log('  FPO:    fpo@test.com    / FPO123');
   console.log('═══════════════════════════════════════════');
   console.log(`  Users: 8 | Farms: 5 | FPO: 1 | Crops: 10`);
   console.log(`  Lots: 3 | Orders: 3 | Market Prices: ${180 * 6 * 4}`);

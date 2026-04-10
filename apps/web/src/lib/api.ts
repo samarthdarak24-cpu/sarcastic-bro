@@ -1,5 +1,8 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
+const getAuthToken = () =>
+  localStorage.getItem("token") || localStorage.getItem("auth_token");
+
 /**
  * Base API utility for making requests.
  */
@@ -8,7 +11,7 @@ export const api = {
    * GET request
    */
   get: async (endpoint: string, options: RequestInit = {}) => {
-    const token = localStorage.getItem("auth_token");
+    const token = getAuthToken();
     const response = await fetch(`${API_URL}${endpoint}`, {
       ...options,
       headers: {
@@ -29,7 +32,7 @@ export const api = {
    * POST request
    */
   post: async (endpoint: string, data: any, options: RequestInit = {}) => {
-    const token = localStorage.getItem("auth_token");
+    const token = getAuthToken();
     const response = await fetch(`${API_URL}${endpoint}`, {
       method: "POST",
       ...options,
@@ -53,7 +56,7 @@ export const api = {
    * PUT request
    */
   put: async (endpoint: string, data: any, options: RequestInit = {}) => {
-    const token = localStorage.getItem("auth_token");
+    const token = getAuthToken();
     const response = await fetch(`${API_URL}${endpoint}`, {
       method: "PUT",
       ...options,
@@ -76,7 +79,7 @@ export const api = {
    * DELETE request
    */
   delete: async (endpoint: string, options: RequestInit = {}) => {
-    const token = localStorage.getItem("auth_token");
+    const token = getAuthToken();
     const response = await fetch(`${API_URL}${endpoint}`, {
       method: "DELETE",
       ...options,

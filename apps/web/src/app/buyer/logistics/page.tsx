@@ -98,7 +98,7 @@ export default function BuyerLogisticsPage() {
                     <div className="p-4 bg-slate-50 rounded-2xl group-hover:bg-blue-50 transition-colors">
                       <Truck className="w-8 h-8 text-slate-400 group-hover:text-blue-600" />
                     </div>
-                    <Badge variant="outline" className={`${statusColors[item.status]} border-none font-black text-[10px] py-1.5 px-3 rounded-full`}>
+                    <Badge tone="ink" className={`${statusColors[item.status]} border-none font-black text-[10px] py-1.5 px-3 rounded-full`}>
                       {t(`logistics.status.${item.status.toLowerCase()}`)}
                     </Badge>
                   </div>

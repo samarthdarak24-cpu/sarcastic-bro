@@ -31,6 +31,7 @@ import walletController from "./wallet.controller";
 import marketplaceController from "./marketplace.controller";
 import bulkOrderController from "./bulk-order.controller";
 import dashboardController from "./dashboard.controller";
+import bankDetailsController from "./bank-details.controller";
 
 // Mount new buyer module routes
 router.use("/kyc", kycController);
@@ -38,6 +39,7 @@ router.use("/wallet", walletController);
 router.use("/marketplace", marketplaceController);
 router.use("/bulk-orders", bulkOrderController);
 router.use("/dashboard", dashboardController);
+router.use("/bank-details", bankDetailsController);
 router.use("/suppliers", supplierController);
 router.use("/bulk-products", bulkProductController);
 router.use("/procurement", procurementController);

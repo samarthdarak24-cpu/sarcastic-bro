@@ -3,11 +3,12 @@
 import { Suspense, useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
+import { useTranslation } from "react-i18next";
 import {
   Sparkles, Truck, DollarSign, TrendingUp as TrendingUpIcon,
   Clock, Box, Sun, ChevronRight, Home,
   ShoppingCart, Activity, UserCheck, Package, FileCheck,
-  Building2, BarChart3, MapPin, Wallet, Languages, Store
+  Building2, BarChart3, MapPin, Wallet as WalletIcon, Languages
 } from "lucide-react";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import AIQualityShield from "@/components/dashboard/farmer/AIQualityShield";
@@ -19,30 +20,35 @@ import Orders from "@/components/dashboard/farmer/Orders";
 import KYC from "@/components/dashboard/farmer/KYC";
 import FPOLinking from "@/components/dashboard/farmer/FPOLinking";
 import Logistics from "@/components/dashboard/farmer/Logistics";
-import Certificates from "@/components/dashboard/farmer/Certificates";
+import Wallet from "@/components/dashboard/farmer/Wallet";
 import LanguageSettings from "@/components/dashboard/farmer/LanguageSettings";
-
-const navItems = [
-  { label: 'Dashboard', href: '/farmer/dashboard', section: 'dashboard', icon: <Home /> },
-  { label: 'KYC & Profile', href: '/farmer/dashboard', section: 'kyc', icon: <UserCheck /> },
-  { label: 'Crop Listing', href: '/farmer/dashboard', section: 'crops', icon: <Package /> },
-  { label: 'Quality Certificate', href: '/farmer/dashboard', section: 'certificate', icon: <FileCheck /> },
-  { label: 'FPO Linking', href: '/farmer/dashboard', section: 'fpo', icon: <Building2 /> },
-  { label: 'Market Prices', href: '/farmer/dashboard', section: 'market', icon: <BarChart3 /> },
-  { label: 'My Orders', href: '/farmer/dashboard', section: 'myorders', icon: <ShoppingCart /> },
-  { label: 'Order Tracking', href: '/farmer/dashboard', section: 'orders', icon: <MapPin /> },
-  { label: 'Wallet', href: '/farmer/dashboard', section: 'wallet', icon: <Wallet /> },
-  { label: 'Analytics', href: '/farmer/dashboard', section: 'analytics', icon: <Activity /> },
-  { label: 'Escrow Payments', href: '/farmer/dashboard', section: 'escrow', icon: <DollarSign /> },
-  { label: 'Earnings', href: '/farmer/dashboard', section: 'earnings', icon: <Wallet /> },
-  { label: 'Logistics', href: '/farmer/dashboard', section: 'logistics', icon: <Truck /> },
-  { label: 'Language', href: '/farmer/dashboard', section: 'language', icon: <Languages /> },
-];
+import Analytics from "@/components/dashboard/farmer/Analytics";
+import Escrow from "@/components/dashboard/farmer/Escrow";
+import FloatingAIChatbot from "@/components/ui/FloatingAIChatbot";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 
 function FarmerDashboardContent() {
+  const { t } = useTranslation();
   const searchParams = useSearchParams();
   const router = useRouter();
   const selectedSection = searchParams.get('section') || 'dashboard';
+  
+  const navItems = [
+    { label: t('nav.dashboard'), href: '/farmer/dashboard', section: 'dashboard', icon: <Home /> },
+    { label: t('nav.aiQuality'), href: '/farmer/dashboard', section: 'ai', icon: <Sparkles /> },
+    { label: t('nav.kyc'), href: '/farmer/dashboard', section: 'kyc', icon: <UserCheck /> },
+    { label: t('nav.crops'), href: '/farmer/dashboard', section: 'crops', icon: <Package /> },
+    { label: t('nav.certificate'), href: '/farmer/dashboard', section: 'certificate', icon: <FileCheck /> },
+    { label: t('nav.fpo'), href: '/farmer/dashboard', section: 'fpo', icon: <Building2 /> },
+    { label: t('nav.market'), href: '/farmer/dashboard', section: 'market', icon: <BarChart3 /> },
+    { label: t('nav.myOrders'), href: '/farmer/dashboard', section: 'myorders', icon: <ShoppingCart /> },
+    { label: t('nav.orderTracking'), href: '/farmer/dashboard', section: 'orders', icon: <MapPin /> },
+    { label: t('nav.wallet'), href: '/farmer/dashboard', section: 'wallet', icon: <WalletIcon /> },
+    { label: t('nav.analytics'), href: '/farmer/dashboard', section: 'analytics', icon: <Activity /> },
+    { label: t('nav.escrow'), href: '/farmer/dashboard', section: 'escrow', icon: <DollarSign /> },
+    { label: t('nav.earnings'), href: '/farmer/dashboard', section: 'earnings', icon: <WalletIcon /> },
+    { label: t('nav.logistics'), href: '/farmer/dashboard', section: 'logistics', icon: <Truck /> },
+  ];
   
   const [userData, setUserData] = useState({
     name: "Rajesh Kumar",
@@ -63,7 +69,7 @@ function FarmerDashboardContent() {
 
   const [revenueData] = useState([65, 78, 85, 72, 90, 88, 95]);
   const [currentTemp, setCurrentTemp] = useState(24);
-  const [weatherCondition, setWeatherCondition] = useState("Clear Skies");
+  const [weatherCondition] = useState("Clear Skies");
   const [marketTrendsData, setMarketTrendsData] = useState([
     { name: 'Tomatoes', price: 42, change: 8.4, available: '2.5T' },
     { name: 'Potatoes', price: 28, change: -3.1, available: '5T' },
@@ -141,6 +147,7 @@ function FarmerDashboardContent() {
 
   return (
     <DashboardLayout navItems={navItems} userRole="farmer">
+      <FloatingAIChatbot userRole="FARMER" userName={userData.name} />
       <AnimatePresence mode="wait">
         {showDashboard && (
           <motion.div
@@ -155,7 +162,7 @@ function FarmerDashboardContent() {
               <div className="relative z-10">
                 <div className="flex items-start justify-between mb-6">
                   <div>
-                    <h1 className="text-4xl font-black mb-2">Welcome Back, {userData.name}! 🌾</h1>
+                    <h1 className="text-4xl font-black mb-2">{t('dashboard.welcome')}, {userData.name}! 🌾</h1>
                     <p className="text-green-50 text-lg">Your farm is thriving. Here's your complete overview.</p>
                   </div>
                   <motion.div whileHover={{ scale: 1.05, rotate: 5 }} className="bg-white/20 backdrop-blur-sm p-4 rounded-2xl">
@@ -165,10 +172,10 @@ function FarmerDashboardContent() {
 
                 <div className="grid grid-cols-4 gap-4 mt-8">
                   {[
-                    { label: 'Active Orders', value: stats.activeOrders, icon: ShoppingCart, color: 'from-blue-400 to-cyan-500' },
-                    { label: 'Revenue Today', value: stats.revenueToday, icon: TrendingUpIcon, color: 'from-amber-400 to-orange-500' },
-                    { label: 'Products Listed', value: stats.productsListed, icon: Box, color: 'from-purple-400 to-pink-500' },
-                    { label: 'Pending Payments', value: stats.pendingPayments, icon: Clock, color: 'from-rose-400 to-red-500' },
+                    { label: t('dashboard.activeOrders'), value: stats.activeOrders, icon: ShoppingCart, color: 'from-blue-400 to-cyan-500' },
+                    { label: t('dashboard.revenue'), value: stats.revenueToday, icon: TrendingUpIcon, color: 'from-amber-400 to-orange-500' },
+                    { label: t('dashboard.products'), value: stats.productsListed, icon: Box, color: 'from-purple-400 to-pink-500' },
+                    { label: t('dashboard.payments'), value: stats.pendingPayments, icon: Clock, color: 'from-rose-400 to-red-500' },
                   ].map((stat, index) => (
                     <motion.div
                       key={stat.label}
@@ -401,13 +408,8 @@ function FarmerDashboardContent() {
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
-            className="bg-white rounded-3xl p-12 shadow-lg border border-slate-200 text-center"
           >
-            <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Wallet size={40} className="text-green-600" />
-            </div>
-            <h3 className="text-2xl font-black text-slate-900 mb-2">Wallet Coming Soon</h3>
-            <p className="text-slate-500">Digital wallet feature is under development.</p>
+            <Wallet />
           </motion.div>
         )}
 
@@ -417,13 +419,8 @@ function FarmerDashboardContent() {
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
-            className="bg-white rounded-3xl p-12 shadow-lg border border-slate-200 text-center"
           >
-            <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Activity size={40} className="text-blue-600" />
-            </div>
-            <h3 className="text-2xl font-black text-slate-900 mb-2">Analytics Coming Soon</h3>
-            <p className="text-slate-500">Advanced analytics dashboard is under development.</p>
+            <Analytics />
           </motion.div>
         )}
 
@@ -433,13 +430,8 @@ function FarmerDashboardContent() {
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
-            className="bg-white rounded-3xl p-12 shadow-lg border border-slate-200 text-center"
           >
-            <div className="w-20 h-20 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <DollarSign size={40} className="text-purple-600" />
-            </div>
-            <h3 className="text-2xl font-black text-slate-900 mb-2">Escrow Payments Coming Soon</h3>
-            <p className="text-slate-500">Secure escrow payment system is under development.</p>
+            <Escrow />
           </motion.div>
         )}
 

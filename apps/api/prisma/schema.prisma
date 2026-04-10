@@ -53,6 +53,7 @@ enum EscrowStatus {
   HELD
   RELEASED
   REFUNDED
+  DISPUTED
 }
 
 enum PaymentStatus {
@@ -142,6 +143,9 @@ model User {
   fpoChats          FPOChat[]
   fpoChatMessages   FPOChatMessage[]
   fpoLinkRequests   FPOLinkRequest[]
+  bankDetails       BankDetails[]
+  complianceLogs    ComplianceLog[]
+  qualityScans      QualityScan[] @relation("FarmerQualityScans")
 
   @@index([phone])
   @@index([role])
@@ -266,6 +270,7 @@ model Crop {
   aggregatedLotId   String?
   payoutSplits      FPOPayoutSplit[]
   qualityCertificates QualityCertificate[]
+  qualityScans      QualityScan[] @relation("CropQualityScans")
 
   @@index([farmerId])
   @@index([fpoFarmerId])
@@ -692,4 +697,74 @@ model OrderTrackingEvent {
   @@index([orderId])
   @@index([status])
   @@index([timestamp])
+}
+
+// ─── BANK DETAILS ──────────────────────────────────────────────────────
+
+model BankDetails {
+  id                  String    @id @default(uuid())
+  userId              String
+  accountHolderName   String
+  accountNumber       String    // Encrypted
+  ifscCode            String
+  bankName            String
+  branchName          String
+  accountType         String    // SAVINGS, CURRENT
+  isVerified          Boolean   @default(false)
+  isPrimary           Boolean   @default(true)
+  verifiedAt          DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  // Relations
+  user                User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([isVerified])
+  @@unique([userId, isPrimary])
+}
+
+// ─── COMPLIANCE LOGS ──────────────────────────────────────────────────
+
+model ComplianceLog {
+  id          String   @id @default(uuid())
+  userId      String
+  type        String   // LIVELINESS_CHECK, AADHAAR_VERIFICATION, GEO_AUDIT, etc.
+  status      String   // PASSED, FAILED, SUCCESS, VALID, EXPIRED, etc.
+  details     Json     // Detailed result data
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([type])
+  @@index([createdAt])
+}
+
+// ─── QUALITY SCAN ──────────────────────────────────────────────────────
+
+model QualityScan {
+  id          String   @id @default(uuid())
+  farmerId    String
+  productId   String?
+  imageUrl    String   @db.Text
+  grade       String   // A+, A, B+, B, C
+  score       Int      // 0-100
+  defects     Int      @default(0)
+  freshness   Int      @default(0) // 0-100
+  color       Int      @default(0) // 0-100
+  size        Int      @default(0) // 0-100
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  farmer      User     @relation("FarmerQualityScans", fields: [farmerId], references: [id], onDelete: Cascade)
+  product     Crop?    @relation("CropQualityScans", fields: [productId], references: [id], onDelete: SetNull)
+
+  @@index([farmerId])
+  @@index([productId])
+  @@index([createdAt])
+  @@index([grade])
 }

@@ -1,7 +1,7 @@
 'use client';
 
-import AIQualityShieldPremium from './AIQualityShieldPremium';
+import AIQualityShieldComplete from './AIQualityShieldComplete';
 
 export default function AIQualityShield() {
-  return <AIQualityShieldPremium />;
+  return <AIQualityShieldComplete />;
 }

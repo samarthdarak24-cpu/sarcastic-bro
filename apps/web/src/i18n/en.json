@@ -1,4 +1,239 @@
 {
+  "buyer": {
+    "dashboard": {
+      "title": "Buyer Dashboard",
+      "welcome": "Welcome back",
+      "overview": "Buyer workspace",
+      "description": "Every buyer action now lives inside one dashboard: marketplace handoff, wallet health, order pipeline, escrow visibility, and supplier follow-up.",
+      "stats": {
+        "activeOrders": "Active orders",
+        "deliveredOrders": "Delivered orders",
+        "walletBalance": "Wallet balance",
+        "activeSuppliers": "Active suppliers",
+        "totalOrders": "Total orders",
+        "totalSpend": "Total spend",
+        "pendingApproval": "Pending approval",
+        "avgOrderValue": "Avg order value"
+      },
+      "sections": {
+        "dashboard": "Dashboard",
+        "marketplace": "Marketplace",
+        "orders": "My Orders",
+        "wallet": "Wallet",
+        "bulkOrders": "Bulk Orders",
+        "escrow": "Escrow Payments",
+        "delivery": "Delivery Approval",
+        "certificates": "Quality Certificates",
+        "chat": "Real-Time Chat",
+        "tracking": "Order Tracking",
+        "analytics": "Analytics",
+        "kyc": "Business KYC",
+        "compliance": "Gov Compliance"
+      },
+      "actions": {
+        "reviewOrders": "Review orders",
+        "browseMarketplace": "Browse marketplace",
+        "placeOrder": "Place a new order",
+        "addFunds": "Add funds",
+        "refresh": "Refresh",
+        "viewDetails": "View details",
+        "trackOrder": "Track order",
+        "confirmDelivery": "Confirm delivery",
+        "openOrder": "Open order"
+      }
+    },
+    "orders": {
+      "title": "My orders",
+      "description": "Filter, track, confirm, and drill into every order without leaving the dashboard shell.",
+      "filters": {
+        "all": "ALL",
+        "pending": "PENDING",
+        "confirmed": "CONFIRMED",
+        "inTransit": "IN_TRANSIT",
+        "delivered": "DELIVERED",
+        "cancelled": "CANCELLED"
+      },
+      "empty": {
+        "title": "No matching orders yet",
+        "description": "Try a different filter or head back to the marketplace to place your next procurement order."
+      },
+      "status": {
+        "pending": "Pending",
+        "confirmed": "Confirmed",
+        "inTransit": "In transit",
+        "delivered": "Delivered",
+        "cancelled": "Cancelled"
+      },
+      "escrowStatus": {
+        "held": "Escrow held",
+        "released": "Escrow released",
+        "refunded": "Escrow refunded"
+      },
+      "buyerConfirmed": "Buyer confirmed"
+    },
+    "wallet": {
+      "title": "Wallet",
+      "description": "Monitor spend capacity, escrow reserves, and the live transaction ledger from one buyer finance view.",
+      "liveBalance": "Live balance",
+      "totalAdded": "Total added",
+      "totalSpent": "Total spent",
+      "inEscrow": "In escrow",
+      "transactionHistory": "Transaction history",
+      "entries": "entries",
+      "addFunds": "Add funds",
+      "addFundsTitle": "Add funds",
+      "addFundsDescription": "Top up your wallet instantly to keep orders moving.",
+      "quickAdd": "Quick add",
+      "amount": "Amount",
+      "enterAmount": "Enter amount",
+      "minimumAmount": "Minimum top-up amount: Rs. 100",
+      "processing": "Processing...",
+      "cancel": "Cancel",
+      "close": "Close",
+      "ready": "Your wallet is ready",
+      "readyDescription": "Add funds to start placing protected orders and to unlock your live transaction ledger.",
+      "demoNote": "Funds are added immediately in demo mode so you can continue your buyer flow without leaving the dashboard."
+    },
+    "escrow": {
+      "title": "Escrow payments",
+      "description": "Track held funds, released payouts, and open protected transactions in the same buyer dashboard flow.",
+      "protected": "Protected",
+      "released": "Released",
+      "refunded": "Refunded",
+      "protectedOrders": "Protected orders",
+      "heldValue": "Held value",
+      "releasedValue": "Released value",
+      "awaitingRelease": "Awaiting release",
+      "confirmDelivery": "Confirm Delivery",
+      "raiseDispute": "Raise Dispute",
+      "disputeReason": "Reason for Dispute",
+      "disputePlaceholder": "Describe the issue...",
+      "submitDispute": "Submit Dispute",
+      "confirmDeliveryPrompt": "Confirm delivery? This will release funds to the seller.",
+      "empty": {
+        "title": "No escrow orders",
+        "description": "Your escrow-protected orders will appear here"
+      }
+    },
+    "delivery": {
+      "title": "Delivery approval",
+      "description": "Review deliveries that still need buyer attention and jump into live tracking for shipments on the move.",
+      "approvalQueue": "Approval queue",
+      "incomingShipments": "Incoming shipments",
+      "awaitingApproval": "Awaiting approval",
+      "inTransit": "In transit",
+      "protectedValue": "Protected value",
+      "empty": {
+        "approvals": "No approvals waiting",
+        "approvalsDescription": "Delivered orders that still need confirmation will surface here automatically.",
+        "shipments": "Nothing on the road right now",
+        "shipmentsDescription": "As soon as shipments are assigned or in transit, they will show up here."
+      }
+    },
+    "marketplace": {
+      "title": "Marketplace",
+      "description": "Browse aggregated lots from FPOs and individual farmer crops with quality certificates and competitive pricing.",
+      "quickAccess": "Quick marketplace access",
+      "fullExperience": "The full marketplace experience is available at /buyer/marketplace with advanced filters, quality certificates, and instant ordering.",
+      "capabilities": "Featured marketplace capabilities",
+      "openMarketplace": "Open marketplace",
+      "features": {
+        "filters": "Filter by crop type, district, grade, and price range",
+        "certificates": "View quality certificates and FPO verification",
+        "compare": "Compare prices across multiple suppliers",
+        "bulkOrders": "Place bulk orders with escrow protection"
+      }
+    },
+    "tracking": {
+      "title": "Order tracking",
+      "description": "Real-time visibility into shipment status, location updates, and estimated delivery times for all active orders.",
+      "activeShipments": "Active shipments",
+      "recentDeliveries": "Recent deliveries",
+      "trackingActive": "Tracking active",
+      "outForDelivery": "Out for delivery",
+      "deliveredToday": "Delivered today",
+      "viewTracking": "View tracking",
+      "empty": {
+        "shipments": "No active shipments",
+        "shipmentsDescription": "Orders in transit will appear here with live tracking updates.",
+        "deliveries": "No recent deliveries",
+        "deliveriesDescription": "Completed deliveries will appear here for quick reference."
+      }
+    },
+    "analytics": {
+      "title": "Analytics",
+      "description": "Comprehensive insights into spending patterns, supplier performance, category trends, and procurement efficiency.",
+      "spendingTrends": "Spending trends",
+      "topSuppliers": "Top suppliers by value",
+      "categoryBreakdown": "Category breakdown",
+      "ordersThisMonth": "Orders this month",
+      "monthlyPattern": "Monthly spending pattern over the last 6 months.",
+      "supplierRanking": "Suppliers ranked by total delivered order value.",
+      "categoryDistribution": "Spending distribution across crop categories.",
+      "ofTotal": "of total",
+      "empty": {
+        "spending": "No spending data yet",
+        "spendingDescription": "Analytics will populate as you complete more orders.",
+        "suppliers": "No supplier data",
+        "suppliersDescription": "Supplier rankings will appear after completed orders.",
+        "categories": "No category data",
+        "categoriesDescription": "Category breakdown will show once you have delivered orders."
+      }
+    },
+    "chat": {
+      "title": "Real-time chat",
+      "description": "Buyer conversations, unread counts, and latest supplier replies now stay visible as one dashboard section.",
+      "conversations": "Conversations",
+      "unreadMessages": "Unread messages",
+      "supplierThreads": "Supplier threads",
+      "lastRefresh": "Last refresh",
+      "recentConversations": "Recent conversations",
+      "conversationsDescription": "Latest supplier and FPO threads ordered by most recent message.",
+      "unread": "unread",
+      "empty": {
+        "title": "No conversations yet",
+        "description": "Buyer chat threads will start appearing here once you begin messaging farmers or FPOs."
+      }
+    },
+    "kyc": {
+      "title": "Business KYC",
+      "description": "GST details, verification progress, and buyer profile completion stay inside the dashboard instead of sending you to a separate setup flow.",
+      "verification": "Verification",
+      "documents": "Documents",
+      "workflow": "Workflow",
+      "status": "Status",
+      "gstVerification": "GST verification",
+      "businessInfo": "Business info",
+      "bankDetails": "Bank details",
+      "profileCompletion": "Profile completion",
+      "inlineSetup": "Inline setup",
+      "trackable": "Trackable"
+    },
+    "bulkOrders": {
+      "title": "Bulk orders",
+      "description": "Use the same dashboard shell to review larger-volume buys, scheduled fulfilment, and large-ticket supplier activity.",
+      "playbook": "Bulk order playbook",
+      "playbookDescription": "What this area now handles inside the buyer dashboard.",
+      "highVolumeOrders": "High-volume orders",
+      "highVolumeDescription": "Orders of 500 kg or more appear here for quick buyer follow-through.",
+      "bulkReady": "Bulk-ready orders",
+      "totalBulkVolume": "Total bulk volume",
+      "bulkValue": "Bulk value",
+      "avgOrderSize": "Avg order size",
+      "features": {
+        "volumeSourcing": "Volume-first sourcing",
+        "volumeSourcingDesc": "Identify larger orders quickly and revisit suppliers with proven delivered value.",
+        "escrowBacked": "Escrow-backed settlement",
+        "escrowBackedDesc": "Large transactions stay visible with hold and release states beside each order.",
+        "trackingHandoff": "Tracking handoff",
+        "trackingHandoffDesc": "Jump straight into live order tracking for shipments already moving through logistics."
+      },
+      "empty": {
+        "title": "No bulk orders yet",
+        "description": "Once larger quantities are purchased, this section becomes your high-volume operating board."
+      }
+    }
+  },
   "certificates": {
     "title": "Quality Certificates",
     "upload": "Upload Certificate",

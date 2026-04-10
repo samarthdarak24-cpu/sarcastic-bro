@@ -44,22 +44,27 @@ export const setupSocketHandlers = (io: Server) => {
     // Send message
     socket.on('send-message', (data: { senderId: string; receiverId: string; content: string; orderId?: string }) => {
       const roomId = [data.senderId, data.receiverId].sort().join('-');
-      io.to(`chat:${roomId}`).emit('new-message', {
+      const payload = {
         senderId: data.senderId,
         receiverId: data.receiverId,
         content: data.content,
         orderId: data.orderId,
         createdAt: new Date(),
-      });
+      };
+      io.to(`chat:${roomId}`).emit('new-message', payload);
+      io.to(`chat:${roomId}`).emit('message_received', payload);
+      io.to(`user:${data.receiverId}`).emit('message_received', payload);
     });
 
     // Order status update
     socket.on('order-status-update', (data: { orderId: string; status: string; userId: string }) => {
-      io.to(`user:${data.userId}`).emit('order-updated', {
+      const payload = {
         orderId: data.orderId,
         status: data.status,
         timestamp: new Date(),
-      });
+      };
+      io.to(`user:${data.userId}`).emit('order-updated', payload);
+      io.to(`user:${data.userId}`).emit('order_updated', payload);
     });
 
     // Notification

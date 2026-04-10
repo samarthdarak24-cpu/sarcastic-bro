@@ -1,6 +1,7 @@
 import { Router, Request, Response } from "express";
 import { authMiddleware } from "../../middleware/auth.middleware";
 import { asyncHandler } from "../../utils/asyncHandler";
+import { sendSuccess, sendError } from "../../utils/response";
 import { BuyerDashboardService } from "./dashboard.service";
 
 const router = Router();
@@ -14,10 +15,7 @@ router.get("/stats", authMiddleware, asyncHandler(async (req: Request, res: Resp
   
   const stats = await dashboardService.getDashboardStats(buyerId);
   
-  res.status(200).json({
-    success: true,
-    data: stats
-  });
+  return sendSuccess(res, stats, "Dashboard stats retrieved successfully");
 }));
 
 /**
@@ -28,10 +26,7 @@ router.get("/orders-summary", authMiddleware, asyncHandler(async (req: Request, 
   
   const summary = await dashboardService.getOrdersSummary(buyerId);
   
-  res.status(200).json({
-    success: true,
-    data: summary
-  });
+  return sendSuccess(res, summary, "Orders summary retrieved successfully");
 }));
 
 /**
@@ -46,10 +41,7 @@ router.get("/analytics/spending", authMiddleware, asyncHandler(async (req: Reque
     period as 'week' | 'month' | 'year'
   );
   
-  res.status(200).json({
-    success: true,
-    data: analytics
-  });
+  return sendSuccess(res, analytics, "Spending analytics retrieved successfully");
 }));
 
 /**
@@ -64,10 +56,7 @@ router.get("/top-suppliers", authMiddleware, asyncHandler(async (req: Request, r
     limit ? parseInt(limit as string) : undefined
   );
   
-  res.status(200).json({
-    success: true,
-    data: suppliers
-  });
+  return sendSuccess(res, suppliers, "Top suppliers retrieved successfully");
 }));
 
 export default router;

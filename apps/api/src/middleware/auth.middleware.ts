@@ -25,7 +25,24 @@ export const authenticateToken = (
   }
 
   try {
-    const decoded = jwt.verify(token, env.JWT_ACCESS_SECRET) as any;
+    const secrets = [env.JWT_ACCESS_SECRET, process.env.JWT_SECRET]
+      .filter((value): value is string => Boolean(value));
+
+    let decoded: any = null;
+
+    for (const secret of secrets) {
+      try {
+        decoded = jwt.verify(token, secret) as any;
+        break;
+      } catch {
+        // Try the next compatible secret
+      }
+    }
+
+    if (!decoded) {
+      throw new Error('Invalid token');
+    }
+
     req.user = {
       id: decoded.userId || decoded.id,
       userId: decoded.userId || decoded.id,

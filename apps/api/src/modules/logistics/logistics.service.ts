@@ -298,6 +298,12 @@ export class LogisticsService {
         status: data.status,
         timestamp: new Date(),
       });
+      SocketService.emitToUser(logistics.order.buyerId, 'order_updated', {
+        orderId: logistics.orderId,
+        status: data.status,
+        source: 'LOGISTICS',
+        timestamp: new Date(),
+      });
     }
 
     return updated;
@@ -372,6 +378,27 @@ export class LogisticsService {
 
       // TODO: Trigger wallet credit to farmer/FPO
       // This would be handled by a separate payment service
+    }
+
+    SocketService.emitToUser(logistics.order.buyerId, 'order_updated', {
+      orderId: logistics.orderId,
+      status: 'DELIVERED',
+      source: 'LOGISTICS',
+      timestamp: new Date(),
+    });
+    if (logistics.order.escrowTransaction) {
+      SocketService.emitToUser(logistics.order.buyerId, 'escrow_updated', {
+        orderId: logistics.orderId,
+        status: 'RELEASED',
+        amount: logistics.order.escrowTransaction.amount,
+        timestamp: new Date(),
+      });
+      SocketService.emitToUser(logistics.order.escrowTransaction.sellerId, 'escrow_updated', {
+        orderId: logistics.orderId,
+        status: 'RELEASED',
+        amount: logistics.order.escrowTransaction.amount,
+        timestamp: new Date(),
+      });
     }
 
     // Emit delivery completion event

@@ -10,6 +10,7 @@ import {
 import { authService } from "@/services/auth";
 import { LivePriceTicker } from "@/components/ui/LivePriceTicker";
 import { LiveNotificationBell } from "@/components/ui/LiveNotificationBell";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 
 
 
@@ -179,6 +180,7 @@ export function DashboardLayout({ children, navItems, userRole }: DashboardLayou
             </div>
 
             <div className="flex items-center gap-3">
+                <LanguageSwitcher />
                 <div className="hidden lg:flex items-center gap-2 px-3 h-9 bg-emerald-50 rounded-xl border border-emerald-100">
                     <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
                     <span className="text-[10px] font-black uppercase tracking-widest text-emerald-600">{"Live"}</span>

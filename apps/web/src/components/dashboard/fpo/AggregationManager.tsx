@@ -5,16 +5,175 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Warehouse, Plus, Search, Filter, RefreshCw, 
   ChevronRight, CheckCircle2, AlertCircle, Trash2,
-  TrendingUp, Scale, Inbox
+  TrendingUp, Scale, Inbox, Zap, Droplets, XCircle, ShieldAlert
 } from 'lucide-react';
 import { toast } from 'sonner';
 
 function QuickAction({ icon, label }: { icon: any, label: string }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [processing, setProcessing] = useState(false);
+
+  const handleExecute = () => {
+    setProcessing(true);
+    setTimeout(() => {
+      setProcessing(false);
+      setIsOpen(false);
+      const t = typeof toast.success === 'function' ? toast.success : toast;
+      t(label + ' completed successfully.');
+    }, 1500);
+  };
+
+  const renderCustomContent = () => {
+    switch (label) {
+      case 'AI Optimize':
+        return (
+           <div className="space-y-3 bg-indigo-50 p-6 rounded-2xl border border-indigo-100 text-center">
+              <Zap className="mx-auto text-indigo-500 mb-3" size={36} />
+              <p className="text-base font-black text-slate-800">Predictive Aggregation Engine</p>
+              <p className="text-xs font-semibold text-slate-500 mt-2 leading-relaxed">AI evaluates incoming batches to suggest the most profitable lot combinations based on historical spot prices.</p>
+              <div className="mt-5 p-3 bg-indigo-100 rounded-xl text-indigo-700 text-xs font-black tracking-widest flex items-center justify-center gap-2">
+                 <RefreshCw size={16} className="animate-spin" /> SCANNING BATCHES...
+              </div>
+           </div>
+        );
+      case 'Moisture Analyser':
+        return (
+          <div className="space-y-3">
+            <label className="text-xs font-black text-slate-500 uppercase tracking-widest flex items-center gap-2"><Droplets size={12}/> Average Moisture Content (%)</label>
+            <input type="number" placeholder="e.g. 12.5" className="w-full border-2 border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-indigo-500 font-bold text-slate-700 transition-all text-lg" />
+            <div className="w-full bg-slate-200 rounded-full h-2.5 mt-4 flex overflow-hidden">
+               <div className="bg-blue-400 h-full w-[25%] transition-all"></div>
+               <div className="bg-emerald-500 h-full w-[45%] transition-all"></div>
+               <div className="bg-red-500 h-full w-[30%] transition-all"></div>
+            </div>
+            <div className="flex justify-between text-[10px] uppercase font-black text-slate-400 mt-1">
+               <span>Dry</span><span className="text-emerald-600">Optimal</span><span>Wet</span>
+            </div>
+          </div>
+        );
+      case 'Set Storage Bin':
+        return (
+           <div className="space-y-3">
+             <label className="text-xs font-black text-slate-500 uppercase tracking-widest flex items-center gap-2"><Warehouse size={12}/> Assign to Warehouse</label>
+             <select className="w-full border-2 border-slate-200 rounded-xl px-4 py-4 outline-none focus:border-indigo-500 font-bold text-slate-700 cursor-pointer transition-all appearance-none bg-slate-50">
+               <option>🧊 WH-A (Cold Storage) - 40% Full</option>
+               <option>📦 WH-B (Ambient) - 85% Full</option>
+               <option>🏭 WH-C (Bulk Silo) - 12% Full</option>
+             </select>
+           </div>
+        );
+      case 'Split Batch':
+        return (
+           <div className="space-y-4">
+              <label className="text-xs font-black text-slate-500 uppercase tracking-widest flex items-center gap-2"><Plus size={12}/> Split Ratio (Percentage)</label>
+              <div className="flex items-center gap-4">
+                 <input type="number" defaultValue="50" className="w-full border-2 border-slate-200 rounded-xl px-4 py-4 outline-none focus:border-indigo-500 font-black text-slate-700 text-center text-xl bg-slate-50" />
+                 <span className="font-black text-slate-300 text-2xl">:</span>
+                 <input type="number" defaultValue="50" className="w-full border-2 border-slate-200 rounded-xl px-4 py-4 outline-none focus:border-indigo-500 font-black text-slate-700 text-center text-xl bg-slate-50" />
+              </div>
+              <p className="text-[11px] text-slate-500 font-bold text-center mt-2 border border-slate-100 p-2 rounded-lg bg-slate-50">Batch will be split into two separate entities.</p>
+           </div>
+        );
+      case 'Generate QC':
+        return (
+          <div className="space-y-3 text-center">
+             <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 border-4 border-white shadow-sm">
+                <CheckCircle2 size={36} className="text-green-500" />
+             </div>
+             <p className="text-lg font-black text-slate-800">Digital Quality Certificate</p>
+             <p className="text-xs text-slate-500 font-semibold leading-relaxed">Creates a unified grading certificate combining metric data from all aggregated sub-batches.</p>
+             <div className="p-3 bg-slate-50 text-slate-600 rounded-xl text-[10px] font-black tracking-widest uppercase border border-slate-200 mt-6 flex items-center justify-center gap-2">
+               <ShieldAlert size={14} className="text-slate-400" /> Web3 Hash Generated on execution.
+             </div>
+          </div>
+        );
+      case 'Lot History':
+        return (
+          <div className="space-y-4">
+             <div className="relative border-l-2 border-slate-200 ml-4 space-y-6 pb-2 mt-4">
+                <div className="relative pl-6">
+                   <div className="absolute w-3.5 h-3.5 bg-indigo-500 border-2 border-white shadow-sm rounded-full -left-[9px] top-1"></div>
+                   <p className="text-[10px] font-black text-indigo-600 uppercase tracking-widest">Today, 09:41 AM</p>
+                   <p className="text-sm font-bold text-slate-700 mt-0.5">Batches autonomously aggregated into Lot-9021</p>
+                </div>
+                <div className="relative pl-6">
+                   <div className="absolute w-3 h-3 bg-slate-300 rounded-full -left-[7px] top-1"></div>
+                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Yesterday</p>
+                   <p className="text-sm font-bold text-slate-600 mt-0.5">Individual batches logged & weighed at hub.</p>
+                </div>
+             </div>
+          </div>
+        );
+      case 'Market Match':
+        return (
+          <div className="space-y-3">
+            <label className="text-xs font-black text-slate-500 uppercase tracking-widest flex items-center gap-2 mb-4"><Search size={12}/> Live Buyer Demands</label>
+             <div className="p-4 bg-white rounded-xl border-2 border-emerald-100 flex items-center justify-between cursor-pointer hover:bg-emerald-50 transition-all group shadow-sm">
+                <div><p className="text-sm font-black text-slate-700 group-hover:text-emerald-700 transition-colors">Reliance Fresh</p><p className="text-xs font-bold text-slate-500">Needs 5,000kg • Nashik</p></div>
+                <div className="text-emerald-600 font-black text-sm bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-100">92% Match</div>
+             </div>
+             <div className="p-4 bg-white rounded-xl border-2 border-emerald-100 flex items-center justify-between cursor-pointer hover:bg-emerald-50 transition-all group shadow-sm">
+                <div><p className="text-sm font-black text-slate-700 group-hover:text-emerald-700 transition-colors">ITC Agri Sector</p><p className="text-xs font-bold text-slate-500">Needs 12,000kg • Pune</p></div>
+                <div className="text-emerald-600 font-black text-sm bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-100">88% Match</div>
+             </div>
+          </div>
+        );
+      default:
+        return (
+          <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 flex items-start gap-3">
+            <p className="text-sm font-semibold text-slate-600">System is ready to process <strong>{label}</strong>.</p>
+          </div>
+        );
+    }
+  };
+
   return (
-    <button className="flex items-center gap-1.5 px-3 py-1.5 bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all">
-      {icon}
-      <span>{label}</span>
-    </button>
+    <>
+      <button 
+        onClick={() => setIsOpen(true)}
+        className="flex items-center gap-1.5 px-3 py-1.5 bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all"
+      >
+        {icon}
+        <span>{label}</span>
+      </button>
+
+      {isOpen && (
+        <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-3xl p-6 shadow-2xl max-w-md w-full border border-slate-100 flex flex-col relative text-left" onClick={(e) => e.stopPropagation()}>
+            <button onClick={() => setIsOpen(false)} className="absolute top-5 right-5 text-slate-400 hover:text-slate-600 bg-slate-100 hover:bg-slate-200 p-2 rounded-full transition-all">
+               <XCircle size={20} />
+            </button>
+            <div className="flex items-center gap-4 mb-6">
+              <div className="p-3 bg-indigo-100 text-indigo-600 rounded-2xl shadow-sm">
+                {icon}
+              </div>
+              <div>
+                <h3 className="text-xl font-black text-slate-900">{label}</h3>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Feature Operation Module</p>
+              </div>
+            </div>
+            
+            <div className="space-y-4 mb-8">
+               {renderCustomContent()}
+            </div>
+
+            <button 
+              onClick={handleExecute}
+              disabled={processing}
+              className="w-full py-4 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl font-black transition-all flex items-center justify-center gap-2 disabled:opacity-50 hover:shadow-xl hover:-translate-y-0.5"
+            >
+              {processing ? (
+                 <>
+                   <RefreshCw size={18} className="animate-spin" /> Processing {label}...
+                 </>
+              ) : (
+                 <>Confirm & Execute</>
+              )}
+            </button>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 

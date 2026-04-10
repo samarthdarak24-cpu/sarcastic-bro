@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { FarmerDashboardController } from "./farmer.controller";
+import { QualityController } from "./quality.controller";
 import { authMiddleware } from "../../middleware/auth.middleware";
 import { asyncHandler } from "../../utils/asyncHandler";
 import escrowController from "./escrow.controller";
@@ -25,5 +26,11 @@ router.get("/production-overview", authMiddleware, asyncHandler(FarmerDashboardC
 
 // Escrow Payments
 router.use("/escrow", escrowController);
+
+// AI Quality Analysis
+router.post("/quality/analyze", authMiddleware, asyncHandler(QualityController.analyzeQuality));
+router.post("/quality/save", authMiddleware, asyncHandler(QualityController.saveQualityScan));
+router.get("/quality/history", authMiddleware, asyncHandler(QualityController.getQualityScanHistory));
+router.get("/quality/stats", authMiddleware, asyncHandler(QualityController.getQualityStats));
 
 export default router;

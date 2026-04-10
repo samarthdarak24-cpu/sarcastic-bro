@@ -29,6 +29,8 @@ import orderTrackingRoutes from './routes/order-tracking.routes';
 import analyticsRoutes from './routes/analyticsRoutes';
 import paymentRoutes from './routes/paymentRoutes';
 import walletRoutes from './routes/wallet.routes';
+import farmerModuleRoutes from './modules/farmer/farmer.routes';
+import n8nChatRoutes from './modules/n8n-chat/n8n-chat.routes';
 
 dotenv.config();
 
@@ -67,6 +69,7 @@ app.get('/health', (req, res) => {
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/farmer', farmerRoutes);
+app.use('/api/farmers', farmerModuleRoutes);
 app.use('/api/buyer', buyerRoutes);
 app.use('/api/fpo', fpoRoutes);
 app.use('/api/market-prices', marketPriceRoutes);
@@ -80,6 +83,7 @@ app.use('/api/orders', orderTrackingRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/wallet', walletRoutes);
+app.use('/api/n8n', n8nChatRoutes);
 
 // Error handling
 app.use(errorHandler);

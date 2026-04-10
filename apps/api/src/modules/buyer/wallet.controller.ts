@@ -1,6 +1,7 @@
 import { Router, Request, Response } from "express";
 import { authMiddleware } from "../../middleware/auth.middleware";
 import { asyncHandler } from "../../utils/asyncHandler";
+import { sendSuccess, sendError, sendValidationError } from "../../utils/response";
 import { BuyerWalletService } from "./wallet.service";
 
 const router = Router();
@@ -13,10 +14,7 @@ router.get("/", authMiddleware, asyncHandler(async (req: Request, res: Response)
   const userId = (req as any).user.userId;
   const wallet = await walletService.getWallet(userId);
   
-  res.status(200).json({
-    success: true,
-    data: wallet
-  });
+  return sendSuccess(res, wallet, "Wallet retrieved successfully");
 }));
 
 /**
@@ -26,10 +24,7 @@ router.get("/balance", authMiddleware, asyncHandler(async (req: Request, res: Re
   const userId = (req as any).user.userId;
   const balance = await walletService.getBalance(userId);
   
-  res.status(200).json({
-    success: true,
-    data: balance
-  });
+  return sendSuccess(res, balance, "Balance retrieved successfully");
 }));
 
 /**
@@ -40,10 +35,7 @@ router.post("/add-funds", authMiddleware, asyncHandler(async (req: Request, res:
   const { amount, razorpayPaymentId, razorpayOrderId, method } = req.body;
   
   if (!amount || amount <= 0) {
-    return res.status(400).json({
-      success: false,
-      message: "Invalid amount"
-    });
+    return sendValidationError(res, [{ field: 'amount', message: 'Invalid amount' }], 'Invalid amount');
   }
   
   const result = await walletService.addFunds(userId, parseFloat(amount), {
@@ -52,11 +44,7 @@ router.post("/add-funds", authMiddleware, asyncHandler(async (req: Request, res:
     method
   });
   
-  res.status(200).json({
-    success: true,
-    message: "Funds added successfully",
-    data: result
-  });
+  return sendSuccess(res, result, "Funds added successfully", 200);
 }));
 
 /**
@@ -72,10 +60,7 @@ router.get("/transactions", authMiddleware, asyncHandler(async (req: Request, re
     limit: limit ? parseInt(limit as string) : undefined
   });
   
-  res.status(200).json({
-    success: true,
-    data: result
-  });
+  return sendSuccess(res, result, "Transactions retrieved successfully");
 }));
 
 export default router;

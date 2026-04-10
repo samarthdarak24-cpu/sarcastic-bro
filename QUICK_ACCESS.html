@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Quick Access</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 24px;
+            padding: 48px;
+            max-width: 900px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 {
+            font-size: 42px;
+            font-weight: 900;
+            text-align: center;
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .subtitle {
+            text-align: center;
+            color: #666;
+            font-size: 18px;
+            margin-bottom: 48px;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+        .card {
+            background: linear-gradient(135deg, var(--color-1), var(--color-2));
+            border-radius: 16px;
+            padding: 32px;
+            color: white;
+            text-decoration: none;
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+            border: none;
+            width: 100%;
+            text-align: left;
+        }
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px rgba(0,0,0,0.2);
+        }
+        .card.farmer {
+            --color-1: #10b981;
+            --color-2: #059669;
+        }
+        .card.buyer {
+            --color-1: #3b82f6;
+            --color-2: #2563eb;
+        }
+        .card.fpo {
+            --color-1: #8b5cf6;
+            --color-2: #7c3aed;
+        }
+        .card-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+        .card-title {
+            font-size: 24px;
+            font-weight: 900;
+            margin-bottom: 8px;
+        }
+        .card-desc {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 12px;
+        }
+        .card-email {
+            font-size: 12px;
+            background: rgba(255,255,255,0.2);
+            padding: 8px 12px;
+            border-radius: 8px;
+            display: inline-block;
+        }
+        .info {
+            background: #f3f4f6;
+            border-radius: 12px;
+            padding: 24px;
+            margin-top: 32px;
+        }
+        .info h3 {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+        .info ol {
+            margin-left: 20px;
+        }
+        .info li {
+            margin-bottom: 8px;
+            color: #666;
+        }
+        .links {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            margin-top: 24px;
+        }
+        .link-btn {
+            background: #667eea;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+        .link-btn:hover {
+            background: #5568d3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 Dashboard Quick Access</h1>
+        <p class="subtitle">Click any button to access the dashboard directly</p>
+        
+        <div class="grid">
+            <button class="card farmer" onclick="accessDashboard('FARMER', 'farmer@test.com', 'Test Farmer')">
+                <div class="card-icon">🌾</div>
+                <div class="card-title">Farmer Dashboard</div>
+                <div class="card-desc">Green theme • Crop management</div>
+                <div class="card-email">farmer@test.com</div>
+            </button>
+            
+            <button class="card buyer" onclick="accessDashboard('BUYER', 'buyer@test.com', 'Test Buyer')">
+                <div class="card-icon">🛒</div>
+                <div class="card-title">Buyer Dashboard</div>
+                <div class="card-desc">Blue theme • Marketplace access</div>
+                <div class="card-email">buyer@test.com</div>
+            </button>
+            
+            <button class="card fpo" onclick="accessDashboard('FPO', 'fpo@test.com', 'Test FPO')">
+                <div class="card-icon">🚜</div>
+                <div class="card-title">FPO Dashboard</div>
+                <div class="card-desc">Purple theme • Organization hub</div>
+                <div class="card-email">fpo@test.com</div>
+            </button>
+        </div>
+        
+        <div class="info">
+            <h3>📝 How it works:</h3>
+            <ol>
+                <li>Click any dashboard button above</li>
+                <li>localStorage will be set with test credentials</li>
+                <li>You'll be redirected to the dashboard automatically</li>
+                <li>No login required!</li>
+            </ol>
+        </div>
+        
+        <div class="links">
+            <a href="http://localhost:3000/test-dashboards" class="link-btn">
+                Open Test Page
+            </a>
+            <a href="http://localhost:3000/login" class="link-btn">
+                Go to Login
+            </a>
+        </div>
+    </div>
+    
+    <script>
+        function accessDashboard(role, email, name) {
+            // Clear old data
+            localStorage.clear();
+            
+            // Set new user data
+            const user = {
+                id: role.toLowerCase() + '-test-id',
+                email: email,
+                name: name,
+                role: role
+            };
+            
+            const token = 'test-token-' + Date.now();
+            
+            localStorage.setItem('token', token);
+            localStorage.setItem('user', JSON.stringify(user));
+            
+            console.log('✅ Set user:', user);
+            console.log('✅ Set token:', token);
+            
+            // Redirect based on role
+            const dashboardUrl = role === 'FARMER' ? '/farmer/dashboard' :
+                                role === 'BUYER' ? '/buyer/dashboard' :
+                                '/fpo/dashboard';
+            
+            console.log('➡️ Redirecting to:', dashboardUrl);
+            
+            // Redirect
+            window.location.href = 'http://localhost:3000' + dashboardUrl;
+        }
+    </script>
+</body>
+</html>

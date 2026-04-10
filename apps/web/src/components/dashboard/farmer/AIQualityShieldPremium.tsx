@@ -30,22 +30,41 @@ export default function AIQualityShieldPremium() {
 
     setAnalyzing(true);
     
-    // Simulate AI analysis
-    await new Promise(resolve => setTimeout(resolve, 2500));
-    
-    // Mock result
-    const mockResult = {
-      grade: ['A', 'A+', 'B', 'B+'][Math.floor(Math.random() * 4)],
-      score: Math.floor(Math.random() * 20) + 80,
-      defects: Math.floor(Math.random() * 5),
-      freshness: Math.floor(Math.random() * 15) + 85,
-      color: Math.floor(Math.random() * 10) + 90,
-      size: Math.floor(Math.random() * 15) + 85,
-    };
-    
-    setResult(mockResult);
-    setAnalyzing(false);
-    toast.success('Analysis complete!');
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:3001/api/farmer/quality/analyze', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ imageUrl: selectedImage })
+      });
+
+      if (!response.ok) {
+        throw new Error('Analysis failed');
+      }
+
+      const data = await response.json();
+      setResult(data);
+      toast.success('Analysis complete!');
+    } catch (error) {
+      console.error('Analysis error:', error);
+      toast.error('Failed to analyze image. Using demo mode.');
+      
+      // Fallback to mock result if API fails
+      const mockResult = {
+        grade: ['A', 'A+', 'B', 'B+'][Math.floor(Math.random() * 4)],
+        score: Math.floor(Math.random() * 20) + 80,
+        defects: Math.floor(Math.random() * 5),
+        freshness: Math.floor(Math.random() * 15) + 85,
+        color: Math.floor(Math.random() * 10) + 90,
+        size: Math.floor(Math.random() * 15) + 85,
+      };
+      setResult(mockResult);
+    } finally {
+      setAnalyzing(false);
+    }
   };
 
   return (

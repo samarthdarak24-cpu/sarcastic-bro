@@ -1,5 +1,6 @@
 import { PrismaClient, OrderStatus, EscrowStatus, PaymentStatus } from '@prisma/client';
 import { BuyerWalletService } from './wallet.service';
+import { SocketService } from '../../config/socket';
 
 const prisma = new PrismaClient();
 const walletService = new BuyerWalletService();
@@ -31,11 +32,22 @@ export class BulkOrderService {
       if (product.totalQuantity < quantity) throw new Error('Insufficient quantity available');
 
       totalAmount = product.pricePerKg * quantity;
-      sellerId = product.fpoId;
+      sellerId = product.fpo.adminUserId;
     } else {
       product = await prisma.crop.findUnique({
         where: { id: productId },
-        include: { farmer: true, fpoFarmer: true }
+        include: {
+          farmer: true,
+          fpoFarmer: {
+            include: {
+              fpo: {
+                select: {
+                  adminUserId: true
+                }
+              }
+            }
+          }
+        }
       });
 
       if (!product) throw new Error('Crop not found');
@@ -43,7 +55,7 @@ export class BulkOrderService {
       if (product.quantity < quantity) throw new Error('Insufficient quantity available');
 
       totalAmount = product.pricePerKg * quantity;
-      sellerId = product.farmerId || product.fpoFarmer?.fpoId || '';
+      sellerId = product.farmerId || product.fpoFarmer?.fpo?.adminUserId || '';
     }
 
     // Check wallet balance
@@ -98,6 +110,28 @@ export class BulkOrderService {
           quantity: newQuantity,
           status: newQuantity <= 0 ? 'SOLD' : 'LISTED'
         }
+      });
+    }
+
+    // Real-time order + escrow updates
+    SocketService.emitToUser(buyerId, 'order_updated', {
+      orderId: order.id,
+      status: order.status,
+      event: 'ORDER_CREATED',
+      timestamp: new Date(),
+    });
+    SocketService.emitToUser(buyerId, 'escrow_updated', {
+      orderId: order.id,
+      status: EscrowStatus.HELD,
+      amount: totalAmount,
+      timestamp: new Date(),
+    });
+    if (sellerId) {
+      SocketService.emitToUser(sellerId, 'order_updated', {
+        orderId: order.id,
+        status: order.status,
+        event: 'NEW_ORDER',
+        timestamp: new Date(),
       });
     }
 
@@ -259,6 +293,27 @@ export class BulkOrderService {
       });
     }
 
+    SocketService.emitToUser(buyerId, 'order_updated', {
+      orderId,
+      status: updatedOrder.status,
+      event: 'DELIVERY_CONFIRMED',
+      timestamp: new Date(),
+    });
+    SocketService.emitToUser(buyerId, 'escrow_updated', {
+      orderId,
+      status: EscrowStatus.RELEASED,
+      amount: order.totalAmount,
+      timestamp: new Date(),
+    });
+    if (order.escrowTransaction?.sellerId) {
+      SocketService.emitToUser(order.escrowTransaction.sellerId, 'escrow_updated', {
+        orderId,
+        status: EscrowStatus.RELEASED,
+        amount: order.totalAmount,
+        timestamp: new Date(),
+      });
+    }
+
     return {
       order: updatedOrder,
       message: 'Delivery confirmed. Payment released to seller.'
@@ -299,6 +354,27 @@ export class BulkOrderService {
       // Add funds back to wallet
       await walletService.addFunds(buyerId, escrow.amount, {
         method: 'REFUND'
+      });
+    }
+
+    SocketService.emitToUser(buyerId, 'order_updated', {
+      orderId,
+      status: OrderStatus.CANCELLED,
+      event: 'ORDER_CANCELLED',
+      timestamp: new Date(),
+    });
+    SocketService.emitToUser(buyerId, 'escrow_updated', {
+      orderId,
+      status: EscrowStatus.REFUNDED,
+      amount: order.totalAmount,
+      timestamp: new Date(),
+    });
+    if (order.escrowTransaction?.sellerId) {
+      SocketService.emitToUser(order.escrowTransaction.sellerId, 'order_updated', {
+        orderId,
+        status: OrderStatus.CANCELLED,
+        event: 'ORDER_CANCELLED',
+        timestamp: new Date(),
       });
     }
 

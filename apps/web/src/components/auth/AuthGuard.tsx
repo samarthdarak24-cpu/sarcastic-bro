@@ -24,7 +24,8 @@ export function AuthGuard({ children, allowedRoles }: AuthGuardProps) {
         user, 
         userRole: user?.role,
         allowedRoles,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        currentPath: window.location.pathname
       });
 
       if (!token || !user) {
@@ -41,16 +42,18 @@ export function AuthGuard({ children, allowedRoles }: AuthGuardProps) {
 
       if (!allowedRoles.includes(user.role)) {
         console.log('❌ User role not allowed:', user.role, 'Allowed:', allowedRoles);
+        console.log('⚠️ Attempting to redirect to correct dashboard...');
+        
         // Redirect to correct dashboard based on role
         if (user.role === 'FARMER') {
           console.log('↪️ Redirecting to farmer dashboard');
-          router.push('/farmer/dashboard');
+          window.location.href = '/farmer/dashboard';
         } else if (user.role === 'BUYER') {
           console.log('↪️ Redirecting to buyer dashboard');
-          router.push('/buyer/dashboard');
+          window.location.href = '/buyer/dashboard';
         } else if (user.role === 'FPO') {
           console.log('↪️ Redirecting to FPO dashboard');
-          router.push('/fpo/dashboard');
+          window.location.href = '/fpo/dashboard';
         } else {
           console.log('↪️ Unknown role, redirecting to login');
           router.push('/login');
@@ -63,7 +66,9 @@ export function AuthGuard({ children, allowedRoles }: AuthGuardProps) {
       setIsLoading(false);
     };
 
-    checkAuth();
+    // Add a small delay to ensure localStorage is ready
+    const timer = setTimeout(checkAuth, 50);
+    return () => clearTimeout(timer);
   }, [router, allowedRoles]);
 
   if (isLoading) {

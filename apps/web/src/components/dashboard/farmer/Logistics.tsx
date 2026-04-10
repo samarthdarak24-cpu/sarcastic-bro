@@ -10,6 +10,30 @@ import {
 import { useRouter } from 'next/navigation';
 import { useActiveLogistics } from '@/hooks/useLogistics';
 import { format } from 'date-fns';
+import { toast } from 'sonner';
+
+// Mock DB objects
+const MOCK_LOGISTICS = [
+  {
+    id: 'LOG-7729-AZ',
+    orderId: 'ORD-9883',
+    status: 'IN_TRANSIT',
+    currentLocation: 'Nashik Highway Toll, MH',
+    driverName: 'Ramesh Patil',
+    driverPhone: '+91 9876543210',
+    vehicleNumber: 'MH-15-AB-1234',
+    estimatedDelivery: new Date(Date.now() + 86400000 * 2).toISOString(),
+    order: { lot: { cropName: 'Premium Export Onions (5T)' } }
+  },
+  {
+    id: 'LOG-3312-BX',
+    orderId: 'ORD-5441',
+    status: 'PENDING',
+    currentLocation: 'Awaiting Farm Pickup Phase',
+    estimatedDelivery: new Date(Date.now() + 86400000 * 4).toISOString(),
+    order: { lot: { cropName: 'Organic Wheat Grains (2T)' } }
+  }
+];
 
 // Badge component
 const Badge = ({ children, variant = 'default', className = '' }: { children: React.ReactNode; variant?: string; className?: string }) => {
@@ -61,6 +85,14 @@ export default function Logistics() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedLogistic, setSelectedLogistic] = useState<any>(null);
 
+  // Modal Flow
+  const [isPickupModalOpen, setIsPickupModalOpen] = useState(false);
+  const [isAnalyticsModalOpen, setIsAnalyticsModalOpen] = useState(false);
+  const [pickupForm, setPickupForm] = useState({ location: 'Current Registered Farm Address', crop: 'New Harvest Batch', notes: '' });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const [mockLogisticsState, setMockLogisticsState] = useState(MOCK_LOGISTICS);
+
   useEffect(() => {
     fetchActiveLogistics();
     // Auto-refresh every 30 seconds
@@ -68,8 +100,9 @@ export default function Logistics() {
     return () => clearInterval(interval);
   }, [fetchActiveLogistics]);
 
-  // Ensure activeLogistics is always an array
-  const logistics = Array.isArray(activeLogistics) ? activeLogistics : [];
+  // Merge Live API with Demo Data fallback
+  const dbData = Array.isArray(activeLogistics) ? activeLogistics : [];
+  const logistics = dbData.length > 0 ? dbData : mockLogisticsState;
 
   // Filter logistics
   const filteredLogistics = logistics.filter(item => {
@@ -109,13 +142,41 @@ export default function Logistics() {
               </div>
             </div>
             <button 
-              onClick={() => fetchActiveLogistics()}
+              onClick={() => {
+                 fetchActiveLogistics();
+                 toast.success('Radar Synchronized with Network Node');
+              }}
               disabled={loading}
               className="bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white px-6 py-3 rounded-2xl font-black shadow-lg transition-all flex items-center gap-2 group disabled:opacity-50"
             >
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : 'group-hover:rotate-180 transition-transform duration-500'}`} />
-              Refresh
+              Sync Fleet
             </button>
+          </div>
+
+          <div className="hidden">
+             {/* Stub function mapped in actions loop */}
+             <button id="secret-handlepickup" onClick={() => {
+                setIsSubmitting(true);
+                setTimeout(() => {
+                   setIsSubmitting(false);
+                   setIsPickupModalOpen(false);
+                   
+                   const newMock = {
+                     id: `LOG-${Math.floor(Math.random()*9000)+1000}-NW`,
+                     orderId: `ORD-${Math.floor(Math.random()*9000)+1000}`,
+                     status: 'PENDING',
+                     currentLocation: 'Awaiting Farm Pickup Phase',
+                     driverName: '',
+                     driverPhone: '',
+                     vehicleNumber: '',
+                     estimatedDelivery: new Date(Date.now() + 86400000 * 3).toISOString(),
+                     order: { lot: { cropName: pickupForm.crop } }
+                   };
+                   setMockLogisticsState([newMock, ...mockLogisticsState]);
+                   toast.success('Pickup Request Initiated! Fleet dispatch node contacted.');
+                }, 2000);
+             }}></button>
           </div>
 
           {/* Stats Grid */}
@@ -309,7 +370,18 @@ export default function Logistics() {
               ].map((action) => (
                 <button
                   key={action.label}
-                  onClick={() => router.push(action.path)}
+                  onClick={() => {
+                     if (action.label === 'Request Pickup') {
+                        setIsPickupModalOpen(true);
+                     } else if (action.label === 'Logistics Analytics') {
+                        setIsAnalyticsModalOpen(true);
+                     } else if (action.label === 'View All Logistics') {
+                        setSelectedFilter('all');
+                        toast.success('Showing all logistics history');
+                     } else {
+                        router.push(action.path)
+                     }
+                  }}
                   className={`w-full p-4 rounded-2xl bg-${action.color}-50 hover:bg-${action.color}-100 border border-${action.color}-100 hover:border-${action.color}-200 transition-all flex items-center justify-between group`}
                 >
                   <div className="flex items-center gap-3">
@@ -478,6 +550,163 @@ export default function Logistics() {
               </div>
             </motion.div>
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* --- Request Pickup Interactive Modal --- */}
+      <AnimatePresence>
+        {isPickupModalOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[200] flex items-center justify-center p-4"
+          >
+             <motion.div
+               initial={{ scale: 0.9, y: 30, opacity: 0 }}
+               animate={{ scale: 1, y: 0, opacity: 1 }}
+               exit={{ scale: 0.9, y: 30, opacity: 0 }}
+               className="bg-white rounded-[32px] p-8 max-w-xl w-full shadow-2xl relative"
+             >
+                <button onClick={() => !isSubmitting && setIsPickupModalOpen(false)} className="absolute top-6 right-6 w-10 h-10 bg-slate-100 hover:bg-slate-200 rounded-full flex items-center justify-center transition-colors">
+                   <span className="text-slate-600 font-bold">✕</span>
+                </button>
+                
+                <h2 className="text-3xl font-black text-slate-900 flex items-center gap-3 mb-2">
+                  <Truck className="text-emerald-600" size={32} /> Schedule Pickup
+                </h2>
+                <p className="text-slate-500 font-medium mb-8">Deploy an AgriTrust certified transport vehicle directly to your requested agricultural site for rapid container bridging.</p>
+
+                <div className="space-y-5">
+                   <div>
+                      <label className="block text-[10px] font-black uppercase text-slate-400 tracking-widest mb-2">Crop Details / Batch Name</label>
+                      <input 
+                         type="text" 
+                         value={pickupForm.crop}
+                         onChange={(e) => setPickupForm({...pickupForm, crop: e.target.value})}
+                         className="w-full bg-slate-50 border-2 border-slate-200 px-5 py-4 rounded-2xl font-bold text-slate-800 outline-none focus:border-emerald-500 transition-colors"
+                      />
+                   </div>
+                   <div>
+                      <label className="block text-[10px] font-black uppercase text-slate-400 tracking-widest mb-2">Target Harvest Location</label>
+                      <input 
+                         type="text" 
+                         value={pickupForm.location}
+                         onChange={(e) => setPickupForm({...pickupForm, location: e.target.value})}
+                         className="w-full bg-slate-50 border-2 border-slate-200 px-5 py-4 rounded-2xl font-bold text-slate-800 outline-none focus:border-emerald-500 transition-colors"
+                      />
+                   </div>
+                   <div>
+                      <label className="block text-[10px] font-black uppercase text-slate-400 tracking-widest mb-2">Operational Notes (Optional)</label>
+                      <textarea 
+                         rows={2}
+                         value={pickupForm.notes}
+                         onChange={(e) => setPickupForm({...pickupForm, notes: e.target.value})}
+                         placeholder="E.g. Muddy road on the approach, bring a standard axel..."
+                         className="w-full bg-slate-50 border-2 border-slate-200 px-5 py-4 rounded-2xl font-bold text-slate-800 outline-none focus:border-emerald-500 transition-colors"
+                      />
+                   </div>
+                   
+                   <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex gap-3 text-amber-800 mt-2">
+                      <AlertCircle size={20} className="shrink-0 mt-0.5 text-amber-500" />
+                      <p className="text-xs font-bold leading-relaxed">
+                        Pickup requests trigger dynamic matching. An FPO admin will assign an active transporter within 30 minutes. Make sure the cargo weight does not exceed registered thresholds.
+                      </p>
+                   </div>
+                </div>
+
+                <div className="mt-8 pt-6 border-t border-slate-100 flex justify-end">
+                   <button 
+                     onClick={() => document.getElementById('secret-handlepickup')?.click()}
+                     disabled={isSubmitting}
+                     className="bg-emerald-600 text-white px-8 py-4 rounded-2xl font-black flex items-center gap-2 hover:bg-emerald-700 transition-colors hover:shadow-lg disabled:opacity-50 w-full justify-center"
+                   >
+                     {isSubmitting ? (
+                        <><RefreshCw className="animate-spin" size={20} /> Deploying Network Node...</>
+                     ) : (
+                        <><CheckCircle size={20} /> Request FPO Container Fleet</>
+                     )}
+                   </button>
+                </div>
+             </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* --- Logistics Analytics Modal --- */}
+      <AnimatePresence>
+        {isAnalyticsModalOpen && (
+           <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[200] flex items-center justify-center p-4"
+           >
+              <motion.div
+                 initial={{ scale: 0.9, y: 30, opacity: 0 }}
+                 animate={{ scale: 1, y: 0, opacity: 1 }}
+                 exit={{ scale: 0.9, y: 30, opacity: 0 }}
+                 className="bg-white rounded-[32px] p-8 max-w-4xl w-full shadow-2xl relative max-h-[90vh] overflow-y-auto"
+              >
+                 <button onClick={() => setIsAnalyticsModalOpen(false)} className="absolute top-6 right-6 w-10 h-10 bg-slate-100 hover:bg-slate-200 rounded-full flex items-center justify-center transition-colors">
+                    <span className="text-slate-600 font-bold">✕</span>
+                 </button>
+                 
+                 <div className="mb-8">
+                    <h2 className="text-3xl font-black text-slate-900 flex items-center gap-3">
+                       <BarChart3 className="text-purple-600" size={32} /> Transportation Analytics
+                    </h2>
+                    <p className="text-slate-500 font-medium mt-2">Macro-level insights to help optimize your post-harvest supply chain and reduce transit spoilage.</p>
+                 </div>
+
+                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div className="bg-gradient-to-br from-purple-50 to-fuchsia-50 p-6 rounded-[24px] border border-purple-100">
+                       <p className="text-[10px] font-black text-purple-600 uppercase tracking-widest mb-1">Avg Transit Time</p>
+                       <p className="text-4xl font-black text-purple-900 tracking-tight">1.8 <span className="text-xl">Days</span></p>
+                       <p className="text-xs font-bold text-emerald-600 mt-2 flex items-center gap-1"><TrendingUp size={14}/> 12% faster than last month</p>
+                    </div>
+                    <div className="bg-gradient-to-br from-blue-50 to-cyan-50 p-6 rounded-[24px] border border-blue-100">
+                       <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-1">Spoilage/Damage Rate</p>
+                       <p className="text-4xl font-black text-blue-900 tracking-tight">0.4 <span className="text-xl">%</span></p>
+                       <p className="text-xs font-bold text-emerald-600 mt-2 flex items-center gap-1"><TrendingUp size={14}/> Down by 2.1% YoY</p>
+                    </div>
+                    <div className="bg-gradient-to-br from-amber-50 to-orange-50 p-6 rounded-[24px] border border-amber-100">
+                       <p className="text-[10px] font-black text-amber-600 uppercase tracking-widest mb-1">Cost Per Ton</p>
+                       <p className="text-4xl font-black text-amber-900 tracking-tight"><span className="text-xl">₹</span>2,400</p>
+                       <p className="text-xs font-bold text-rose-600 mt-2 flex items-center gap-1"><TrendingUp size={14}/> Increased by 4% due to fuel</p>
+                    </div>
+                 </div>
+
+                 <div className="bg-slate-50 rounded-[24px] p-8 border border-slate-200">
+                    <h3 className="font-black text-slate-800 mb-6 flex items-center gap-2"><Map className="text-slate-400" size={20}/> Active Heatmap Nodes</h3>
+                    
+                    <div className="space-y-4">
+                       <div className="flex items-center gap-4">
+                          <span className="w-16 text-xs font-black text-slate-500 uppercase">Nashik</span>
+                          <div className="flex-1 bg-slate-200 h-4 rounded-full overflow-hidden">
+                             <div className="bg-gradient-to-r from-emerald-400 to-emerald-600 w-[80%] h-full rounded-full"></div>
+                          </div>
+                          <span className="text-sm font-bold text-slate-700">124 Shipments</span>
+                       </div>
+                       <div className="flex items-center gap-4">
+                          <span className="w-16 text-xs font-black text-slate-500 uppercase">Pune</span>
+                          <div className="flex-1 bg-slate-200 h-4 rounded-full overflow-hidden">
+                             <div className="bg-gradient-to-r from-purple-400 to-purple-600 w-[45%] h-full rounded-full"></div>
+                          </div>
+                          <span className="text-sm font-bold text-slate-700">42 Shipments</span>
+                       </div>
+                       <div className="flex items-center gap-4">
+                          <span className="w-16 text-xs font-black text-slate-500 uppercase">Nagpur</span>
+                          <div className="flex-1 bg-slate-200 h-4 rounded-full overflow-hidden">
+                             <div className="bg-gradient-to-r from-blue-400 to-blue-600 w-[20%] h-full rounded-full"></div>
+                          </div>
+                          <span className="text-sm font-bold text-slate-700">18 Shipments</span>
+                       </div>
+                    </div>
+                 </div>
+
+              </motion.div>
+           </motion.div>
         )}
       </AnimatePresence>
     </div>

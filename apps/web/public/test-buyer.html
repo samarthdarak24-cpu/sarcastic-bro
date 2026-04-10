@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Quick Buyer Login Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+            width: 100%;
+        }
+        button:hover {
+            background: #2563eb;
+        }
+        .status {
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 6px;
+            font-family: monospace;
+        }
+        .success { background: #d1fae5; color: #065f46; }
+        .error { background: #fee2e2; color: #991b1b; }
+        .info { background: #dbeafe; color: #1e40af; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>🛒 Quick Buyer Login Test</h1>
+        <p>Use this page to quickly test buyer login functionality.</p>
+        
+        <div id="status"></div>
+        
+        <button onclick="testLogin()">🔐 Test Buyer Login</button>
+        <button onclick="checkStatus()">📊 Check Current Status</button>
+        <button onclick="goToDashboard()">🏠 Go to Dashboard</button>
+        <button onclick="clearData()">🗑️ Clear All Data</button>
+    </div>
+
+    <script>
+        function showStatus(message, type) {
+            document.getElementById('status').innerHTML = 
+                `<div class="status ${type}">${message}</div>`;
+        }
+
+        async function testLogin() {
+            showStatus('🔄 Logging in as buyer...', 'info');
+            
+            try {
+                // Clear old data
+                localStorage.clear();
+                
+                // Login
+                const response = await fetch('http://localhost:3001/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: 'buyer@test.com',
+                        password: 'Farmer123'
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Login failed: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                const token = data.tokens?.accessToken || data.token;
+                const user = data.user;
+                
+                // Store data
+                localStorage.setItem('token', token);
+                localStorage.setItem('user', JSON.stringify(user));
+                
+                showStatus(`✅ Login successful! Role: ${user.role}<br>Redirecting in 2 seconds...`, 'success');
+                
+                setTimeout(() => {
+                    window.location.href = '/buyer/dashboard';
+                }, 2000);
+                
+            } catch (error) {
+                showStatus(`❌ Error: ${error.message}<br>Make sure backend is running on port 3001`, 'error');
+            }
+        }
+
+        function checkStatus() {
+            const token = localStorage.getItem('token');
+            const user = localStorage.getItem('user');
+            
+            if (!token || !user) {
+                showStatus('❌ Not logged in', 'error');
+                return;
+            }
+            
+            try {
+                const userData = JSON.parse(user);
+                showStatus(
+                    `✅ Logged in as: ${userData.name}<br>` +
+                    `📧 Email: ${userData.email}<br>` +
+                    `👤 Role: ${userData.role}<br>` +
+                    `🔑 Token: ${token.substring(0, 20)}...`,
+                    'success'
+                );
+            } catch (e) {
+                showStatus('❌ Invalid user data', 'error');
+            }
+        }
+
+        function goToDashboard() {
+            const user = localStorage.getItem('user');
+            if (!user) {
+                showStatus('❌ Please login first', 'error');
+                return;
+            }
+            
+            window.location.href = '/buyer/dashboard';
+        }
+
+        function clearData() {
+            localStorage.clear();
+            sessionStorage.clear();
+            showStatus('✅ All data cleared', 'success');
+        }
+
+        // Auto-check on load
+        window.onload = checkStatus;
+    </script>
+</body>
+</html>

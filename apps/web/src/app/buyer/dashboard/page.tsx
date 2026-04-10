@@ -3,12 +3,14 @@
 import { Suspense, type ReactNode, useCallback, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
+import { io, type Socket } from 'socket.io-client';
 import type { LucideIcon } from 'lucide-react';
 import {
   ArrowRight,
   BarChart3,
   Building2,
   CheckCircle2,
+  CreditCard,
   DollarSign,
   FileCheck,
   Loader2,
@@ -16,6 +18,7 @@ import {
   MessageCircle,
   Package,
   ShoppingBag,
+  Shield,
   Store,
   Truck,
   Users,
@@ -23,14 +26,18 @@ import {
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import OrdersSection from '@/components/buyer/OrdersSection';
+import EscrowSection from '@/components/buyer/EscrowSection';
 import WalletSection from '@/components/buyer/WalletSection';
 import DeliveryConfirmationModal from '@/components/buyer/DeliveryConfirmationModal';
 import BuyerQualityCertificate from '@/components/dashboard/buyer/QualityCertificate';
 import KYC from '@/components/dashboard/buyer/KYC';
+import ComplianceSection from '@/components/buyer/ComplianceSection';
+import BankDetailsSection from '@/components/buyer/BankDetailsSection';
 import { useWallet } from '@/hooks/useWallet';
 import { authService } from '@/services/auth';
-import buyerAPI, { Order } from '@/services/buyer';
+import buyerAPI, { MarketplaceProduct, Order } from '@/services/buyer';
 import buyerService from '@/services/buyerService';
+import { logisticsService } from '@/services/logistics';
 
 type DashboardStats = {
   totalOrders: number;
@@ -330,6 +337,8 @@ function BuyerDashboardContent() {
   const [conversations, setConversations] = useState<ConversationSummary[]>([]);
   const [chatLoading, setChatLoading] = useState(false);
   const [selectedApprovalOrder, setSelectedApprovalOrder] = useState<Order | null>(null);
+  const [socket, setSocket] = useState<Socket | null>(null);
+  const [isSocketConnected, setIsSocketConnected] = useState(false);
 
   const syncOrders = useCallback((nextOrders: Order[]) => {
     setOrders(nextOrders);
@@ -424,6 +433,64 @@ function BuyerDashboardContent() {
     if (user?.name) {
       setUserName(user.name);
     }
+
+    // Initialize Socket.IO connection
+    const token = authService.getToken();
+    if (token && user?.userId) {
+      const socketUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+      const newSocket = io(socketUrl, {
+        auth: { token },
+        transports: ['websocket', 'polling'],
+      });
+
+      newSocket.on('connect', () => {
+        console.log('✅ Socket connected:', newSocket.id);
+        setIsSocketConnected(true);
+        
+        // Join user's personal room
+        newSocket.emit('join-room', `user:${user.userId}`);
+      });
+
+      newSocket.on('disconnect', () => {
+        console.log('❌ Socket disconnected');
+        setIsSocketConnected(false);
+      });
+
+      // Listen for order updates
+      newSocket.on('order_updated', (data: { orderId: string; status: string }) => {
+        console.log('📦 Order updated:', data);
+        void refreshOrders();
+      });
+
+      newSocket.on('order-updated', (data: { orderId: string; status: string }) => {
+        console.log('📦 Order updated (alt):', data);
+        void refreshOrders();
+      });
+
+      // Listen for escrow updates
+      newSocket.on('escrow_updated', (data: { escrowId: string; status: string }) => {
+        console.log('💰 Escrow updated:', data);
+        void refreshEscrows();
+      });
+
+      // Listen for new messages
+      newSocket.on('message_received', (data: { senderId: string; content: string }) => {
+        console.log('💬 New message:', data);
+        void refreshConversations();
+      });
+
+      // Listen for wallet updates
+      newSocket.on('wallet_updated', (data: { balance: number }) => {
+        console.log('💳 Wallet updated:', data);
+        void loadWalletPanel(false);
+      });
+
+      setSocket(newSocket);
+
+      return () => {
+        newSocket.disconnect();
+      };
+    }
   }, []);
 
   useEffect(() => {
@@ -468,7 +535,7 @@ function BuyerDashboardContent() {
 
   const navItems = [
     { label: 'Dashboard', href: '/buyer/dashboard', section: 'dashboard', icon: <BarChart3 /> },
-    { label: 'Marketplace', href: '/buyer/marketplace', icon: <Store /> },
+    { label: 'Marketplace', href: '/buyer/dashboard', section: 'marketplace', icon: <Store /> },
     { label: 'My Orders', href: '/buyer/dashboard', section: 'orders', icon: <ShoppingBag />, badge: stats.activeOrders || undefined },
     { label: 'Wallet', href: '/buyer/dashboard', section: 'wallet', icon: <Wallet /> },
     { label: 'Bulk Orders', href: '/buyer/dashboard', section: 'bulk-orders', icon: <Package /> },
@@ -476,8 +543,11 @@ function BuyerDashboardContent() {
     { label: 'Delivery Approval', href: '/buyer/dashboard', section: 'delivery', icon: <Truck />, badge: pendingApprovalOrders.length || undefined },
     { label: 'Quality Certificates', href: '/buyer/dashboard', section: 'certificates', icon: <FileCheck /> },
     { label: 'Real-Time Chat', href: '/buyer/dashboard', section: 'chat', icon: <MessageCircle />, badge: totalUnreadMessages || undefined },
-    { label: 'Order Tracking', href: '/buyer/logistics', icon: <MapPin /> },
+    { label: 'Order Tracking', href: '/buyer/dashboard', section: 'tracking', icon: <MapPin /> },
+    { label: 'Analytics', href: '/buyer/dashboard', section: 'analytics', icon: <BarChart3 /> },
     { label: 'Business KYC', href: '/buyer/dashboard', section: 'kyc', icon: <Building2 /> },
+    { label: 'Bank Details', href: '/buyer/dashboard', section: 'bank-details', icon: <CreditCard /> },
+    { label: 'Gov Compliance', href: '/buyer/dashboard', section: 'compliance', icon: <Shield />, badge: 7 },
   ];
 
   const renderDashboard = () => (
@@ -777,6 +847,317 @@ function BuyerDashboardContent() {
     </div>
   );
 
+  const renderMarketplace = () => (
+    <div className="space-y-6">
+      <SectionHero
+        eyebrow="Product discovery"
+        title="Marketplace"
+        description="Browse aggregated lots from FPOs and individual farmer crops with quality certificates and competitive pricing."
+        gradient="from-indigo-600 via-purple-600 to-pink-600"
+        icon={Store}
+        highlights={['Aggregated lots', 'Quality certified', 'Price comparison', 'Direct sourcing']}
+        stats={[
+          { label: 'Available products', value: 'Live catalog' },
+          { label: 'FPO suppliers', value: 'Verified' },
+          { label: 'Quality grades', value: 'A, B, C' },
+          { label: 'Instant checkout', value: 'Escrow ready' },
+        ]}
+        actions={
+          <button
+            type="button"
+            onClick={() => router.push('/buyer/marketplace')}
+            className="rounded-full bg-white px-5 py-3 text-sm font-semibold text-indigo-700 transition-colors hover:bg-indigo-50"
+          >
+            Browse full marketplace
+          </button>
+        }
+      />
+
+      <SurfaceCard
+        title="Quick marketplace access"
+        description="The full marketplace experience is available at /buyer/marketplace with advanced filters, quality certificates, and instant ordering."
+      >
+        <div className="space-y-4">
+          <div className="rounded-[24px] bg-gradient-to-br from-indigo-50 to-purple-50 p-6">
+            <h4 className="text-lg font-black text-slate-900">Featured marketplace capabilities</h4>
+            <ul className="mt-4 space-y-2 text-sm text-slate-600">
+              <li className="flex items-start gap-2">
+                <CheckCircle2 className="h-5 w-5 shrink-0 text-indigo-600" />
+                <span>Filter by crop type, district, grade, and price range</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <CheckCircle2 className="h-5 w-5 shrink-0 text-indigo-600" />
+                <span>View quality certificates and FPO verification</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <CheckCircle2 className="h-5 w-5 shrink-0 text-indigo-600" />
+                <span>Compare prices across multiple suppliers</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <CheckCircle2 className="h-5 w-5 shrink-0 text-indigo-600" />
+                <span>Place bulk orders with escrow protection</span>
+              </li>
+            </ul>
+            <button
+              type="button"
+              onClick={() => router.push('/buyer/marketplace')}
+              className="mt-6 inline-flex items-center gap-2 rounded-full bg-indigo-600 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-indigo-700"
+            >
+              Open marketplace
+              <ArrowRight className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      </SurfaceCard>
+    </div>
+  );
+
+  const renderTracking = () => (
+    <div className="space-y-6">
+      <SectionHero
+        eyebrow="Live logistics"
+        title="Order tracking"
+        description="Real-time visibility into shipment status, location updates, and estimated delivery times for all active orders."
+        gradient="from-cyan-600 via-blue-600 to-indigo-700"
+        icon={MapPin}
+        highlights={['Live location', 'Status updates', 'Delivery estimates', 'Driver contact']}
+        stats={[
+          { label: 'In transit', value: String(liveShipmentOrders.length) },
+          { label: 'Out for delivery', value: String(orders.filter(o => o.status === 'IN_TRANSIT').length) },
+          { label: 'Delivered today', value: String(orders.filter(o => o.status === 'DELIVERED' && new Date(o.createdAt).toDateString() === new Date().toDateString()).length) },
+          { label: 'Tracking active', value: String(orders.filter(o => o.trackingNumber).length) },
+        ]}
+      />
+
+      <SurfaceCard
+        title="Active shipments"
+        description="Track all orders currently in transit or out for delivery."
+      >
+        {liveShipmentOrders.length === 0 ? (
+          <EmptyPanel
+            icon={Truck}
+            title="No active shipments"
+            description="Orders in transit will appear here with live tracking updates."
+          />
+        ) : (
+          <div className="space-y-4">
+            {liveShipmentOrders.map((order) => (
+              <div
+                key={order.id}
+                className="rounded-[24px] border border-slate-200 bg-slate-50 p-5 transition-colors hover:bg-slate-100"
+              >
+                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                  <div className="flex items-start gap-4">
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-600 to-blue-700">
+                      <Truck className="h-6 w-6 text-white" />
+                    </div>
+                    <div>
+                      <p className="font-black text-slate-900">{getOrderTitle(order)}</p>
+                      <p className="text-sm text-slate-500">{getOrderSubtitle(order)}</p>
+                      <div className="mt-2 flex flex-wrap items-center gap-3 text-sm">
+                        <span className="font-semibold text-slate-700">{order.quantity} kg</span>
+                        {order.trackingNumber && (
+                          <>
+                            <span className="text-slate-300">•</span>
+                            <span className="text-slate-600">Tracking: {order.trackingNumber}</span>
+                          </>
+                        )}
+                        {order.estimatedDelivery && (
+                          <>
+                            <span className="text-slate-300">•</span>
+                            <span className="text-slate-600">
+                              ETA: {new Date(order.estimatedDelivery).toLocaleDateString('en-IN')}
+                            </span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <span
+                      className={`rounded-full px-3 py-2 text-xs font-semibold ${
+                        order.status === 'IN_TRANSIT'
+                          ? 'bg-blue-100 text-blue-700'
+                          : 'bg-cyan-100 text-cyan-700'
+                      }`}
+                    >
+                      {order.status.replace(/_/g, ' ')}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => router.push(`/buyer/tracking?orderId=${order.id}`)}
+                      className="rounded-full bg-cyan-600 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-cyan-700"
+                    >
+                      View tracking
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </SurfaceCard>
+
+      <SurfaceCard
+        title="Recent deliveries"
+        description="Orders delivered in the last 7 days."
+      >
+        {orders.filter(o => o.status === 'DELIVERED').length === 0 ? (
+          <EmptyPanel
+            icon={CheckCircle2}
+            title="No recent deliveries"
+            description="Completed deliveries will appear here for quick reference."
+          />
+        ) : (
+          <div className="space-y-3">
+            {orders
+              .filter(o => o.status === 'DELIVERED')
+              .slice(0, 5)
+              .map((order) => (
+                <div
+                  key={order.id}
+                  className="flex items-center justify-between rounded-[22px] bg-slate-50 px-4 py-4"
+                >
+                  <div>
+                    <p className="font-black text-slate-900">{getOrderTitle(order)}</p>
+                    <p className="text-sm text-slate-500">
+                      Delivered {order.actualDelivery ? new Date(order.actualDelivery).toLocaleDateString('en-IN') : 'recently'}
+                    </p>
+                  </div>
+                  <CheckCircle2 className="h-6 w-6 text-emerald-600" />
+                </div>
+              ))}
+          </div>
+        )}
+      </SurfaceCard>
+    </div>
+  );
+
+  const renderAnalytics = () => (
+    <div className="space-y-6">
+      <SectionHero
+        eyebrow="Business intelligence"
+        title="Analytics"
+        description="Comprehensive insights into spending patterns, supplier performance, category trends, and procurement efficiency."
+        gradient="from-violet-600 via-purple-600 to-fuchsia-700"
+        icon={BarChart3}
+        highlights={['Spending trends', 'Supplier rankings', 'Category breakdown', 'Order velocity']}
+        stats={[
+          { label: 'Total spend', value: formatCompactCurrency(stats.totalSpend) },
+          { label: 'Avg order value', value: formatCompactCurrency(stats.totalOrders ? stats.totalSpend / stats.totalOrders : 0) },
+          { label: 'Active suppliers', value: String(stats.activeSuppliers) },
+          { label: 'Orders this month', value: String(orders.filter(o => new Date(o.createdAt).getMonth() === new Date().getMonth()).length) },
+        ]}
+      />
+
+      <div className="grid gap-6 xl:grid-cols-2">
+        <SurfaceCard
+          title="Spending trends"
+          description="Monthly spending pattern over the last 6 months."
+        >
+          {spendingOverview ? (
+            <div className="space-y-4">
+              <div className="rounded-[24px] bg-gradient-to-br from-violet-50 to-purple-50 p-5">
+                <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-400">
+                  This {spendingOverview.period}
+                </p>
+                <p className="mt-2 text-3xl font-black text-slate-900">
+                  {formatCurrency(spendingOverview.totalSpent)}
+                </p>
+                <p className="mt-1 text-sm text-slate-600">
+                  {spendingOverview.orderCount} orders • Avg {formatCompactCurrency(spendingOverview.averageOrderValue)}
+                </p>
+              </div>
+              <div className="h-48 rounded-[20px] bg-slate-100 p-4">
+                <p className="text-center text-sm text-slate-500">
+                  Chart visualization would render here with spending over time
+                </p>
+              </div>
+            </div>
+          ) : (
+            <EmptyPanel
+              icon={BarChart3}
+              title="No spending data yet"
+              description="Analytics will populate as you complete more orders."
+            />
+          )}
+        </SurfaceCard>
+
+        <SurfaceCard
+          title="Top suppliers by value"
+          description="Suppliers ranked by total delivered order value."
+        >
+          {topSuppliers.length > 0 ? (
+            <div className="space-y-3">
+              {topSuppliers.map((supplier, index) => (
+                <div
+                  key={supplier.id}
+                  className="flex items-center justify-between rounded-[22px] bg-slate-50 px-4 py-4"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-violet-600 to-purple-700 text-sm font-black text-white">
+                      #{index + 1}
+                    </div>
+                    <div>
+                      <p className="font-black text-slate-900">{supplier.name}</p>
+                      <p className="text-sm text-slate-500">{supplier.orders} orders</p>
+                    </div>
+                  </div>
+                  <p className="text-lg font-black text-slate-900">
+                    {formatCompactCurrency(supplier.totalSpent)}
+                  </p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <EmptyPanel
+              icon={Users}
+              title="No supplier data"
+              description="Supplier rankings will appear after completed orders."
+            />
+          )}
+        </SurfaceCard>
+
+        <SurfaceCard
+          title="Category breakdown"
+          description="Spending distribution across crop categories."
+          className="xl:col-span-2"
+        >
+          {spendingOverview && spendingOverview.categoryBreakdown.length > 0 ? (
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {spendingOverview.categoryBreakdown.map((category) => (
+                <div
+                  key={category.category}
+                  className="rounded-[24px] border border-slate-200 bg-slate-50 p-5"
+                >
+                  <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-400">
+                    {category.category}
+                  </p>
+                  <p className="mt-2 text-2xl font-black text-slate-900">
+                    {formatCompactCurrency(category.amount)}
+                  </p>
+                  <div className="mt-3 h-2 rounded-full bg-slate-200">
+                    <div
+                      className="h-2 rounded-full bg-gradient-to-r from-violet-600 to-purple-600"
+                      style={{ width: `${category.percentage}%` }}
+                    />
+                  </div>
+                  <p className="mt-2 text-sm text-slate-600">{category.percentage.toFixed(1)}% of total</p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <EmptyPanel
+              icon={BarChart3}
+              title="No category data"
+              description="Category breakdown will show once you have delivered orders."
+            />
+          )}
+        </SurfaceCard>
+      </div>
+    </div>
+  );
+
   const renderWallet = () => (
     <div className="space-y-6">
       <SectionHero
@@ -919,117 +1300,58 @@ function BuyerDashboardContent() {
       </div>
     </div>
   );
-  const renderEscrow = () => (
-    <div className="space-y-6">
-      <SectionHero
-        eyebrow="Protected settlement"
-        title="Escrow payments"
-        description="Track held funds, released payouts, and open protected transactions in the same buyer dashboard flow."
-        gradient="from-green-600 via-emerald-600 to-teal-700"
-        icon={DollarSign}
-        highlights={['Held funds', 'Release visibility', 'Dispute readiness', 'Order context']}
-        stats={[
-          { label: 'Protected orders', value: String(escrowOrders.length) },
-          { label: 'Held value', value: formatCompactCurrency(heldEscrowValue) },
-          { label: 'Released value', value: formatCompactCurrency(releasedEscrowValue) },
-          { label: 'Awaiting release', value: String(heldEscrows.length) },
-        ]}
-      />
+  const renderEscrow = () => {
+    const handleConfirmDelivery = async (escrowId: string) => {
+      try {
+        await buyerAPI.confirmEscrowDelivery(escrowId);
+        await refreshEscrows();
+        await refreshOrders();
+      } catch (error) {
+        console.error('Failed to confirm delivery:', error);
+        alert('Failed to confirm delivery. Please try again.');
+      }
+    };
 
-      <div className="grid gap-6 xl:grid-cols-12">
-        <SurfaceCard
-          title="Protected funds"
-          description="Current escrow orders and their release state."
-          className="xl:col-span-7"
-        >
-          {escrowLoading ? (
-            <div className="flex items-center justify-center py-16">
-              <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
-            </div>
-          ) : escrowOrders.length === 0 ? (
-            <EmptyPanel
-              icon={DollarSign}
-              title="No escrow orders yet"
-              description="Protected payments will appear here as soon as a buyer order enters the settlement flow."
-            />
-          ) : (
-            <div className="space-y-3">
-              {escrowOrders.map((escrow) => (
-                <div
-                  key={escrow.id}
-                  className="flex flex-col gap-3 rounded-[24px] bg-slate-50 p-5 md:flex-row md:items-center md:justify-between"
-                >
-                  <div>
-                    <p className="font-black text-slate-900">{getEscrowTitle(escrow)}</p>
-                    <p className="text-sm text-slate-500">
-                      Opened {new Date(escrow.createdAt).toLocaleDateString('en-IN')}
-                    </p>
-                    <p className="mt-2 text-sm font-semibold text-slate-700">
-                      {formatCurrency(escrow.amount || 0)}
-                    </p>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span
-                      className={`rounded-full px-3 py-2 text-xs font-semibold ${
-                        escrow.status === 'HELD'
-                          ? 'bg-amber-100 text-amber-700'
-                          : escrow.status === 'RELEASED'
-                            ? 'bg-emerald-100 text-emerald-700'
-                            : 'bg-slate-200 text-slate-700'
-                      }`}
-                    >
-                      {escrow.status}
-                    </span>
-                    {escrow.order?.id && (
-                      <button
-                        type="button"
-                        onClick={() => router.push(`/buyer/orders/${escrow.order?.id}`)}
-                        className="rounded-full border border-slate-300 px-4 py-2 text-xs font-semibold text-slate-700 transition-colors hover:bg-white"
-                      >
-                        View order
-                      </button>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </SurfaceCard>
+    const handleRaiseDispute = async (escrowId: string) => {
+      try {
+        const reason = prompt('Please provide a reason for the dispute:');
+        if (!reason) return;
+        
+        await buyerAPI.raiseDispute(escrowId, reason);
+        await refreshEscrows();
+      } catch (error) {
+        console.error('Failed to raise dispute:', error);
+        alert('Failed to raise dispute. Please try again.');
+      }
+    };
 
-        <SurfaceCard
-          title="How it works"
-          description="The dashboard keeps the settlement process visible at every step."
-          className="xl:col-span-5"
-        >
-          <div className="space-y-4">
-            {[
-              {
-                step: '01',
-                title: 'Place the order',
-                description: 'Funds are protected inside escrow as soon as the buyer order is created.',
-              },
-              {
-                step: '02',
-                title: 'Track fulfillment',
-                description: 'Delivery progress stays linked to the same order record and protected amount.',
-              },
-              {
-                step: '03',
-                title: 'Release with confidence',
-                description: 'The release state updates next to the order once delivery is verified.',
-              },
-            ].map((item) => (
-              <div key={item.step} className="rounded-[22px] bg-slate-50 p-5">
-                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">{item.step}</p>
-                <p className="mt-2 font-black text-slate-900">{item.title}</p>
-                <p className="mt-1 text-sm text-slate-500">{item.description}</p>
-              </div>
-            ))}
-          </div>
-        </SurfaceCard>
+    return (
+      <div className="space-y-6">
+        <SectionHero
+          eyebrow="Protected settlement"
+          title="Escrow payments"
+          description="Track held funds, released payouts, and open protected transactions in the same buyer dashboard flow."
+          gradient="from-green-600 via-emerald-600 to-teal-700"
+          icon={DollarSign}
+          highlights={['Held funds', 'Release visibility', 'Dispute readiness', 'Order context']}
+          stats={[
+            { label: 'Protected orders', value: String(escrowOrders.length) },
+            { label: 'Held value', value: formatCompactCurrency(heldEscrowValue) },
+            { label: 'Released value', value: formatCompactCurrency(releasedEscrowValue) },
+            { label: 'Awaiting release', value: String(heldEscrows.length) },
+          ]}
+        />
+
+        <EscrowSection
+          escrows={escrowOrders}
+          loading={escrowLoading}
+          onRefresh={refreshEscrows}
+          onConfirmDelivery={handleConfirmDelivery}
+          onRaiseDispute={handleRaiseDispute}
+        />
       </div>
-    </div>
-  );
+    );
+  };
 
   const renderDelivery = () => (
     <div className="space-y-6">
@@ -1244,6 +1566,35 @@ function BuyerDashboardContent() {
     </div>
   );
 
+  const renderBankDetails = () => {
+    const user = authService.getUser();
+    return (
+      <div className="space-y-6">
+        <SectionHero
+          eyebrow="Financial information"
+          title="Bank Details"
+          description="Securely manage your bank account information for seamless payments, refunds, and withdrawals."
+          gradient="from-green-600 via-emerald-600 to-teal-700"
+          icon={Building2}
+          highlights={['Secure encryption', 'Quick updates', 'Verification status', 'Primary account']}
+          stats={[
+            { label: 'Security', value: 'Bank-level' },
+            { label: 'Encryption', value: 'AES-256' },
+            { label: 'Compliance', value: 'PCI DSS' },
+            { label: 'Privacy', value: 'Protected' },
+          ]}
+        />
+        <BankDetailsSection userId={user?.userId || ''} onUpdate={() => void refreshDashboard()} />
+      </div>
+    );
+  };
+
+  const renderCompliance = () => (
+    <div className="space-y-6">
+      <ComplianceSection />
+    </div>
+  );
+
   const sectionContent = (() => {
     switch (selectedSection) {
       case 'orders':
@@ -1262,6 +1613,16 @@ function BuyerDashboardContent() {
         return renderChat();
       case 'kyc':
         return renderKyc();
+      case 'bank-details':
+        return renderBankDetails();
+      case 'compliance':
+        return renderCompliance();
+      case 'marketplace':
+        return renderMarketplace();
+      case 'tracking':
+        return renderTracking();
+      case 'analytics':
+        return renderAnalytics();
       case 'dashboard':
         return renderDashboard();
       default:

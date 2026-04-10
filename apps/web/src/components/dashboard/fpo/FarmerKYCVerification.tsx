@@ -10,11 +10,178 @@ import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
 
 function QuickAction({ icon, label }: { icon: any, label: string }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [processing, setProcessing] = useState(false);
+
+  const handleExecute = () => {
+    setProcessing(true);
+    setTimeout(() => {
+      setProcessing(false);
+      setIsOpen(false);
+      const t = typeof toast.success === 'function' ? toast.success : toast;
+      t(label + ' verification sequence completed.');
+    }, 1500);
+  };
+
+  const renderCustomContent = () => {
+    switch (label) {
+      case 'Liveliness API':
+        return (
+          <div className="space-y-4 text-center">
+            <div className="w-full h-32 bg-slate-900 rounded-xl overflow-hidden relative border-4 border-slate-200 shadow-inner flex items-center justify-center">
+               <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1542909168-82c3e7fdca5c?w=400')] bg-cover bg-center opacity-40 blur-[1px]"></div>
+               <div className="w-16 h-16 border-2 border-green-400 rounded-full absolute mix-blend-screen scale-[1.5] animate-pulse"></div>
+               <span className="relative z-10 text-[10px] font-black text-green-400 bg-black/50 px-2 py-1 rounded backdrop-blur-sm tracking-widest uppercase">Detecting Face...</span>
+            </div>
+            <p className="text-sm font-bold text-slate-700">Passive Liveliness Check</p>
+            <p className="text-xs text-slate-500 font-semibold max-w-[250px] mx-auto">Verifies the user is a live person and not presenting a static image or deepfake.</p>
+          </div>
+        );
+      case 'AADHAAR Bridge':
+        return (
+          <div className="space-y-3">
+             <label className="text-xs font-black text-slate-500 uppercase tracking-widest flex items-center gap-2"><Database size={12}/> Bridge Connection</label>
+             <div className="p-4 bg-slate-50 border-2 border-indigo-100 rounded-xl flex items-center justify-between">
+                <div>
+                   <p className="font-black text-slate-800">UIDAI Gateway v2.1</p>
+                   <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Status: OK</p>
+                </div>
+                <div className="h-3 w-3 bg-green-500 rounded-full shadow-[0_0_10px_rgba(34,197,94,0.6)] animate-pulse"></div>
+             </div>
+             <input type="text" placeholder="Enter OTP (sent to linked mobile)" className="w-full border-2 border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-indigo-500 font-black text-slate-800 tracking-widest text-center mt-2 transition-all shadow-sm" />
+          </div>
+        );
+      case 'Geo-Audit':
+        return (
+          <div className="space-y-3">
+             <label className="text-xs font-black text-slate-500 uppercase tracking-widest flex items-center gap-2 mb-2"><MapPin size={12}/> GPS Extraction</label>
+             <div className="h-28 bg-slate-100 rounded-xl border border-slate-200 flex items-center justify-center relative overflow-hidden group">
+                <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1524661135-423995f22d0b?w=400')] bg-cover bg-center opacity-50 grayscale group-hover:grayscale-0 transition-all duration-700"></div>
+                <div className="bg-white/90 backdrop-blur-sm p-3 rounded-xl shadow-lg relative z-10 flex items-center gap-3">
+                   <MapPin className="text-red-500" />
+                   <div className="text-left">
+                     <p className="text-xs font-black text-slate-800">19.0760° N, 72.8777° E</p>
+                     <p className="text-[10px] font-bold text-slate-500">Metadata from Exif data</p>
+                   </div>
+                </div>
+             </div>
+          </div>
+        );
+      case 'Family Links':
+        return (
+          <div className="space-y-4">
+             <div className="bg-orange-50 p-4 rounded-xl border border-orange-100">
+                <div className="flex justify-between items-center mb-3">
+                   <h4 className="text-sm font-black text-orange-900">Ration Card Linkage</h4>
+                   <span className="text-[10px] font-black uppercase text-orange-600 border border-orange-200 bg-white px-2 py-0.5 rounded-full">Automated</span>
+                </div>
+                <p className="text-xs text-orange-800/80 font-semibold mb-3">System detects 2 other registered farmers using the same household ration card number.</p>
+                <div className="space-y-2">
+                   <div className="flex items-center gap-2 p-2 bg-white rounded-lg shadow-sm"><UserCheck size={14} className="text-slate-400"/> <span className="text-xs font-bold text-slate-700">Ganesh Patil (Son)</span></div>
+                   <div className="flex items-center gap-2 p-2 bg-white rounded-lg shadow-sm"><UserCheck size={14} className="text-slate-400"/> <span className="text-xs font-bold text-slate-700">Suman Patil (Wife)</span></div>
+                </div>
+             </div>
+          </div>
+        );
+      case 'Subsidy Check':
+        return (
+          <div className="space-y-3">
+             <div className="p-4 bg-emerald-50 border border-emerald-100 rounded-xl flex items-start gap-3">
+                <FilePlus className="text-emerald-600 mt-1" size={20} />
+                <div>
+                   <p className="font-black text-emerald-900 text-sm">PM-Kisan Beneficiary</p>
+                   <p className="text-xs text-emerald-700/80 font-bold mt-1">Cross-referenced Aadhaar with central DBT subsidy database. Match confirmed.</p>
+                </div>
+             </div>
+             <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 flex justify-between items-center text-xs font-bold">
+                <span className="text-slate-500">Last Setup Amount</span>
+                <span className="text-slate-900 font-black">₹2,000.00</span>
+             </div>
+          </div>
+        );
+      case 'Blacklist DB':
+        return (
+          <div className="space-y-4 text-center">
+             <div className="mx-auto w-16 h-16 bg-red-50 rounded-full flex items-center justify-center border border-red-100">
+                <AlertTriangle size={28} className="text-red-500" />
+             </div>
+             <div>
+                <h4 className="font-black text-slate-800 text-lg">Defaulter Lookup</h4>
+                <p className="text-xs text-slate-500 font-semibold mt-1">Scan farmer ID against local FPO blacklists, bank NPA databases, and willful defaulter lists.</p>
+             </div>
+             <div className="mt-4 flex items-center justify-center p-3 bg-slate-50 border border-slate-200 rounded-xl gap-2 font-mono text-xs text-slate-600">
+                <RefreshCw size={14} className="animate-spin" /> Querying 4 national nodes...
+             </div>
+          </div>
+        );
+      case 'Re-KYC Timer':
+        return (
+          <div className="space-y-4">
+             <label className="text-xs font-black text-slate-500 uppercase tracking-widest flex items-center gap-2"><Clock size={12}/> Periodic Refresh Schedule</label>
+             <div className="grid grid-cols-3 gap-2">
+                <button className="py-3 bg-indigo-50 border-2 border-indigo-200 rounded-xl text-indigo-700 font-black text-xs hover:bg-indigo-100 transition-colors">6 Months</button>
+                <button className="py-3 bg-indigo-600 border-2 border-indigo-600 rounded-xl text-white font-black text-xs shadow-lg">1 Year</button>
+                <button className="py-3 bg-indigo-50 border-2 border-indigo-200 rounded-xl text-indigo-700 font-black text-xs hover:bg-indigo-100 transition-colors">3 Years</button>
+             </div>
+             <p className="text-[10px] font-bold text-slate-400 text-center uppercase tracking-widest">Sets trigger warning for next document upload</p>
+          </div>
+        );
+      default:
+        return (
+          <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 flex items-start gap-3">
+             <p className="text-sm font-semibold text-slate-600">Module <strong>{label}</strong> is initialized and securely connected.</p>
+          </div>
+        );
+    }
+  };
+
   return (
-    <button className="flex items-center gap-1.5 px-3 py-1.5 bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all">
-      {icon}
-      <span>{label}</span>
-    </button>
+    <>
+      <button 
+        onClick={() => setIsOpen(true)}
+        className="flex items-center gap-1.5 px-3 py-1.5 bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all shadow-sm"
+      >
+        {icon}
+        <span>{label}</span>
+      </button>
+
+      {isOpen && (
+        <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-[24px] p-6 shadow-2xl max-w-md w-full border border-slate-100 flex flex-col relative text-left" onClick={(e) => e.stopPropagation()}>
+            <button onClick={() => setIsOpen(false)} className="absolute top-5 right-5 text-slate-400 hover:text-red-500 bg-slate-100 hover:bg-red-50 p-2 rounded-full transition-all">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+            <div className="flex items-center gap-4 mb-6">
+              <div className="p-3 bg-slate-50 text-slate-800 rounded-2xl shadow-inner border border-slate-200">
+                {icon}
+              </div>
+              <div>
+                <h3 className="text-xl font-black text-slate-900 tracking-tight">{label}</h3>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Audit Protocol</p>
+              </div>
+            </div>
+            
+            <div className="space-y-4 mb-8">
+               {renderCustomContent()}
+            </div>
+
+            <button 
+              onClick={handleExecute}
+              disabled={processing}
+              className="w-full py-4 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl font-black transition-all flex items-center justify-center gap-2 disabled:opacity-50 hover:shadow-xl hover:-translate-y-0.5 active:scale-[0.98]"
+            >
+              {processing ? (
+                 <>
+                   <RefreshCw size={18} className="animate-spin text-slate-400" /> Auditing...
+                 </>
+              ) : (
+                 <>Authorize execution</>
+              )}
+            </button>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 

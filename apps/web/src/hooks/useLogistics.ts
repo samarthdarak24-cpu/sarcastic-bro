@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { logisticsService, RequestPickupData, AssignDriverData, UpdateLocationData } from '@/services/logistics';
+import fpoService from '@/services/fpo';
 
 const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3001';
 
@@ -10,12 +11,30 @@ interface UseLogisticsReturn {
   logistics: any;
   loading: boolean;
   error: string | null;
+  fetchLogisticsByOrderId: (orderId: string) => Promise<any>;
+  createLogistics: (data: CreateLogisticsData) => Promise<any>;
+  updateLogisticsStatus: (logisticsId: string, data: UpdateLogisticsStatusData) => Promise<any>;
   requestPickup: (data: RequestPickupData) => Promise<any>;
   assignDriver: (data: AssignDriverData) => Promise<any>;
   updateLocation: (data: UpdateLocationData) => Promise<any>;
   markDelivered: (logisticsId: string, data: any) => Promise<any>;
   refreshLogistics: () => Promise<void>;
   isConnected: boolean;
+}
+
+interface CreateLogisticsData {
+  orderId: string;
+  carrier?: string;
+  trackingNumber?: string;
+  estimatedDelivery?: string;
+  notes?: string;
+}
+
+interface UpdateLogisticsStatusData {
+  status: string;
+  currentLocation?: string;
+  description?: string;
+  notes?: string;
 }
 
 export function useLogistics(logisticsId?: string): UseLogisticsReturn {
@@ -29,7 +48,7 @@ export function useLogistics(logisticsId?: string): UseLogisticsReturn {
   useEffect(() => {
     const socketInstance = io(SOCKET_URL, {
       auth: {
-        token: localStorage.getItem('auth_token'),
+        token: localStorage.getItem('token') || localStorage.getItem('auth_token'),
       },
       transports: ['websocket', 'polling'],
     });
@@ -92,22 +111,70 @@ export function useLogistics(logisticsId?: string): UseLogisticsReturn {
     };
   }, [logisticsId]);
 
-  // Fetch logistics data
-  const fetchLogistics = useCallback(async () => {
-    if (!logisticsId) return;
-
+  // Fetch logistics details by order ID
+  const fetchLogisticsByOrderId = useCallback(async (orderId: string) => {
     setLoading(true);
     setError(null);
 
     try {
-      // This would need to be implemented in the service
-      // For now, we'll rely on the pages to fetch data
+      const response = await logisticsService.getByOrder(orderId);
+      const data = response?.data || response;
+      setLogistics(data);
+      return data;
     } catch (err: any) {
       setError(err.message || 'Failed to fetch logistics');
+      throw err;
     } finally {
       setLoading(false);
     }
-  }, [logisticsId]);
+  }, []);
+
+  // Fetch logistics data with initial hook argument (if provided)
+  const fetchLogistics = useCallback(async () => {
+    if (!logisticsId) return;
+    await fetchLogisticsByOrderId(logisticsId);
+  }, [logisticsId, fetchLogisticsByOrderId]);
+
+  // Create logistics entry (FPO)
+  const createLogistics = async (data: CreateLogisticsData) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const created = await fpoService.createLogistics(data);
+      setLogistics(created);
+      return created;
+    } catch (err: any) {
+      setError(err.message || 'Failed to create logistics');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Update logistics status (FPO)
+  const updateLogisticsStatus = async (logisticsId: string, data: UpdateLogisticsStatusData) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const payload = {
+        status: data.status,
+        location: data.currentLocation,
+        description: data.description,
+        notes: data.notes,
+      };
+
+      const updated = await fpoService.updateLogistics(logisticsId, payload);
+      setLogistics((prev: any) => (prev ? { ...prev, ...updated } : updated));
+      return updated;
+    } catch (err: any) {
+      setError(err.message || 'Failed to update logistics status');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Request pickup (Farmer)
   const requestPickup = async (data: RequestPickupData) => {
@@ -193,6 +260,9 @@ export function useLogistics(logisticsId?: string): UseLogisticsReturn {
     logistics,
     loading,
     error,
+    fetchLogisticsByOrderId,
+    createLogistics,
+    updateLogisticsStatus,
     requestPickup,
     assignDriver,
     updateLocation,

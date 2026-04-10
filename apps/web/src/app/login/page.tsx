@@ -122,6 +122,9 @@ export default function LoginPage() {
         }
       }
 
+      // Small delay to ensure localStorage is written
+      await new Promise(resolve => setTimeout(resolve, 100));
+
       // Route based on user role
       const role = response.user.role;
       console.log('🔀 Routing user with role:', role);
@@ -780,7 +783,7 @@ export default function LoginPage() {
                     transition={{ duration: 0.6 }}
                   />
                   <p className="text-sm font-mono text-white relative z-10">
-                    <span className="font-black text-purple-200">🚜 FPO:</span> fpo@test.com / Farmer123
+                    <span className="font-black text-purple-200">🚜 FPO:</span> fpo@test.com / FPO123
                   </p>
                 </motion.div>
               </div>

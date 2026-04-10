@@ -1,293 +1,230 @@
-// ========================================================================
-// Buyer Routes — /api/buyer/*
-// ========================================================================
-
-import { Router, Response, NextFunction } from 'express';
+import { Router, Response } from 'express';
 import prisma from '../config/database';
-import { authenticate, authorize, AuthRequest } from '../middleware/auth';
-import { WalletService } from '../services/wallet.service';
-import { EscrowService } from '../services/escrow.service';
-import { AggregationService } from '../services/aggregation.service';
+import { authMiddleware, requireBuyer, AuthRequest } from '../middleware/auth.middleware';
+import { MarketService } from '../services/market.service';
+
+import kycRoutes from '../modules/buyer/kyc.controller';
+import walletRoutes from '../modules/buyer/wallet.controller';
+import marketplaceRoutes from '../modules/buyer/marketplace.controller';
+import bulkOrderRoutes from '../modules/buyer/bulk-order.controller';
+import dashboardRoutes from '../modules/buyer/dashboard.controller';
+import chatRoutes from '../modules/buyer/chat.controller';
 
 const router = Router();
 
-// All buyer routes require authentication
-router.use(authenticate);
-router.use(authorize('BUYER'));
+// All buyer routes require authenticated buyer session
+router.use(authMiddleware);
+router.use(requireBuyer);
 
-// ─── GET /api/buyer/marketplace — Aggregated lots + individual crops ───
-router.get('/marketplace', async (req: AuthRequest, res: Response, next: NextFunction) => {
+// Core buyer feature modules used by the unified dashboard
+router.use('/kyc', kycRoutes);
+router.use('/wallet', walletRoutes);
+router.use('/marketplace', marketplaceRoutes);
+router.use('/bulk-orders', bulkOrderRoutes);
+router.use('/dashboard', dashboardRoutes);
+router.use('/chat', chatRoutes);
+
+/**
+ * GET /api/buyer/escrow
+ * Escrow summary backed by EscrowTransaction + Order relations
+ */
+router.get('/escrow', async (req: AuthRequest, res: Response) => {
   try {
-    const { crop, grade, district, minQty, maxPrice } = req.query;
+    const status = req.query.status as string | undefined;
+    const page = req.query.page ? parseInt(req.query.page as string, 10) : 1;
+    const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 20;
+    const skip = (page - 1) * limit;
 
-    // Get aggregated lots
-    const lots = await AggregationService.getMarketplaceLots({
-      cropName: crop as string,
-      grade: grade as any,
-      district: district as string,
-      minQuantity: minQty ? Number(minQty) : undefined,
-      maxPrice: maxPrice ? Number(maxPrice) : undefined,
-    });
-
-    // Get individual listed crops (not aggregated)
-    const cropWhere: any = { status: 'LISTED', isAggregated: false };
-    if (crop) cropWhere.cropName = { contains: crop as string, mode: 'insensitive' };
-    if (grade) cropWhere.grade = grade;
-    if (minQty) cropWhere.quantity = { gte: Number(minQty) };
-    if (maxPrice) cropWhere.pricePerKg = { lte: Number(maxPrice) };
-
-    const individualCrops = await prisma.crop.findMany({
-      where: cropWhere,
-      include: {
-        farmer: { select: { id: true, name: true, phone: true, kycVerified: true } },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
-
-    res.json({ lots, crops: individualCrops });
-  } catch (error) {
-    next(error);
-  }
-});
-
-// ─── GET /api/buyer/marketplace/:lotId — Lot details ───────────────────
-router.get('/marketplace/:lotId', async (req: AuthRequest, res: Response, next: NextFunction) => {
-  try {
-    const lot = await AggregationService.getLotDetails(req.params.lotId);
-    if (!lot) {
-      return res.status(404).json({ error: 'Lot not found' });
-    }
-    res.json(lot);
-  } catch (error) {
-    next(error);
-  }
-});
-
-// ─── POST /api/buyer/order — Place bulk order ──────────────────────────
-router.post('/order', async (req: AuthRequest, res: Response, next: NextFunction) => {
-  try {
-    const { cropId, lotId, quantity, deliveryAddress } = req.body;
-
-    if (!deliveryAddress) {
-      return res.status(400).json({ error: 'Delivery address is required' });
+    const where: any = { buyerId: req.user!.id };
+    if (status) {
+      where.status = status;
     }
 
-    let totalAmount: number;
-    let sellerId: string;
+    const [escrows, total] = await Promise.all([
+      prisma.escrowTransaction.findMany({
+        where,
+        include: {
+          order: {
+            select: {
+              id: true,
+              quantity: true,
+              totalAmount: true,
+              status: true,
+              crop: { select: { cropName: true } },
+              lot: { select: { cropName: true } },
+            },
+          },
+        },
+        orderBy: { heldAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      prisma.escrowTransaction.count({ where }),
+    ]);
 
-    if (lotId) {
-      // Buying from aggregated lot
-      const lot = await prisma.aggregatedLot.findUnique({
-        where: { id: lotId },
-        include: { fpo: true },
-      });
+    const normalizedEscrows = escrows.map((escrow) => ({
+      ...escrow,
+      createdAt: escrow.heldAt,
+    }));
 
-      if (!lot || lot.status !== 'LISTED') {
-        return res.status(400).json({ error: 'Lot not available' });
-      }
-
-      const qty = quantity ? Number(quantity) : lot.totalQuantity;
-      if (qty > lot.totalQuantity) {
-        return res.status(400).json({ error: 'Requested quantity exceeds available' });
-      }
-
-      totalAmount = qty * lot.pricePerKg;
-      sellerId = lot.fpo.adminUserId;
-    } else if (cropId) {
-      // Buying individual crop
-      const crop = await prisma.crop.findUnique({
-        where: { id: cropId },
-      });
-
-      if (!crop || crop.status !== 'LISTED') {
-        return res.status(400).json({ error: 'Crop not available' });
-      }
-
-      const qty = quantity ? Number(quantity) : crop.quantity;
-      if (qty > crop.quantity) {
-        return res.status(400).json({ error: 'Requested quantity exceeds available' });
-      }
-
-      totalAmount = qty * crop.pricePerKg;
-      sellerId = crop.farmerId!;
-    } else {
-      return res.status(400).json({ error: 'Either cropId or lotId is required' });
-    }
-
-    // Check wallet balance
-    const wallet = await WalletService.getBalance(req.user!.id);
-    if (wallet.balance < totalAmount) {
-      return res.status(400).json({
-        error: 'Insufficient wallet balance',
-        required: totalAmount,
-        available: wallet.balance,
-      });
-    }
-
-    // Create order
-    const order = await prisma.order.create({
+    res.json({
+      success: true,
       data: {
+        escrows: normalizedEscrows,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
+        },
+      },
+    });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * GET /api/buyer/market-intelligence/prices
+ * Real market widget feed derived from persisted market prices
+ */
+router.get('/market-intelligence/prices', async (req: AuthRequest, res: Response) => {
+  try {
+    const cropName = req.query.cropName as string | undefined;
+    const district = req.query.district as string | undefined;
+
+    const prices = await MarketService.getPrices({ cropName, district });
+
+    const feed = await Promise.all(
+      prices.slice(0, 20).map(async (priceRow) => {
+        const previous = await prisma.marketPrice.findFirst({
+          where: {
+            cropName: priceRow.cropName,
+            district: priceRow.district,
+            date: { lt: priceRow.date },
+          },
+          orderBy: { date: 'desc' },
+          select: { modalPrice: true },
+        });
+
+        const previousPrice = previous?.modalPrice ?? priceRow.modalPrice;
+        const delta = previousPrice > 0
+          ? ((priceRow.modalPrice - previousPrice) / previousPrice) * 100
+          : 0;
+
+        return {
+          name: priceRow.cropName,
+          price: priceRow.modalPrice,
+          change: Number(delta.toFixed(1)),
+          available: `${Math.round(priceRow.arrivalQuantity || 0)} qtl`,
+          district: priceRow.district,
+          state: priceRow.state,
+          date: priceRow.date,
+        };
+      }),
+    );
+
+    res.json({ success: true, data: feed });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * GET /api/buyer/market-intelligence/trends
+ * Backward-compatible trends endpoint for buyer frontend service
+ */
+router.get('/market-intelligence/trends', async (req: AuthRequest, res: Response) => {
+  try {
+    const cropName = req.query.cropName as string | undefined;
+    const district = req.query.district as string | undefined;
+    const days = req.query.days ? parseInt(req.query.days as string, 10) : 30;
+
+    if (!cropName || !district) {
+      return res.json({ success: true, data: [] });
+    }
+
+    const trends = await MarketService.getTrends(cropName, district, days);
+    res.json({ success: true, data: trends });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * GET /api/buyer/orders/:orderId/track
+ * Buyer order tracking view with logistics + events
+ */
+router.get('/orders/:orderId/track', async (req: AuthRequest, res: Response) => {
+  try {
+    const order = await prisma.order.findFirst({
+      where: {
+        id: req.params.orderId,
         buyerId: req.user!.id,
-        cropId: cropId || null,
-        lotId: lotId || null,
-        quantity: quantity ? Number(quantity) : 0,
-        totalAmount,
-        deliveryAddress,
-        status: 'CONFIRMED',
-        escrowStatus: 'HELD',
       },
-    });
-
-    // Hold funds in escrow
-    await EscrowService.holdFunds(order.id, req.user!.id, sellerId, totalAmount);
-
-    // Update crop/lot status
-    if (cropId) {
-      await prisma.crop.update({
-        where: { id: cropId },
-        data: { status: 'PENDING' },
-      });
-    }
-    if (lotId) {
-      await prisma.aggregatedLot.update({
-        where: { id: lotId },
-        data: { status: 'PENDING' },
-      });
-    }
-
-    // Real-time notification to seller
-    const io = req.app.get('io');
-    if (io) {
-      io.to(`user:${sellerId}`).emit('notification', {
-        title: 'New Order Received!',
-        message: `₹${totalAmount.toLocaleString('en-IN')} order placed. Funds held in escrow.`,
-        type: 'NEW_ORDER',
-        timestamp: new Date(),
-      });
-    }
-
-    res.status(201).json({
-      order,
-      escrow: { amount: totalAmount, status: 'HELD' },
-    });
-  } catch (error) {
-    next(error);
-  }
-});
-
-// ─── POST /api/buyer/wallet/add — Add funds (prototype) ────────────────
-router.post('/wallet/add', async (req: AuthRequest, res: Response, next: NextFunction) => {
-  try {
-    const { amount, razorpayPaymentId } = req.body;
-
-    if (!amount || amount <= 0) {
-      return res.status(400).json({ error: 'Amount must be positive' });
-    }
-
-    const result = await WalletService.addFunds(req.user!.id, Number(amount), razorpayPaymentId);
-    res.json(result);
-  } catch (error) {
-    next(error);
-  }
-});
-
-// ─── GET /api/buyer/wallet — Get wallet info ───────────────────────────
-router.get('/wallet', async (req: AuthRequest, res: Response, next: NextFunction) => {
-  try {
-    const wallet = await WalletService.getBalance(req.user!.id);
-    const transactions = await WalletService.getTransactions(req.user!.id);
-    res.json({ wallet, transactions });
-  } catch (error) {
-    next(error);
-  }
-});
-
-// ─── GET /api/buyer/orders — My orders + supply tracking ───────────────
-router.get('/orders', async (req: AuthRequest, res: Response, next: NextFunction) => {
-  try {
-    const orders = await prisma.order.findMany({
-      where: { buyerId: req.user!.id },
       include: {
-        crop: {
-          select: { id: true, cropName: true, variety: true, grade: true, qualityCertUrl: true },
+        trackingEvents: {
+          orderBy: { timestamp: 'asc' },
         },
-        lot: {
-          select: { id: true, cropName: true, totalQuantity: true, qualityCertUrl: true },
-          include: { fpo: { select: { name: true, district: true } } },
+        logistics: {
+          include: {
+            events: {
+              orderBy: { timestamp: 'asc' },
+            },
+          },
         },
-        escrowTransaction: true,
       },
-      orderBy: { createdAt: 'desc' },
     });
 
-    res.json(orders);
-  } catch (error) {
-    next(error);
-  }
-});
-
-// ─── POST /api/buyer/delivery/approve/:orderId — Release escrow ────────
-router.post('/delivery/approve/:orderId', async (req: AuthRequest, res: Response, next: NextFunction) => {
-  try {
-    const { orderId } = req.params;
-
-    const order = await prisma.order.findUnique({ where: { id: orderId } });
     if (!order) {
-      return res.status(404).json({ error: 'Order not found' });
-    }
-    if (order.buyerId !== req.user!.id) {
-      return res.status(403).json({ error: 'Not your order' });
-    }
-    if (order.escrowStatus !== 'HELD') {
-      return res.status(400).json({ error: 'Escrow already processed' });
+      return res.status(404).json({ success: false, message: 'Order not found' });
     }
 
-    // Update order status
-    await prisma.order.update({
-      where: { id: orderId },
-      data: { status: 'DELIVERED' },
+    const logisticsEvents = (order.logistics?.events || []).map((event) => ({
+      id: event.id,
+      status: event.status,
+      location: event.location,
+      description: event.description,
+      timestamp: event.timestamp,
+      photos: [],
+      updatedBy: order.logistics?.fpoId || '',
+      updatedByRole: 'FPO',
+    }));
+
+    const trackingEvents = order.trackingEvents.length > 0 ? order.trackingEvents : logisticsEvents;
+
+    res.json({
+      success: true,
+      data: {
+        ...order,
+        trackingEvents,
+      },
     });
-
-    // Release escrow — triggers automatic payout split
-    const result = await EscrowService.releaseFunds(orderId);
-
-    // Mark crop as sold
-    if (order.cropId) {
-      await prisma.crop.update({ where: { id: order.cropId }, data: { status: 'SOLD' } });
-    }
-    if (order.lotId) {
-      await prisma.aggregatedLot.update({ where: { id: order.lotId }, data: { status: 'SOLD' } });
-    }
-
-    res.json(result);
-  } catch (error) {
-    next(error);
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
   }
 });
 
-// ─── GET /api/buyer/certificates/:cropId — View quality certificate ────
-router.get('/certificates/:cropId', async (req: AuthRequest, res: Response, next: NextFunction) => {
-  try {
-    const certificates = await prisma.qualityCertificate.findMany({
-      where: { cropId: req.params.cropId },
-      orderBy: { uploadedAt: 'desc' },
-    });
-
-    res.json(certificates);
-  } catch (error) {
-    next(error);
-  }
-});
-
-// ─── GET /api/buyer/dashboard-stats — Dashboard summary ────────────────
-router.get('/dashboard-stats', async (req: AuthRequest, res: Response, next: NextFunction) => {
+/**
+ * GET /api/buyer/dashboard-stats
+ * Legacy endpoint kept for older buyer screens
+ */
+router.get('/dashboard-stats', async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user!.id;
 
     const [orderCount, totalSpent, pendingOrders, wallet] = await Promise.all([
       prisma.order.count({ where: { buyerId: userId } }),
-      prisma.order.aggregate({ where: { buyerId: userId, status: 'DELIVERED' }, _sum: { totalAmount: true } }),
-      prisma.order.count({ where: { buyerId: userId, status: { in: ['PENDING', 'CONFIRMED', 'IN_TRANSIT'] } } }),
+      prisma.order.aggregate({
+        where: { buyerId: userId, status: 'DELIVERED' },
+        _sum: { totalAmount: true },
+      }),
+      prisma.order.count({
+        where: {
+          buyerId: userId,
+          status: { in: ['PENDING', 'CONFIRMED', 'IN_TRANSIT'] },
+        },
+      }),
       prisma.wallet.findUnique({ where: { userId } }),
     ]);
 
@@ -297,8 +234,8 @@ router.get('/dashboard-stats', async (req: AuthRequest, res: Response, next: Nex
       pendingOrders,
       walletBalance: wallet?.balance || 0,
     });
-  } catch (error) {
-    next(error);
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
   }
 });
 
