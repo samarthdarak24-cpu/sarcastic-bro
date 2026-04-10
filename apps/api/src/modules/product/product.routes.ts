@@ -18,8 +18,9 @@ router.get("/:id",  asyncHandler(ProductController.getById));
 // Farmer only
 router.get("/my-products", authMiddleware, roleMiddleware("FARMER", "ADMIN"), asyncHandler(ProductController.getByFarmer));
 router.post("/",      authMiddleware, roleMiddleware("FARMER", "ADMIN"), uploadImages.array("images", 5), asyncHandler(ProductController.create));
-router.put("/:id",    authMiddleware, roleMiddleware("FARMER", "ADMIN"), asyncHandler(ProductController.update));
+router.put("/:id",    authMiddleware, roleMiddleware("FARMER", "ADMIN"), uploadImages.array("images", 5), asyncHandler(ProductController.update));
 router.patch("/:id/toggle-status", authMiddleware, roleMiddleware("FARMER", "ADMIN"), asyncHandler(ProductController.toggleStatus));
+router.get("/:id/inventory-logs", authMiddleware, roleMiddleware("FARMER", "ADMIN"), asyncHandler(ProductController.getInventoryLogs));
 router.delete("/:id", authMiddleware, roleMiddleware("FARMER", "ADMIN"), asyncHandler(ProductController.delete));
 
 export default router;

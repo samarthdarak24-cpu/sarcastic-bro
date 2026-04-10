@@ -1,30 +1,42 @@
-import type { Request, Response } from "express";
+import { Response } from "express";
+import { AuthRequest } from "../../middleware/auth.middleware";
+import { LogisticsService } from "./logistics.service";
 import { sendSuccess, sendCreated } from "../../utils/response";
-
-export interface AuthRequest extends Request {
-  user?: { userId: string; email: string; role: string };
-}
+import { asyncHandler } from "../../utils/asyncHandler";
 
 export class LogisticsController {
-  static async bookShipment(req: AuthRequest, res: Response) {
-    const userId = req.user?.userId;
-    if (!userId) return res.status(401).json({ error: "Unauthorized" });
-    const { orderId, destination } = req.body;
-    return sendCreated(res, { id: "shipment_" + Date.now(), orderId, destination }, "Shipment booked");
-  }
+  static getOverview = asyncHandler(async (req: AuthRequest, res: Response) => {
+    const ownerId = req.user?.id || '';
+    const overview = await LogisticsService.getLogisticsOverview(ownerId);
+    return sendSuccess(res, overview);
+  });
 
-  static async trackShipment(req: AuthRequest, res: Response) {
-    const { id } = req.params;
-    return sendSuccess(res, { id, status: "in_transit", location: "Delhi" }, "Shipment tracked");
-  }
+  static createWarehouse = asyncHandler(async (req: AuthRequest, res: Response) => {
+    const ownerId = req.user?.id || '';
+    const warehouse = await LogisticsService.createWarehouse(ownerId, req.body);
+    return sendCreated(res, warehouse, "Warehouse registered successfully");
+  });
 
-  static async getProviders(req: AuthRequest, res: Response) {
-    return sendSuccess(res, [], "Providers retrieved");
-  }
+  static getWarehouses = asyncHandler(async (req: AuthRequest, res: Response) => {
+    const ownerId = req.user?.id || '';
+    const warehouses = await LogisticsService.getWarehouses(ownerId);
+    return sendSuccess(res, warehouses);
+  });
 
-  static async getShipments(req: AuthRequest, res: Response) {
-    const userId = req.user?.userId;
-    if (!userId) return res.status(401).json({ error: "Unauthorized" });
-    return sendSuccess(res, [], "Shipments retrieved");
-  }
+  static getShipments = asyncHandler(async (req: AuthRequest, res: Response) => {
+    const ownerId = req.user?.id || '';
+    const shipments = await LogisticsService.getShipments(ownerId);
+    return sendSuccess(res, shipments);
+  });
+
+  static updateShipment = asyncHandler(async (req: AuthRequest, res: Response) => {
+    const shipment = await LogisticsService.updateShipmentStatus(req.params.id, req.body.status, req.body.location);
+    return sendSuccess(res, shipment, "Shipment updated");
+  });
+
+  static getMarketPrices = asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { district, cropName } = req.query;
+    const prices = await LogisticsService.getMarketPrices(district as string, cropName as string);
+    return sendSuccess(res, prices);
+  });
 }

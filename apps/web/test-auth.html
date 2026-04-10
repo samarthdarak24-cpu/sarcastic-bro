@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Authentication Test</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 { color: #333; }
+        h2 { color: #666; margin-top: 0; }
+        button {
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+        }
+        button:hover { background: #059669; }
+        .logout-btn { background: #ef4444; }
+        .logout-btn:hover { background: #dc2626; }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .success { background: #d1fae5; color: #065f46; }
+        .error { background: #fee2e2; color: #991b1b; }
+        .info { background: #dbeafe; color: #1e40af; }
+        input {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        label {
+            display: block;
+            margin-top: 10px;
+            font-weight: 500;
+            color: #555;
+        }
+        .credentials {
+            background: #f9fafb;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .credentials code {
+            background: #e5e7eb;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔐 Authentication Test Suite</h1>
+    
+    <div class="test-section">
+        <h2>Test Credentials</h2>
+        <div class="credentials">
+            <p><strong>Farmer:</strong> <code>farmer@test.com</code> / <code>Test@123</code></p>
+            <p><strong>Buyer:</strong> <code>buyer@test.com</code> / <code>Test@123</code></p>
+            <p><strong>FPO:</strong> <code>fpo@test.com</code> / <code>Test@123</code></p>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>Quick Login Tests</h2>
+        <button onclick="testLogin('farmer@test.com', 'Test@123', 'FARMER')">Test Farmer Login</button>
+        <button onclick="testLogin('buyer@test.com', 'Test@123', 'BUYER')">Test Buyer Login</button>
+        <button onclick="testLogin('fpo@test.com', 'Test@123', 'FPO')">Test FPO Login</button>
+        <button class="logout-btn" onclick="testLogout()">Test Logout</button>
+        <div id="loginStatus"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Custom Login Test</h2>
+        <label>Email:</label>
+        <input type="email" id="email" placeholder="Enter email">
+        <label>Password:</label>
+        <input type="password" id="password" placeholder="Enter password">
+        <button onclick="customLogin()">Login</button>
+        <div id="customStatus"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Current Auth State</h2>
+        <button onclick="checkAuthState()">Check Auth State</button>
+        <div id="authState"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Navigation Tests</h2>
+        <button onclick="goToDashboard('farmer')">Go to Farmer Dashboard</button>
+        <button onclick="goToDashboard('buyer')">Go to Buyer Dashboard</button>
+        <button onclick="goToDashboard('fpo')">Go to FPO Dashboard</button>
+        <button onclick="window.location.href='http://localhost:3000/login'">Go to Login Page</button>
+        <button onclick="window.location.href='http://localhost:3000/register'">Go to Register Page</button>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:3001';
+
+        function showStatus(elementId, message, type) {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `<div class="status ${type}">${message}</div>`;
+        }
+
+        async function testLogin(email, password, expectedRole) {
+            showStatus('loginStatus', `Testing login for ${expectedRole}...`, 'info');
+            
+            try {
+                const response = await fetch(`${API_URL}/api/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    const token = data.data?.tokens?.accessToken || data.data?.token || data.token;
+                    const user = data.data?.user || data.user;
+                    
+                    localStorage.setItem('token', token);
+                    localStorage.setItem('user', JSON.stringify(user));
+                    
+                    showStatus('loginStatus', 
+                        `✅ SUCCESS: Logged in as ${user.name} (${user.role})<br>` +
+                        `Token: ${token.substring(0, 20)}...<br>` +
+                        `Expected Role: ${expectedRole} | Actual: ${user.role}`, 
+                        'success'
+                    );
+                } else {
+                    showStatus('loginStatus', `❌ ERROR: ${data.message || 'Login failed'}`, 'error');
+                }
+            } catch (error) {
+                showStatus('loginStatus', `❌ NETWORK ERROR: ${error.message}<br>Make sure API is running on ${API_URL}`, 'error');
+            }
+        }
+
+        async function customLogin() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            if (!email || !password) {
+                showStatus('customStatus', '❌ Please enter email and password', 'error');
+                return;
+            }
+
+            showStatus('customStatus', 'Logging in...', 'info');
+            
+            try {
+                const response = await fetch(`${API_URL}/api/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    const token = data.data?.tokens?.accessToken || data.data?.token || data.token;
+                    const user = data.data?.user || data.user;
+                    
+                    localStorage.setItem('token', token);
+                    localStorage.setItem('user', JSON.stringify(user));
+                    
+                    showStatus('customStatus', 
+                        `✅ SUCCESS: Logged in as ${user.name} (${user.role})<br>` +
+                        `Token stored in localStorage`, 
+                        'success'
+                    );
+                } else {
+                    showStatus('customStatus', `❌ ERROR: ${data.message || 'Login failed'}`, 'error');
+                }
+            } catch (error) {
+                showStatus('customStatus', `❌ NETWORK ERROR: ${error.message}`, 'error');
+            }
+        }
+
+        function testLogout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            localStorage.removeItem('refreshToken');
+            showStatus('loginStatus', '✅ Logged out successfully. LocalStorage cleared.', 'success');
+            checkAuthState();
+        }
+
+        function checkAuthState() {
+            const token = localStorage.getItem('token');
+            const userStr = localStorage.getItem('user');
+            
+            if (token && userStr) {
+                const user = JSON.parse(userStr);
+                showStatus('authState', 
+                    `✅ AUTHENTICATED<br>` +
+                    `User: ${user.name}<br>` +
+                    `Email: ${user.email}<br>` +
+                    `Role: ${user.role}<br>` +
+                    `Token: ${token.substring(0, 30)}...`, 
+                    'success'
+                );
+            } else {
+                showStatus('authState', '❌ NOT AUTHENTICATED<br>No token or user in localStorage', 'error');
+            }
+        }
+
+        function goToDashboard(role) {
+            window.location.href = `http://localhost:3000/${role}/dashboard`;
+        }
+
+        // Check auth state on load
+        window.onload = () => {
+            checkAuthState();
+        };
+    </script>
+</body>
+</html>

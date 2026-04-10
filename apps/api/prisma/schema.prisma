@@ -1,6 +1,6 @@
 // ========================================================================
-// Prisma Schema — Real-Time Marketplace Ecosystem
-// PostgreSQL database for production deployment
+// AgriTrust - Agri-B2B Marketplace Platform
+// Prisma Schema for PostgreSQL
 // ========================================================================
 
 generator client {
@@ -17,329 +17,492 @@ datasource db {
 enum Role {
   FARMER
   BUYER
-  ADMIN
+  FPO
 }
 
 enum Language {
-  ENGLISH
-  HINDI
-  MARATHI
+  en
+  hi
+  mr
 }
 
-enum KycStatus {
+enum CropGrade {
+  A
+  B
+  C
+}
+
+enum CropStatus {
+  LISTED
+  SOLD
   PENDING
-  VERIFIED
-  REJECTED
 }
 
 enum OrderStatus {
   PENDING
-  ACCEPTED
-  REJECTED
+  CONFIRMED
   IN_TRANSIT
   DELIVERED
-  COMPLETED
   CANCELLED
+}
+
+enum EscrowStatus {
+  HELD
+  RELEASED
+  REFUNDED
 }
 
 enum PaymentStatus {
   PENDING
-  PROCESSING
-  PAID
+  COMPLETED
   FAILED
-  REFUNDED
-}
-
-enum MessageType {
-  TEXT
-  IMAGE
-  VOICE
-  FILE
-}
-
-enum NotificationType {
-  ORDER
-  MESSAGE
-  PAYMENT
-  QUALITY
-  RATING
-  SYSTEM
 }
 
 // ─── USER ──────────────────────────────────────────────────────────────
 
 model User {
   id                String    @id @default(uuid())
-  email             String    @unique
-  password          String
   name              String
-  role              Role      @default(FARMER)
-  phone             String?
-  address           String?
-  district          String?
-  state             String?
-  language          Language  @default(ENGLISH)
-  kycStatus         KycStatus @default(PENDING)
-  reputationScore   Float     @default(0)
-  isActive          Boolean   @default(true)
-  lastSeen          DateTime?
+  phone             String    @unique
+  email             String?   @unique
+  passwordHash      String
+  role              Role
+  
+  // KYC Fields
+  aadhaar           String?   // For Farmers
+  gst               String?   // For Buyers
+  bankAccount       String?
+  ifsc              String?
+  bankName          String?
+  
+  // Preferences
+  language          Language  @default(en)
+  kycVerified       Boolean   @default(false)
+  
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 
   // Relations
-  products          Product[]
-  ordersAsFarmer    Order[]   @relation("FarmerOrders")
+  farm              Farm?
+  fpo               FPO?
+  crops             Crop[]
   ordersAsBuyer     Order[]   @relation("BuyerOrders")
+  wallet            Wallet?
   sentMessages      Message[] @relation("SentMessages")
   receivedMessages  Message[] @relation("ReceivedMessages")
-  ratingsGiven      Rating[]  @relation("RatingsGiven")
-  ratingsReceived   Rating[]  @relation("RatingsReceived")
-  notifications     Notification[]
-  payments          Payment[]
-  favoritesAsUser   Favorite[] @relation("FavoriteBuyer")
-  favoritesOfUser   Favorite[] @relation("FavoriteFarmer")
-  conversationsAsUser1 Conversation[] @relation("ConversationUser1")
-  conversationsAsUser2 Conversation[] @relation("ConversationUser2")
+  farmerEarnings    FarmerEarning[]
+  fpoChats          FPOChat[]
+  fpoChatMessages   FPOChatMessage[]
 
-  @@index([email])
+  @@index([phone])
   @@index([role])
-  @@index([reputationScore])
+}
+
+// ─── FARM ──────────────────────────────────────────────────────────────
+
+model Farm {
+  id                String    @id @default(uuid())
+  farmerId          String    @unique
+  location          String
+  district          String
+  state             String
+  areaAcres         Float
+  photos            String[]  // Array of photo URLs
+  soilType          String?
+  irrigationType    String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  // Relations
+  farmer            User      @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+
+  @@index([farmerId])
   @@index([district])
 }
 
-// ─── PRODUCT (Crop) ────────────────────────────────────────────────────
+// ─── FPO ───────────────────────────────────────────────────────────────
 
-model Product {
-  id              String    @id @default(uuid())
-  name            String
-  category        String    // fruit, vegetable, grain
-  description     String?
-  imageUrls       Json      // Array of image URLs
-  price           Float
-  quantity        Float
-  unit            String    @default("kg")
-  qualityGrade    String?   // A+, A, B+, B
-  qualityScore    Float?    // 0-100
-  district        String?
-  state           String?
-  isActive        Boolean   @default(true)
-  farmerId        String
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+model FPO {
+  id                String    @id @default(uuid())
+  adminUserId       String    @unique
+  name              String
+  registrationNo    String    @unique
+  bankAccount       String
+  ifsc              String
+  district          String
+  state             String
+  commissionRate    Float     @default(5.0) // FPO commission percentage
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 
   // Relations
-  farmer          User      @relation(fields: [farmerId], references: [id], onDelete: Cascade)
-  orders          Order[]
-  qualityScans    QualityScan[]
+  admin             User      @relation(fields: [adminUserId], references: [id], onDelete: Cascade)
+  farmers           FPOFarmer[]
+  aggregatedLots    AggregatedLot[]
+  chats             FPOChat[]
+  logistics         FPOLogistics[]
+  payoutSplits      FPOPayoutSplit[]
+
+  @@index([adminUserId])
+  @@index([district])
+}
+
+// ─── FPO FARMER ────────────────────────────────────────────────────────
+
+model FPOFarmer {
+  id                String    @id @default(uuid())
+  fpoId             String
+  name              String
+  phone             String
+  aadhaar           String
+  bankAccount       String?
+  ifsc              String?
+  photos            String[]  // Array of photo URLs
+  district          String?
+  isActive          Boolean   @default(true)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  // Relations
+  fpo               FPO       @relation(fields: [fpoId], references: [id], onDelete: Cascade)
+  crops             Crop[]
+  payoutSplits      FPOPayoutSplit[]
+
+  @@index([fpoId])
+  @@index([phone])
+}
+
+// ─── CROP ──────────────────────────────────────────────────────────────
+
+model Crop {
+  id                String      @id @default(uuid())
+  farmerId          String?
+  fpoFarmerId       String?
+  fpoId             String?
+  
+  cropName          String
+  category          String      // Vegetables, Fruits, Grains
+  variety           String
+  quantity          Float       // in kg
+  pricePerKg        Float
+  grade             CropGrade
+  isAggregated      Boolean     @default(false)
+  qualityCertUrl    String?
+  status            CropStatus  @default(LISTED)
+  
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  // Relations
+  farmer            User?       @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+  fpoFarmer         FPOFarmer?  @relation(fields: [fpoFarmerId], references: [id], onDelete: Cascade)
+  orders            Order[]
+  aggregatedLot     AggregatedLot? @relation(fields: [aggregatedLotId], references: [id])
+  aggregatedLotId   String?
+  payoutSplits      FPOPayoutSplit[]
 
   @@index([farmerId])
-  @@index([category])
-  @@index([qualityGrade])
-  @@index([isActive])
-  @@index([category, isActive])
+  @@index([fpoFarmerId])
+  @@index([cropName])
+  @@index([status])
+  @@index([isAggregated])
+}
+
+// ─── AGGREGATED LOT ────────────────────────────────────────────────────
+
+model AggregatedLot {
+  id                String      @id @default(uuid())
+  fpoId             String
+  cropName          String
+  totalQuantity     Float       // Combined quantity in kg
+  pricePerKg        Float       // Weighted average price
+  qualityCertUrl    String?
+  status            CropStatus  @default(LISTED)
+  
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  // Relations
+  fpo               FPO         @relation(fields: [fpoId], references: [id], onDelete: Cascade)
+  crops             Crop[]
+  orders            Order[]
+
+  @@index([fpoId])
+  @@index([cropName])
+  @@index([status])
 }
 
 // ─── ORDER ─────────────────────────────────────────────────────────────
 
 model Order {
-  id              String      @id @default(uuid())
-  orderNumber     String      @unique
-  productId       String
-  farmerId        String
-  buyerId         String
-  quantity        Float
-  totalPrice      Float
-  status          OrderStatus @default(PENDING)
-  notes           String?
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
+  id                String        @id @default(uuid())
+  buyerId           String
+  cropId            String?
+  lotId             String?
+  
+  quantity          Float
+  totalAmount       Float
+  status            OrderStatus   @default(PENDING)
+  escrowStatus      EscrowStatus  @default(HELD)
+  deliveryAddress   String
+  
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
 
   // Relations
-  product         Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
-  farmer          User        @relation("FarmerOrders", fields: [farmerId], references: [id], onDelete: Cascade)
-  buyer           User        @relation("BuyerOrders", fields: [buyerId], references: [id], onDelete: Cascade)
-  tracking        OrderTracking[]
-  payment         Payment?
-  rating          Rating?
+  buyer             User          @relation("BuyerOrders", fields: [buyerId], references: [id], onDelete: Cascade)
+  crop              Crop?         @relation(fields: [cropId], references: [id], onDelete: SetNull)
+  lot               AggregatedLot? @relation(fields: [lotId], references: [id], onDelete: SetNull)
+  escrowTransaction EscrowTransaction?
+  logistics         FPOLogistics?
+  payoutSplits      FPOPayoutSplit[]
 
-  @@index([farmerId])
   @@index([buyerId])
+  @@index([cropId])
+  @@index([lotId])
   @@index([status])
-  @@index([orderNumber])
-  @@index([status, createdAt])
+  @@index([escrowStatus])
 }
 
-// ─── ORDER TRACKING ────────────────────────────────────────────────────
+// ─── ESCROW TRANSACTION ────────────────────────────────────────────────
 
-model OrderTracking {
-  id              String    @id @default(uuid())
-  orderId         String
-  status          OrderStatus
-  location        String?
-  lat             Float?
-  lng             Float?
-  notes           String?
-  estimatedTime   DateTime?
-  actualTime      DateTime?
-  createdAt       DateTime  @default(now())
-
-  // Relations
-  order           Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
-
-  @@index([orderId])
-  @@index([createdAt])
-}
-
-// ─── MESSAGE (AgriChat) ────────────────────────────────────────────────
-
-model Message {
-  id              String      @id @default(uuid())
-  conversationId  String
-  senderId        String
-  receiverId      String
-  content         String
-  type            MessageType @default(TEXT)
-  attachmentUrl   String?
-  isRead          Boolean     @default(false)
-  readAt          DateTime?
-  createdAt       DateTime    @default(now())
-
-  // Relations
-  conversation    Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  sender          User         @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
-  receiver        User         @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
-
-  @@index([conversationId])
-  @@index([senderId])
-  @@index([receiverId])
-  @@index([isRead])
-  @@index([createdAt])
-}
-
-// ─── CONVERSATION ─────────────────────────────────────────────────────
-
-model Conversation {
-  id              String    @id @default(uuid())
-  user1Id         String
-  user2Id         String
-  lastMessageAt   DateTime?
-  createdAt       DateTime  @default(now())
-
-  // Relations
-  messages        Message[]
-  user1           User      @relation("ConversationUser1", fields: [user1Id], references: [id], onDelete: Cascade)
-  user2           User      @relation("ConversationUser2", fields: [user2Id], references: [id], onDelete: Cascade)
-
-  @@unique([user1Id, user2Id])
-  @@index([user1Id])
-  @@index([user2Id])
-}
-
-// ─── PAYMENT ───────────────────────────────────────────────────────────
-
-model Payment {
-  id              String        @id @default(uuid())
-  orderId         String        @unique
-  userId          String
-  amount          Float
-  currency        String        @default("INR")
-  status          PaymentStatus @default(PENDING)
-  paymentMethod   String?
-  razorpayOrderId String?
+model EscrowTransaction {
+  id                String        @id @default(uuid())
+  orderId           String        @unique
+  buyerId           String
+  sellerId          String        // Farmer or FPO ID
+  amount            Float
+  status            EscrowStatus  @default(HELD)
   razorpayPaymentId String?
-  razorpaySignature String?
-  invoiceUrl      String?
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  heldAt            DateTime      @default(now())
+  releasedAt        DateTime?
 
   // Relations
-  order           Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  order             Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
   @@index([orderId])
-  @@index([userId])
+  @@index([buyerId])
+  @@index([sellerId])
   @@index([status])
-  @@index([createdAt])
 }
 
-// ─── RATING ────────────────────────────────────────────────────────────
+// ─── WALLET ────────────────────────────────────────────────────────────
 
-model Rating {
-  id              String    @id @default(uuid())
-  orderId         String    @unique
-  fromUserId      String
-  toUserId        String
-  stars           Int       // 1-5
-  review          String?
-  createdAt       DateTime  @default(now())
-
-  // Relations
-  order           Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  fromUser        User      @relation("RatingsGiven", fields: [fromUserId], references: [id], onDelete: Cascade)
-  toUser          User      @relation("RatingsReceived", fields: [toUserId], references: [id], onDelete: Cascade)
-
-  @@index([toUserId])
-  @@index([stars])
-  @@index([createdAt])
-}
-
-// ─── QUALITY SCAN ──────────────────────────────────────────────────────
-
-model QualityScan {
-  id              String    @id @default(uuid())
-  productId       String
-  imageUrl        String
-  grade           String    // A+, A, B+, B
-  score           Float     // 0-100
-  confidence      Float     // 0-100
-  defects         Json?     // Array of detected defects
-  certificateUrl  String?
-  createdAt       DateTime  @default(now())
+model Wallet {
+  id                String    @id @default(uuid())
+  userId            String    @unique
+  balance           Float     @default(0)
+  currency          String    @default("INR")
+  
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 
   // Relations
-  product         Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
-
-  @@index([productId])
-  @@index([grade])
-  @@index([createdAt])
-}
-
-// ─── NOTIFICATION ─────────────────────────────────────────────────────
-
-model Notification {
-  id              String           @id @default(uuid())
-  userId          String
-  type            NotificationType
-  title           String
-  message         String
-  metadata        Json?
-  isRead          Boolean          @default(false)
-  readAt          DateTime?
-  createdAt       DateTime         @default(now())
-
-  // Relations
-  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions      WalletTransaction[]
 
   @@index([userId])
-  @@index([isRead])
+}
+
+// ─── WALLET TRANSACTION ────────────────────────────────────────────────
+
+model WalletTransaction {
+  id                String    @id @default(uuid())
+  walletId          String
+  type              String    // ADD_FUNDS, DEBIT, ESCROW_HOLD, ESCROW_RELEASE
+  amount            Float
+  balanceBefore     Float
+  balanceAfter      Float
+  description       String?
+  referenceId       String?   // Order ID
+  
+  createdAt         DateTime  @default(now())
+
+  // Relations
+  wallet            Wallet    @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  @@index([walletId])
   @@index([type])
   @@index([createdAt])
 }
 
-// ─── FAVORITE ─────────────────────────────────────────────────────────
+// ─── MARKET PRICE ──────────────────────────────────────────────────────
 
-model Favorite {
-  id              String    @id @default(uuid())
-  buyerId         String
-  farmerId        String
-  notes           String?
-  createdAt       DateTime  @default(now())
+model MarketPrice {
+  id                String    @id @default(uuid())
+  cropName          String
+  variety           String
+  grade             CropGrade
+  pricePerKg        Float
+  district          String
+  recordedAt        DateTime  @default(now())
+
+  @@index([cropName])
+  @@index([variety])
+  @@index([district])
+  @@index([recordedAt])
+}
+
+// ─── MESSAGE (Chat) ────────────────────────────────────────────────────
+
+model Message {
+  id                String    @id @default(uuid())
+  senderId          String
+  receiverId        String
+  orderId           String?
+  content           String
+  read              Boolean   @default(false)
+  
+  createdAt         DateTime  @default(now())
 
   // Relations
-  buyer           User      @relation("FavoriteBuyer", fields: [buyerId], references: [id], onDelete: Cascade)
-  farmer          User      @relation("FavoriteFarmer", fields: [farmerId], references: [id], onDelete: Cascade)
+  sender            User      @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver          User      @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
 
-  @@unique([buyerId, farmerId])
-  @@index([buyerId])
+  @@index([senderId])
+  @@index([receiverId])
+  @@index([orderId])
+  @@index([createdAt])
+}
+
+// ─── QUALITY CERTIFICATE ───────────────────────────────────────────────
+
+model QualityCertificate {
+  id                String    @id @default(uuid())
+  cropId            String?
+  lotId             String?
+  uploadedBy        String
+  fileUrl           String
+  verifiedByFPO     Boolean   @default(false)
+  aiScore           Float?
+  
+  uploadedAt        DateTime  @default(now())
+
+  @@index([cropId])
+  @@index([lotId])
+  @@index([uploadedBy])
+}
+
+// ─── FARMER EARNING ────────────────────────────────────────────────────
+
+model FarmerEarning {
+  id                String    @id @default(uuid())
+  farmerId          String
+  orderId           String
+  amount            Float
+  platformFee       Float     @default(0)
+  status            PaymentStatus @default(PENDING)
+  
+  createdAt         DateTime  @default(now())
+  paidAt            DateTime?
+
+  // Relations
+  farmer            User      @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+
   @@index([farmerId])
+  @@index([orderId])
+  @@index([status])
+}
+
+// ─── FPO CHAT ──────────────────────────────────────────────────────────
+
+model FPOChat {
+  id                String    @id @default(uuid())
+  fpoId             String
+  buyerId           String
+  orderId           String?
+  lastMessage       String?
+  lastMessageAt     DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  // Relations
+  fpo               FPO       @relation(fields: [fpoId], references: [id], onDelete: Cascade)
+  buyer             User      @relation(fields: [buyerId], references: [id], onDelete: Cascade)
+  messages          FPOChatMessage[]
+
+  @@index([fpoId])
+  @@index([buyerId])
+}
+
+model FPOChatMessage {
+  id                String    @id @default(uuid())
+  chatId            String
+  senderId          String
+  content           String
+  attachments       String[]
+  read              Boolean   @default(false)
+  createdAt         DateTime  @default(now())
+
+  // Relations
+  chat              FPOChat   @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  sender            User      @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([chatId])
+  @@index([senderId])
+}
+
+// ─── FPO LOGISTICS ─────────────────────────────────────────────────────
+
+model FPOLogistics {
+  id                String    @id @default(uuid())
+  orderId           String    @unique
+  fpoId             String
+  trackingNumber    String?
+  carrier           String?
+  status            String    @default("PENDING") // PENDING, PICKED_UP, IN_TRANSIT, OUT_FOR_DELIVERY, DELIVERED
+  currentLocation   String?
+  estimatedDelivery DateTime?
+  actualDelivery    DateTime?
+  notes             String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  // Relations
+  order             Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  fpo               FPO       @relation(fields: [fpoId], references: [id], onDelete: Cascade)
+  events            LogisticsEvent[]
+
+  @@index([orderId])
+  @@index([fpoId])
+}
+
+model LogisticsEvent {
+  id                String    @id @default(uuid())
+  logisticsId       String
+  status            String
+  location          String?
+  description       String?
+  timestamp         DateTime  @default(now())
+
+  // Relations
+  logistics         FPOLogistics @relation(fields: [logisticsId], references: [id], onDelete: Cascade)
+
+  @@index([logisticsId])
+}
+
+// ─── FPO PAYOUT SPLIT ──────────────────────────────────────────────────
+
+model FPOPayoutSplit {
+  id                String    @id @default(uuid())
+  orderId           String
+  fpoId             String
+  fpoFarmerId       String
+  cropId            String
+  farmerShare       Float     // Amount for farmer
+  fpoCommission     Float     // FPO commission
+  totalAmount       Float     // Total amount
+  status            String    @default("PENDING") // PENDING, PAID
+  paidAt            DateTime?
+  createdAt         DateTime  @default(now())
+
+  // Relations
+  order             Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  fpo               FPO       @relation(fields: [fpoId], references: [id], onDelete: Cascade)
+  fpoFarmer         FPOFarmer @relation(fields: [fpoFarmerId], references: [id], onDelete: Cascade)
+  crop              Crop      @relation(fields: [cropId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@index([fpoId])
+  @@index([fpoFarmerId])
 }

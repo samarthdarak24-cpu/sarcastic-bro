@@ -44,14 +44,54 @@ export class OrderTrackingService {
       prisma.order.findUnique({
         where: { id: orderId },
         include: {
-          product: true,
-          farmer: {
+          crop: {
+            include: {
+              farmer: {
+                select: {
+                  id: true,
+                  name: true,
+                  phone: true,
+                  farm: {
+                    select: {
+                      district: true,
+                      state: true,
+                      location: true
+                    }
+                  }
+                }
+              },
+              fpoFarmer: {
+                select: {
+                  id: true,
+                  name: true,
+                  phone: true,
+                  district: true,
+                  fpo: {
+                    select: {
+                      name: true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          lot: {
+            include: {
+              fpo: {
+                select: {
+                  id: true,
+                  name: true,
+                  district: true,
+                  state: true
+                }
+              }
+            }
+          },
+          buyer: {
             select: {
               id: true,
               name: true,
-              phone: true,
-              district: true,
-              state: true
+              phone: true
             }
           }
         }
@@ -64,8 +104,17 @@ export class OrderTrackingService {
 
     if (!order) throw new Error('Order not found');
 
+    // Determine supplier info
+    let supplier: any = null;
+    if (order.crop) {
+      supplier = order.crop.farmer || order.crop.fpoFarmer;
+    } else if (order.lot) {
+      supplier = order.lot.fpo;
+    }
+
     return {
       order,
+      supplier,
       tracking: trackingEvents,
       currentStatus: trackingEvents[trackingEvents.length - 1] || null
     };

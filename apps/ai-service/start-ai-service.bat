@@ -1,3 +1,0 @@
-@echo off
-echo Starting AgriVoice Advanced AI Service...
-python real_ai_service.py

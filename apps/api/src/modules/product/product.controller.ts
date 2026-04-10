@@ -8,6 +8,7 @@ import { ProductService } from "./product.service";
 import { createProductSchema, updateProductSchema } from "./product.validation";
 import { sendSuccess, sendCreated, sendPaginated } from "../../utils/response";
 import { getSocketService } from "../../services/socketService";
+import prisma from "../../prisma/client";
 
 export class ProductController {
   static async create(req: AuthRequest, res: Response) {
@@ -40,10 +41,13 @@ export class ProductController {
 
   static async update(req: AuthRequest, res: Response) {
     const data = updateProductSchema.parse(req.body);
+    const imageUrls = req.files && (req.files as Express.Multer.File[]).length > 0
+      ? (req.files as Express.Multer.File[]).map((f) => `/uploads/images/${f.filename}`)
+      : undefined;
     
     // Get old product for price comparison
     const oldProduct = await ProductService.getById(req.params.id);
-    const product = await ProductService.update(req.params.id, req.user?.id || req.user?.userId || '', data);
+    const product = await ProductService.update(req.params.id, req.user?.id || req.user?.userId || '', data, imageUrls);
     
     // Emit price update if price changed
     if (data.price && oldProduct.price !== data.price) {
@@ -80,5 +84,12 @@ export class ProductController {
     await ProductService.delete(req.params.id, req.user?.id || req.user?.userId || '');
     return sendSuccess(res, null, "Product deleted");
   }
-}
 
+  static async getInventoryLogs(req: AuthRequest, res: Response) {
+    const logs = await prisma.inventoryLog.findMany({
+      where: { productId: req.params.id },
+      orderBy: { createdAt: "desc" },
+    });
+    return sendSuccess(res, logs);
+  }
+}

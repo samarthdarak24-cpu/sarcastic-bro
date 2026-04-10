@@ -13,7 +13,7 @@ import BackendStatusBanner from '@/components/ui/BackendStatusBanner';
 
 export default function RegisterPage() {
   const router = useRouter();
-  const [role, setRole] = useState<'FARMER' | 'BUYER'>('FARMER');
+  const [role, setRole] = useState<'FARMER' | 'BUYER' | 'FPO'>('FARMER');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -89,26 +89,37 @@ export default function RegisterPage() {
         role,
       });
 
-      console.log('Registration response:', response);
+      console.log('✅ Registration successful:', response);
 
       // Ensure data is stored synchronously
       if (typeof window !== 'undefined' && response.token) {
         localStorage.setItem('token', response.token);
         localStorage.setItem('user', JSON.stringify(response.user));
-        console.log('Stored in localStorage:', {
+        if (response.tokens?.refreshToken) {
+          localStorage.setItem('refreshToken', response.tokens.refreshToken);
+        }
+        console.log('✅ Stored in localStorage:', {
           token: localStorage.getItem('token'),
           user: localStorage.getItem('user')
         });
       }
 
-      // Use replace instead of push to avoid back button issues
-      if (response.user.role === 'FARMER') {
+      // Route based on user role
+      const userRole = response.user.role;
+      console.log('🔀 Routing user with role:', userRole);
+
+      // Use window.location for reliable redirect
+      if (userRole === 'FARMER') {
         window.location.href = '/farmer/dashboard';
-      } else if (response.user.role === 'BUYER') {
+      } else if (userRole === 'BUYER') {
         window.location.href = '/buyer/dashboard';
+      } else if (userRole === 'FPO') {
+        window.location.href = '/fpo/dashboard';
+      } else {
+        throw new Error('Invalid user role');
       }
     } catch (err: any) {
-      console.error('Register error:', err);
+      console.error('❌ Register error:', err);
       let errorMessage = 'Registration failed. Please try again.';
 
       if (err.response?.data?.message) {
@@ -276,61 +287,77 @@ export default function RegisterPage() {
           />
         ))}
 
-        {/* Enhanced particles with trails */}
-        {[...Array(45)].map((_, i) => (
+        {/* Enhanced particles with trails - Fixed positions to avoid hydration mismatch */}
+        {Array.from({ length: 45 }, (_, i) => ({
+          id: i,
+          left: (i * 41 + 17) % 100,
+          top: (i * 47 + 23) % 100,
+          width: ((i * 13) % 4) + 2,
+          height: ((i * 19) % 4) + 2,
+          yOffset: 120 + ((i * 31) % 100),
+          xOffset: ((i * 29) % 60) - 30,
+          duration: 4 + ((i * 17) % 4),
+          delay: (i * 7) % 3,
+          color: i % 3 === 0 ? 'rgba(167, 243, 208, 0.8)' : i % 3 === 1 ? 'rgba(110, 231, 183, 0.8)' : 'rgba(52, 211, 153, 0.8)',
+        })).map((particle) => (
           <motion.div
-            key={`particle-${i}`}
+            key={`particle-${particle.id}`}
             className="absolute rounded-full"
             style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              width: Math.random() * 6 + 2,
-              height: Math.random() * 6 + 2,
-              background: `radial-gradient(circle, ${
-                i % 3 === 0 ? 'rgba(167, 243, 208, 0.8)' : 
-                i % 3 === 1 ? 'rgba(110, 231, 183, 0.8)' : 
-                'rgba(52, 211, 153, 0.8)'
-              }, transparent)`,
+              left: `${particle.left}%`,
+              top: `${particle.top}%`,
+              width: particle.width,
+              height: particle.height,
+              background: `radial-gradient(circle, ${particle.color}, transparent)`,
             }}
             animate={{
-              y: [0, -120 - Math.random() * 100, 0],
-              x: [0, Math.random() * 60 - 30, 0],
+              y: [0, -particle.yOffset, 0],
+              x: [0, particle.xOffset, 0],
               opacity: [0, 1, 0],
               scale: [0, 1.8, 0],
             }}
             transition={{
-              duration: 4 + Math.random() * 4,
+              duration: particle.duration,
               repeat: Infinity,
-              delay: Math.random() * 3,
+              delay: particle.delay,
               ease: 'easeOut',
             }}
           />
         ))}
 
-        {/* Glowing orbs */}
-        {[...Array(10)].map((_, i) => (
+        {/* Glowing orbs - Fixed positions to avoid hydration mismatch */}
+        {Array.from({ length: 10 }, (_, i) => ({
+          id: i,
+          left: (i * 43 + 19) % 100,
+          top: (i * 51 + 27) % 100,
+          width: ((i * 23) % 150) + 100,
+          height: ((i * 29) % 150) + 100,
+          xOffset: ((i * 37) % 120) - 60,
+          yOffset: ((i * 41) % 120) - 60,
+          duration: 12 + ((i * 19) % 10),
+          delay: (i * 13) % 5,
+          color: i % 2 === 0 ? 'rgba(16, 185, 129, 0.3)' : 'rgba(5, 150, 105, 0.3)',
+        })).map((orb) => (
           <motion.div
-            key={`orb-${i}`}
+            key={`orb-${orb.id}`}
             className="absolute rounded-full blur-2xl"
             style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              width: Math.random() * 250 + 100,
-              height: Math.random() * 250 + 100,
-              background: `radial-gradient(circle, ${
-                i % 2 === 0 ? 'rgba(16, 185, 129, 0.3)' : 'rgba(5, 150, 105, 0.3)'
-              }, transparent)`,
+              left: `${orb.left}%`,
+              top: `${orb.top}%`,
+              width: orb.width,
+              height: orb.height,
+              background: `radial-gradient(circle, ${orb.color}, transparent)`,
             }}
             animate={{
               scale: [1, 1.6, 1],
               opacity: [0.3, 0.7, 0.3],
-              x: [0, Math.random() * 120 - 60, 0],
-              y: [0, Math.random() * 120 - 60, 0],
+              x: [0, orb.xOffset, 0],
+              y: [0, orb.yOffset, 0],
             }}
             transition={{
-              duration: 12 + Math.random() * 10,
+              duration: orb.duration,
               repeat: Infinity,
-              delay: Math.random() * 5,
+              delay: orb.delay,
             }}
           />
         ))}
@@ -448,13 +475,13 @@ export default function RegisterPage() {
                 <label className="block text-sm font-semibold text-gray-700 mb-3">
                   I am a
                 </label>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-3 gap-3">
                   <motion.button
                     type="button"
                     onClick={() => setRole('FARMER')}
                     whileHover={{ scale: 1.03, y: -2 }}
                     whileTap={{ scale: 0.98 }}
-                    className={`flex items-center justify-center gap-2 px-4 py-4 rounded-xl font-bold transition-all duration-300 border-2 relative overflow-hidden ${
+                    className={`flex flex-col items-center justify-center gap-2 px-3 py-4 rounded-xl font-bold transition-all duration-300 border-2 relative overflow-hidden ${
                       role === 'FARMER'
                         ? 'bg-gradient-to-br from-green-600 to-emerald-600 text-white border-green-600 shadow-xl'
                         : 'bg-white text-gray-700 border-gray-200 hover:border-green-300 hover:shadow-md'
@@ -469,14 +496,14 @@ export default function RegisterPage() {
                       />
                     )}
                     <Leaf className="w-5 h-5 relative z-10" />
-                    <span className="relative z-10">Farmer</span>
+                    <span className="relative z-10 text-sm">Farmer</span>
                   </motion.button>
                   <motion.button
                     type="button"
                     onClick={() => setRole('BUYER')}
                     whileHover={{ scale: 1.03, y: -2 }}
                     whileTap={{ scale: 0.98 }}
-                    className={`flex items-center justify-center gap-2 px-4 py-4 rounded-xl font-bold transition-all duration-300 border-2 relative overflow-hidden ${
+                    className={`flex flex-col items-center justify-center gap-2 px-3 py-4 rounded-xl font-bold transition-all duration-300 border-2 relative overflow-hidden ${
                       role === 'BUYER'
                         ? 'bg-gradient-to-br from-blue-600 to-cyan-600 text-white border-blue-600 shadow-xl'
                         : 'bg-white text-gray-700 border-gray-200 hover:border-blue-300 hover:shadow-md'
@@ -491,7 +518,29 @@ export default function RegisterPage() {
                       />
                     )}
                     <ShoppingBag className="w-5 h-5 relative z-10" />
-                    <span className="relative z-10">Buyer</span>
+                    <span className="relative z-10 text-sm">Buyer</span>
+                  </motion.button>
+                  <motion.button
+                    type="button"
+                    onClick={() => setRole('FPO')}
+                    whileHover={{ scale: 1.03, y: -2 }}
+                    whileTap={{ scale: 0.98 }}
+                    className={`flex flex-col items-center justify-center gap-2 px-3 py-4 rounded-xl font-bold transition-all duration-300 border-2 relative overflow-hidden ${
+                      role === 'FPO'
+                        ? 'bg-gradient-to-br from-purple-600 to-indigo-600 text-white border-purple-600 shadow-xl'
+                        : 'bg-white text-gray-700 border-gray-200 hover:border-purple-300 hover:shadow-md'
+                    }`}
+                  >
+                    {role === 'FPO' && (
+                      <motion.div
+                        className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0"
+                        initial={{ x: '-100%' }}
+                        animate={{ x: '100%' }}
+                        transition={{ duration: 1.5, repeat: Infinity, repeatDelay: 0.5 }}
+                      />
+                    )}
+                    <Tractor className="w-5 h-5 relative z-10" />
+                    <span className="relative z-10 text-sm">FPO</span>
                   </motion.button>
                 </div>
               </motion.div>

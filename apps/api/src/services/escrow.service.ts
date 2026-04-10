@@ -1,244 +1,268 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { PrismaService } from './prisma.service';
+import prisma from '../config/database';
+import { EscrowStatus } from '@prisma/client';
 
-interface EscrowAccount {
-  id: string;
-  orderId: string;
-  buyerId: string;
-  farmerId: string;
-  amount: number;
-  status: 'HELD' | 'RELEASED' | 'DISPUTED';
-  createdAt: Date;
-  releasedAt?: Date;
-}
-
-interface DisputeResolution {
-  id: string;
-  escrowId: string;
-  initiatedBy: string;
-  reason: string;
-  status: 'OPEN' | 'RESOLVED';
-  resolution: string;
-  createdAt: Date;
-}
-
-@Injectable()
 export class EscrowService {
-  private readonly logger = new Logger(EscrowService.name);
+  // Hold funds in escrow when order is placed
+  static async holdFunds(orderId: string, buyerId: string, sellerId: string, amount: number, razorpayPaymentId?: string) {
+    // Deduct from buyer's wallet
+    const wallet = await prisma.wallet.findUnique({
+      where: { userId: buyerId },
+    });
 
-  constructor(private prisma: PrismaService) {}
+    if (!wallet || wallet.balance < amount) {
+      throw new Error('Insufficient wallet balance');
+    }
 
-  async createEscrowAccount(orderId: string, buyerId: string, farmerId: string, amount: number): Promise<EscrowAccount> {
-    try {
-      this.logger.log(`Creating escrow account for order: ${orderId}`);
+    // Create wallet transaction for debit
+    await prisma.walletTransaction.create({
+      data: {
+        walletId: wallet.id,
+        type: 'ESCROW_HOLD',
+        amount: -amount,
+        balanceBefore: wallet.balance,
+        balanceAfter: wallet.balance - amount,
+        description: `Escrow hold for order ${orderId}`,
+        referenceId: orderId,
+      },
+    });
 
-      const escrow: EscrowAccount = {
-        id: `escrow-${Date.now()}`,
+    // Update wallet balance
+    await prisma.wallet.update({
+      where: { id: wallet.id },
+      data: { balance: wallet.balance - amount },
+    });
+
+    // Create escrow transaction
+    const escrow = await prisma.escrowTransaction.create({
+      data: {
         orderId,
         buyerId,
-        farmerId,
+        sellerId,
         amount,
-        status: 'HELD',
-        createdAt: new Date(),
-      };
+        status: EscrowStatus.HELD,
+        razorpayPaymentId,
+        heldAt: new Date(),
+      },
+    });
 
-      // Save to database
-      // await this.prisma.escrow.create({ data: escrow });
-
-      // Notify both parties
-      await this.notifyParties(escrow, 'ESCROW_CREATED');
-
-      return escrow;
-    } catch (error) {
-      this.logger.error(`Failed to create escrow account: ${error.message}`);
-      throw error;
-    }
+    return escrow;
   }
 
-  async holdFunds(escrowId: string, amount: number): Promise<void> {
-    try {
-      this.logger.log(`Holding funds in escrow: ${escrowId}`);
+  // Release funds from escrow to sellers
+  static async releaseFunds(orderId: string) {
+    const escrow = await prisma.escrowTransaction.findUnique({
+      where: { orderId },
+    });
 
-      // Deduct from buyer's account
-      // Update escrow status to HELD
-
-      this.logger.log(`Funds held: ₹${amount}`);
-    } catch (error) {
-      this.logger.error(`Failed to hold funds: ${error.message}`);
-      throw error;
+    if (!escrow || escrow.status !== EscrowStatus.HELD) {
+      throw new Error('Escrow transaction not found or already processed');
     }
-  }
 
-  async releaseFunds(escrowId: string): Promise<void> {
-    try {
-      this.logger.log(`Releasing funds from escrow: ${escrowId}`);
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+      include: {
+        lot: {
+          include: {
+            crops: {
+              include: {
+                fpoFarmer: true,
+              },
+            },
+          },
+        },
+        crop: {
+          include: {
+            farmer: true,
+          },
+        },
+      },
+    });
 
-      // Get escrow account
-      // const escrow = await this.prisma.escrow.findUnique({ where: { id: escrowId } });
-
-      // Transfer funds to farmer
-      // Update escrow status to RELEASED
-
-      // Notify both parties
-      // await this.notifyParties(escrow, 'FUNDS_RELEASED');
-
-      this.logger.log(`Funds released from escrow: ${escrowId}`);
-    } catch (error) {
-      this.logger.error(`Failed to release funds: ${error.message}`);
-      throw error;
+    if (!order) {
+      throw new Error('Order not found');
     }
-  }
 
-  async holdFundsOnDispute(escrowId: string): Promise<void> {
-    try {
-      this.logger.log(`Holding funds due to dispute: ${escrowId}`);
+    const platformFeeRate = 0.02; // 2% platform fee
+    const totalAmount = escrow.amount;
 
-      // Update escrow status to DISPUTED
-      // Notify both parties
+    // If it's an aggregated lot, split among farmers
+    if (order.lot) {
+      const crops = order.lot.crops;
+      const totalQuantity = crops.reduce((sum, crop) => sum + crop.quantity, 0);
 
-      this.logger.log(`Funds held pending dispute resolution: ${escrowId}`);
-    } catch (error) {
-      this.logger.error(`Failed to hold funds on dispute: ${error.message}`);
-      throw error;
-    }
-  }
+      for (const crop of crops) {
+        const farmerShare = (crop.quantity / totalQuantity) * totalAmount;
+        const platformFee = farmerShare * platformFeeRate;
+        const netAmount = farmerShare - platformFee;
 
-  async initiateDispute(escrowId: string, initiatedBy: string, reason: string): Promise<DisputeResolution> {
-    try {
-      this.logger.log(`Initiating dispute for escrow: ${escrowId}`);
+        // Find the farmer user ID
+        const fpoFarmer = crop.fpoFarmer;
+        if (fpoFarmer) {
+          const farmer = await prisma.user.findFirst({
+            where: { phone: fpoFarmer.phone, role: 'FARMER' },
+          });
 
-      const dispute: DisputeResolution = {
-        id: `dispute-${Date.now()}`,
-        escrowId,
-        initiatedBy,
-        reason,
-        status: 'OPEN',
-        resolution: '',
-        createdAt: new Date(),
-      };
+          if (farmer) {
+            // Create farmer earning record
+            await prisma.farmerEarning.create({
+              data: {
+                farmerId: farmer.id,
+                orderId,
+                amount: netAmount,
+                platformFee,
+                status: 'COMPLETED',
+                paidAt: new Date(),
+              },
+            });
 
-      // Save to database
-      // await this.prisma.dispute.create({ data: dispute });
+            // Update farmer's wallet (create if doesn't exist)
+            let farmerWallet = await prisma.wallet.findUnique({
+              where: { userId: farmer.id },
+            });
 
-      // Hold funds
-      await this.holdFundsOnDispute(escrowId);
+            if (!farmerWallet) {
+              farmerWallet = await prisma.wallet.create({
+                data: {
+                  userId: farmer.id,
+                  balance: 0,
+                },
+              });
+            }
 
-      // Notify both parties
-      this.logger.log(`Dispute initiated: ${dispute.id}`);
+            await prisma.walletTransaction.create({
+              data: {
+                walletId: farmerWallet.id,
+                type: 'ESCROW_RELEASE',
+                amount: netAmount,
+                balanceBefore: farmerWallet.balance,
+                balanceAfter: farmerWallet.balance + netAmount,
+                description: `Payment for order ${orderId}`,
+                referenceId: orderId,
+              },
+            });
 
-      return dispute;
-    } catch (error) {
-      this.logger.error(`Failed to initiate dispute: ${error.message}`);
-      throw error;
-    }
-  }
+            await prisma.wallet.update({
+              where: { id: farmerWallet.id },
+              data: { balance: farmerWallet.balance + netAmount },
+            });
+          }
+        }
+      }
+    } else if (order.crop && order.crop.farmer) {
+      // Direct farmer sale
+      const platformFee = totalAmount * platformFeeRate;
+      const netAmount = totalAmount - platformFee;
 
-  async resolveDispute(disputeId: string, resolution: string, releaseToFarmer: boolean): Promise<void> {
-    try {
-      this.logger.log(`Resolving dispute: ${disputeId}`);
+      await prisma.farmerEarning.create({
+        data: {
+          farmerId: order.crop.farmer.id,
+          orderId,
+          amount: netAmount,
+          platformFee,
+          status: 'COMPLETED',
+          paidAt: new Date(),
+        },
+      });
 
-      // Get dispute
-      // const dispute = await this.prisma.dispute.findUnique({ where: { id: disputeId } });
+      let farmerWallet = await prisma.wallet.findUnique({
+        where: { userId: order.crop.farmer.id },
+      });
 
-      // Update dispute status
-      // await this.prisma.dispute.update({
-      //   where: { id: disputeId },
-      //   data: { status: 'RESOLVED', resolution }
-      // });
-
-      // Release funds based on resolution
-      if (releaseToFarmer) {
-        // await this.releaseFunds(dispute.escrowId);
-      } else {
-        // Refund to buyer
-        // await this.refundToBuyer(dispute.escrowId);
+      if (!farmerWallet) {
+        farmerWallet = await prisma.wallet.create({
+          data: {
+            userId: order.crop.farmer.id,
+            balance: 0,
+          },
+        });
       }
 
-      this.logger.log(`Dispute resolved: ${disputeId}`);
-    } catch (error) {
-      this.logger.error(`Failed to resolve dispute: ${error.message}`);
-      throw error;
-    }
-  }
-
-  async getEscrowStatus(escrowId: string): Promise<EscrowAccount> {
-    try {
-      // Placeholder for getting escrow status
-      return {
-        id: escrowId,
-        orderId: '',
-        buyerId: '',
-        farmerId: '',
-        amount: 0,
-        status: 'HELD',
-        createdAt: new Date(),
-      };
-    } catch (error) {
-      this.logger.error(`Failed to get escrow status: ${error.message}`);
-      throw error;
-    }
-  }
-
-  async getTransactionHistory(escrowId: string): Promise<any[]> {
-    try {
-      this.logger.log(`Getting transaction history for escrow: ${escrowId}`);
-
-      // Placeholder for transaction history
-      return [
-        {
-          type: 'HOLD',
-          amount: 0,
-          timestamp: new Date(),
-          status: 'COMPLETED',
-        },
-      ];
-    } catch (error) {
-      this.logger.error(`Failed to get transaction history: ${error.message}`);
-      throw error;
-    }
-  }
-
-  private async notifyParties(escrow: EscrowAccount, eventType: string): Promise<void> {
-    try {
-      // Notify buyer
-      await this.prisma.notification.create({
+      await prisma.walletTransaction.create({
         data: {
-          userId: escrow.buyerId,
-          type: 'ESCROW_UPDATE',
-          title: 'Escrow Account Update',
-          message: `Escrow account ${eventType} for order ${escrow.orderId}`,
-          relatedId: escrow.id,
+          walletId: farmerWallet.id,
+          type: 'ESCROW_RELEASE',
+          amount: netAmount,
+          balanceBefore: farmerWallet.balance,
+          balanceAfter: farmerWallet.balance + netAmount,
+          description: `Payment for order ${orderId}`,
+          referenceId: orderId,
         },
       });
 
-      // Notify farmer
-      await this.prisma.notification.create({
-        data: {
-          userId: escrow.farmerId,
-          type: 'ESCROW_UPDATE',
-          title: 'Escrow Account Update',
-          message: `Escrow account ${eventType} for order ${escrow.orderId}`,
-          relatedId: escrow.id,
-        },
+      await prisma.wallet.update({
+        where: { id: farmerWallet.id },
+        data: { balance: farmerWallet.balance + netAmount },
       });
-    } catch (error) {
-      this.logger.error(`Failed to notify parties: ${error.message}`);
     }
+
+    // Update escrow status
+    await prisma.escrowTransaction.update({
+      where: { orderId },
+      data: {
+        status: EscrowStatus.RELEASED,
+        releasedAt: new Date(),
+      },
+    });
+
+    // Update order escrow status
+    await prisma.order.update({
+      where: { id: orderId },
+      data: { escrowStatus: EscrowStatus.RELEASED },
+    });
+
+    return { success: true, message: 'Funds released successfully' };
   }
 
-  private async refundToBuyer(escrowId: string): Promise<void> {
-    try {
-      this.logger.log(`Refunding to buyer for escrow: ${escrowId}`);
+  // Refund funds to buyer
+  static async refundFunds(orderId: string) {
+    const escrow = await prisma.escrowTransaction.findUnique({
+      where: { orderId },
+    });
 
-      // Get escrow account
-      // const escrow = await this.prisma.escrow.findUnique({ where: { id: escrowId } });
-
-      // Transfer funds back to buyer
-      // Update escrow status
-
-      this.logger.log(`Refund processed for escrow: ${escrowId}`);
-    } catch (error) {
-      this.logger.error(`Failed to refund to buyer: ${error.message}`);
+    if (!escrow || escrow.status !== EscrowStatus.HELD) {
+      throw new Error('Escrow transaction not found or already processed');
     }
+
+    // Return funds to buyer's wallet
+    const wallet = await prisma.wallet.findUnique({
+      where: { userId: escrow.buyerId },
+    });
+
+    if (!wallet) {
+      throw new Error('Buyer wallet not found');
+    }
+
+    await prisma.walletTransaction.create({
+      data: {
+        walletId: wallet.id,
+        type: 'REFUND',
+        amount: escrow.amount,
+        balanceBefore: wallet.balance,
+        balanceAfter: wallet.balance + escrow.amount,
+        description: `Refund for order ${orderId}`,
+        referenceId: orderId,
+      },
+    });
+
+    await prisma.wallet.update({
+      where: { id: wallet.id },
+      data: { balance: wallet.balance + escrow.amount },
+    });
+
+    // Update escrow status
+    await prisma.escrowTransaction.update({
+      where: { orderId },
+      data: {
+        status: EscrowStatus.REFUNDED,
+        releasedAt: new Date(),
+      },
+    });
+
+    await prisma.order.update({
+      where: { id: orderId },
+      data: { escrowStatus: EscrowStatus.REFUNDED },
+    });
+
+    return { success: true, message: 'Funds refunded successfully' };
   }
 }

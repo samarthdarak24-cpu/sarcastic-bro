@@ -1,0 +1,12 @@
+{
+	"folders": [
+		{
+			"name": "mvpm hackathon",
+			"path": "."
+		}
+	],
+	"settings": {
+		"kiroAgent.configureMCP": "Enabled",
+		"typescript.autoClosingTags": false
+	}
+}

@@ -19,6 +19,34 @@ const PARTICLES = Array.from({ length: 30 }, (_, i) => ({
   delay: (i * 11) % 3,
 }));
 
+// Generate fixed enhanced particles
+const ENHANCED_PARTICLES = Array.from({ length: 45 }, (_, i) => ({
+  id: i,
+  left: (i * 41 + 17) % 100,
+  top: (i * 47 + 23) % 100,
+  width: ((i * 13) % 4) + 2,
+  height: ((i * 19) % 4) + 2,
+  yOffset: 120 + ((i * 31) % 100),
+  xOffset: ((i * 29) % 60) - 30,
+  duration: 4 + ((i * 17) % 4),
+  delay: (i * 7) % 3,
+  color: i % 3 === 0 ? 'rgba(167, 243, 208, 0.8)' : i % 3 === 1 ? 'rgba(110, 231, 183, 0.8)' : 'rgba(52, 211, 153, 0.8)',
+}));
+
+// Generate fixed glowing orbs
+const GLOWING_ORBS = Array.from({ length: 10 }, (_, i) => ({
+  id: i,
+  left: (i * 43 + 19) % 100,
+  top: (i * 51 + 27) % 100,
+  width: ((i * 23) % 150) + 100,
+  height: ((i * 29) % 150) + 100,
+  xOffset: ((i * 37) % 120) - 60,
+  yOffset: ((i * 41) % 120) - 60,
+  duration: 12 + ((i * 19) % 10),
+  delay: (i * 13) % 5,
+  color: i % 2 === 0 ? 'rgba(16, 185, 129, 0.3)' : 'rgba(5, 150, 105, 0.3)',
+}));
+
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState('');
@@ -63,28 +91,42 @@ export default function LoginPage() {
     try {
       const response = await authService.login({ email, password });
 
-      console.log('Login response:', response);
+      console.log('✅ Login successful:', response);
 
       // Ensure data is stored
       if (typeof window !== 'undefined' && response.token) {
         localStorage.setItem('token', response.token);
         localStorage.setItem('user', JSON.stringify(response.user));
+        if (response.tokens?.refreshToken) {
+          localStorage.setItem('refreshToken', response.tokens.refreshToken);
+        }
       }
+
+      // Route based on user role
+      const role = response.user.role;
+      console.log('🔀 Routing user with role:', role);
 
       // Use window.location for reliable redirect
-      if (response.user.role === 'FARMER') {
+      if (role === 'FARMER') {
         window.location.href = '/farmer/dashboard';
-      } else if (response.user.role === 'BUYER') {
+      } else if (role === 'BUYER') {
         window.location.href = '/buyer/dashboard';
+      } else if (role === 'FPO') {
+        window.location.href = '/fpo/dashboard';
+      } else {
+        throw new Error('Invalid user role');
       }
     } catch (err: any) {
-      console.error('Login error:', err);
+      console.error('❌ Login error:', err);
       let errorMessage = 'Login failed. Please check your credentials and try again.';
 
+      // Try different error message locations
       if (err.response?.data?.message) {
         errorMessage = err.response.data.message;
       } else if (err.response?.data?.error) {
         errorMessage = err.response.data.error;
+      } else if (err.response?.data?.error?.message) {
+        errorMessage = err.response.data.error.message;
       } else if (err.message) {
         errorMessage = err.message;
       }
@@ -93,6 +135,14 @@ export default function LoginPage() {
         const errors = err.response.data.errors;
         if (Array.isArray(errors)) {
           errorMessage = errors.map((e: any) => e.message || e).join(', ');
+        }
+      }
+
+      // If still no message, show a helpful error
+      if (!errorMessage || errorMessage === 'Login failed. Please check your credentials and try again.') {
+        console.error('Full error object:', JSON.stringify(err, null, 2));
+        if (err.isMockFallbackError) {
+          errorMessage = err.message;
         }
       }
 
@@ -303,29 +353,27 @@ export default function LoginPage() {
         ))}
 
         {/* Glowing orbs */}
-        {[...Array(10)].map((_, i) => (
+        {GLOWING_ORBS.map((orb) => (
           <motion.div
-            key={`orb-${i}`}
+            key={`orb-${orb.id}`}
             className="absolute rounded-full blur-2xl"
             style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              width: Math.random() * 250 + 100,
-              height: Math.random() * 250 + 100,
-              background: `radial-gradient(circle, ${
-                i % 2 === 0 ? 'rgba(16, 185, 129, 0.3)' : 'rgba(5, 150, 105, 0.3)'
-              }, transparent)`,
+              left: `${orb.left}%`,
+              top: `${orb.top}%`,
+              width: orb.width,
+              height: orb.height,
+              background: `radial-gradient(circle, ${orb.color}, transparent)`,
             }}
             animate={{
               scale: [1, 1.6, 1],
               opacity: [0.3, 0.7, 0.3],
-              x: [0, Math.random() * 120 - 60, 0],
-              y: [0, Math.random() * 120 - 60, 0],
+              x: [0, orb.xOffset, 0],
+              y: [0, orb.yOffset, 0],
             }}
             transition={{
-              duration: 12 + Math.random() * 10,
+              duration: orb.duration,
               repeat: Infinity,
-              delay: Math.random() * 5,
+              delay: orb.delay,
             }}
           />
         ))}
@@ -692,6 +740,20 @@ export default function LoginPage() {
                   />
                   <p className="text-sm font-mono text-white relative z-10">
                     <span className="font-black text-blue-200">🛒 Buyer:</span> buyer@test.com / Buyer123
+                  </p>
+                </motion.div>
+                <motion.div
+                  className="bg-gradient-to-r from-purple-500/30 via-indigo-500/30 to-purple-500/30 backdrop-blur-sm px-5 py-3 rounded-xl border-2 border-purple-300/30 relative overflow-hidden group"
+                  whileHover={{ scale: 1.02, borderColor: 'rgba(196, 181, 253, 0.6)' }}
+                >
+                  <motion.div
+                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+                    initial={{ x: '-100%' }}
+                    whileHover={{ x: '100%' }}
+                    transition={{ duration: 0.6 }}
+                  />
+                  <p className="text-sm font-mono text-white relative z-10">
+                    <span className="font-black text-purple-200">🚜 FPO:</span> fpo@test.com / Fpo123
                   </p>
                 </motion.div>
               </div>

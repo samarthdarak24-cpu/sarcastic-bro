@@ -1,84 +1,102 @@
-/* ========================================================================
-   Server Entry Point — ODOP Connect API
-   HTTP + Socket.IO server with graceful shutdown.
-   ======================================================================== */
+import express from 'express';
+import http from 'http';
+import cors from 'cors';
+import helmet from 'helmet';
+import morgan from 'morgan';
+import { Server } from 'socket.io';
+import dotenv from 'dotenv';
+import prisma from './config/database';
+import { errorHandler } from './middleware/errorHandler';
+import { setupSocketHandlers } from './socket/socketHandlers';
 
-import http from "http";
-import fs from "fs";
-import path from "path";
-import app from "./app";
-import { env } from "./config/env";
-import prisma from "./prisma/client";
-import { SocketService } from "./config/socket";
-import { initializeSocketService } from "./services/socketService";
-import { MandiRealtimeService } from "./services/mandiService";
-import { setupAgriChatSocket } from "./modules/agri-chat/agri-chat.socket";
+// Routes
+import authRoutes from './routes/auth.routes';
+import farmerRoutes from './routes/farmer.routes';
+import buyerRoutes from './routes/buyer.routes';
+import fpoRoutes from './routes/fpo.routes';
+import marketPriceRoutes from './routes/marketPrice.routes';
+import chatRoutes from './routes/chat.routes';
 
-// Create HTTP server
+dotenv.config();
+
+const app = express();
 const server = http.createServer(app);
 
-// Initialize Socket.IO with JWT auth and room-based architecture
-SocketService.initialize(server);
+// Socket.IO setup
+const io = new Server(server, {
+  cors: {
+    origin: process.env.CLIENT_URL || 'http://localhost:5173',
+    credentials: true,
+  },
+});
 
-// Initialize Socket Service for event emissions
-const io = SocketService.getIO();
-initializeSocketService(io);
+// Middleware
+app.use(helmet());
+app.use(cors({
+  origin: process.env.CLIENT_URL || 'http://localhost:5173',
+  credentials: true,
+}));
+app.use(morgan('dev'));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-// Initialize AgriChat Socket handlers
-setupAgriChatSocket(io);
+// Make io accessible to routes
+app.set('io', io);
 
-// Start Mandi Simulation for real-time market updates
-MandiRealtimeService.startSimulation();
+// Health check
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
 
-// Ensure uploads directory exists
-const uploadsDir = path.join(__dirname, '..', 'uploads');
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
-  console.log('[FS] Created uploads directory');
-}
+// API Routes
+app.use('/api/auth', authRoutes);
+app.use('/api/farmer', farmerRoutes);
+app.use('/api/buyer', buyerRoutes);
+app.use('/api/fpo', fpoRoutes);
+app.use('/api/market-prices', marketPriceRoutes);
+app.use('/api/chat', chatRoutes);
 
-/* ─── Server Start ──────────────────────────────────────────────────── */
+// Error handling
+app.use(errorHandler);
+
+// Setup Socket.IO handlers
+setupSocketHandlers(io);
+
+// Start server
+const PORT = process.env.PORT || 5000;
 
 async function start() {
   try {
-    // Test database connection
     await prisma.$connect();
-    console.log("[DB] Connected to database");
+    console.log('✓ Database connected');
 
-    // Initialize Intelligent Operations Schedulers
-    // const { AutoSellService } = require("./modules/auto-sell/auto-sell.service");
-    // AutoSellService.initScheduler();
-    // console.log("[Cron] Auto-Sell Scheduler Active ✓");
-
-    server.listen(env.PORT, () => {
+    server.listen(PORT, () => {
       console.log(`
 ╔══════════════════════════════════════════╗
-║   ODOP Connect API v2.0                  ║
-║   Port: ${env.PORT}                             ║
-║   Mode: ${env.NODE_ENV.padEnd(20)}         ║
-║   DB:   Connected ✓                      ║
-║   WS:   Socket.IO Ready ✓               ║
+║   AgriTrust API Server                   ║
+║   Port: ${PORT}                             ║
+║   Environment: ${process.env.NODE_ENV || 'development'}        ║
+║   Database: Connected ✓                  ║
+║   Socket.IO: Ready ✓                     ║
 ╚══════════════════════════════════════════╝
       `);
     });
   } catch (error) {
-    console.error("[FATAL] Failed to start server:", error);
+    console.error('Failed to start server:', error);
     process.exit(1);
   }
 }
 
-/* ─── Graceful Shutdown ─────────────────────────────────────────────── */
-
-const shutdown = async (signal: string) => {
-  console.log(`\n[${signal}] Shutting down gracefully...`);
+// Graceful shutdown
+process.on('SIGTERM', async () => {
+  console.log('SIGTERM received, shutting down gracefully...');
   await prisma.$disconnect();
   server.close(() => {
-    console.log("[Server] Closed");
+    console.log('Server closed');
     process.exit(0);
   });
-};
-
-process.on("SIGTERM", () => shutdown("SIGTERM"));
-process.on("SIGINT", () => shutdown("SIGINT"));
+});
 
 start();
+
+export { io };

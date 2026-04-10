@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { authService } from "@/services/auth";
 import { NewNavbar } from "@/components/landing/NewNavbar";
 import { EnhancedHeroSection } from "@/components/landing/EnhancedHeroSection";
 import { AnimatedFeaturesSection } from "@/components/landing/AnimatedFeaturesSection";
@@ -14,11 +16,11 @@ import { BenefitsComparisonSection } from "@/components/landing/BenefitsComparis
 import { NewCTASection } from "@/components/landing/NewCTASection";
 import { NewFAQSection } from "@/components/landing/NewFAQSection";
 import { NewFooter } from "@/components/landing/NewFooter";
-import { PremiumChatWidget } from "@/components/chat/PremiumChatWidget";
 import { PageLoadAnimation } from "@/components/animations/PageLoadAnimation";
 
 export default function HomePage() {
   const [mounted, setMounted] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     setMounted(true);
@@ -42,9 +44,6 @@ export default function HomePage() {
         <NewCTASection />
         <NewFAQSection />
         <NewFooter />
-
-        {/* Premium Chat Widget */}
-        <PremiumChatWidget />
       </div>
     </PageLoadAnimation>
   );

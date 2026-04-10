@@ -1,13 +1,10 @@
 import type { Metadata } from "next";
-import { Inter, Poppins } from "next/font/google";
+import { Inter, Poppins, Geist } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "react-hot-toast";
-import { RealtimeProvider } from "@/providers/RealtimeProvider";
+import { cn } from "@/lib/utils";
 
-const sans = Inter({
-  subsets: ["latin"],
-  variable: "--font-sans",
-});
+const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
 const heading = Poppins({
   weight: ["400", "500", "600", "700"],
@@ -25,19 +22,17 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className="scroll-smooth" suppressHydrationWarning>
-      <body className={`${sans.variable} ${heading.variable} font-sans antialiased text-neut-900 bg-app-bg`}>
-        <RealtimeProvider>
-          {children}
-          <Toaster
-            position="top-right"
-            toastOptions={{
-              duration: 4000,
-              style: { borderRadius: '12px', fontWeight: 600, fontSize: '13px' },
-              success: { iconTheme: { primary: '#22c55e', secondary: '#fff' } },
-            }}
-          />
-        </RealtimeProvider>
+    <html lang="en" className={cn("scroll-smooth", "font-sans", geist.variable)} suppressHydrationWarning>
+      <body className={`${geist.variable} ${heading.variable} font-sans antialiased text-neut-900 bg-app-bg`}>
+        {children}
+        <Toaster
+          position="top-right"
+          toastOptions={{
+            duration: 4000,
+            style: { borderRadius: '12px', fontWeight: 600, fontSize: '13px' },
+            success: { iconTheme: { primary: '#22c55e', secondary: '#fff' } },
+          }}
+        />
       </body>
     </html>
   );

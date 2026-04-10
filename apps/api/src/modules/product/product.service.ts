@@ -23,6 +23,16 @@ export class ProductService {
       include: { farmer: { select: { id: true, name: true, district: true } } },
     });
 
+    // Create Initial Inventory Log
+    await prisma.inventoryLog.create({
+      data: {
+        productId: product.id,
+        type: "ADDITION",
+        quantity: product.quantity,
+        reason: "Initial Stock Upload",
+      }
+    });
+
     // Add blockchain trace event for HARVEST
     try {
       const BlockchainTraceService = (await import('../blockchain-trace/blockchain-trace.service')).default;
@@ -152,16 +162,34 @@ export class ProductService {
     return product;
   }
 
-  static async update(id: string, farmerId: string, data: UpdateProductInput) {
+  static async update(id: string, farmerId: string, data: UpdateProductInput, imageUrls?: string[]) {
     const product = await prisma.product.findUnique({ where: { id } });
     if (!product) throw ApiError.notFound("Product not found");
     if (product.farmerId !== farmerId) throw ApiError.forbidden("You can only update your own products");
 
+    // Prepare update data
+    const updateData: any = { ...data };
+    if (imageUrls && imageUrls.length > 0) {
+      updateData.imageUrls = JSON.stringify(imageUrls);
+    }
+
     const updated = await prisma.product.update({ 
       where: { id }, 
-      data,
+      data: updateData,
       include: { farmer: { select: { id: true, name: true, district: true } } },
     });
+
+    // Log Inventory Change if quantity updated
+    if (data.quantity !== undefined && data.quantity !== product.quantity) {
+      await prisma.inventoryLog.create({
+        data: {
+          productId: id,
+          type: data.quantity > product.quantity ? "ADDITION" : "REMOVAL",
+          quantity: Math.abs(data.quantity - product.quantity),
+          reason: "Manual Inventory Update",
+        }
+      });
+    }
 
     // Re-index in Elasticsearch (soft fail)
     try {
@@ -240,6 +268,16 @@ export class ProductService {
     const product = await prisma.product.update({
       where: { id },
       data: { quantity: { increment: quantityChange } },
+    });
+
+    // Log Inventory Change
+    await prisma.inventoryLog.create({
+      data: {
+        productId: id,
+        type: quantityChange > 0 ? "ADDITION" : "SALE",
+        quantity: Math.abs(quantityChange),
+        reason: quantityChange > 0 ? "Inventory Restock" : "Order Fulfillment",
+      }
     });
 
     // Invalidate cache

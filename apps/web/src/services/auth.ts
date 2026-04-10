@@ -5,7 +5,8 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 const USE_MOCK_AUTH = process.env.NEXT_PUBLIC_USE_MOCK_AUTH === 'true';
 
 export interface LoginCredentials {
-  email: string;
+  email?: string;
+  phone?: string;
   password: string;
 }
 
@@ -13,7 +14,7 @@ export interface RegisterData {
   name: string;
   email: string;
   password: string;
-  role: 'FARMER' | 'BUYER';
+  role: 'FARMER' | 'BUYER' | 'FPO';
   phone?: string;
 }
 
@@ -27,12 +28,17 @@ export interface AuthResponse {
     id: string;
     name: string;
     email: string;
-    role: 'FARMER' | 'BUYER';
+    role: 'FARMER' | 'BUYER' | 'FPO';
   };
 }
 
 export const authService = {
   async login(credentials: LoginCredentials): Promise<AuthResponse> {
+    console.log('🔵 Login function called');
+    console.log('🔵 API_URL:', API_URL);
+    console.log('🔵 USE_MOCK_AUTH:', USE_MOCK_AUTH);
+    console.log('🔵 Credentials:', { email: credentials.email, hasPassword: !!credentials.password });
+    
     // If mock auth is explicitly enabled, use it
     if (USE_MOCK_AUTH) {
       console.log('🔧 Using mock authentication (NEXT_PUBLIC_USE_MOCK_AUTH=true)');
@@ -40,19 +46,36 @@ export const authService = {
     }
 
     try {
-      const response = await axios.post(`${API_URL}/auth/login`, {
-        email: credentials.email.trim().toLowerCase(),
-        password: credentials.password
-      }, {
+      const loginPayload: any = { password: credentials.password };
+      
+      if (credentials.phone) {
+        loginPayload.phone = credentials.phone.trim();
+        console.log('🚀 Attempting login with phone:', loginPayload.phone);
+      } else if (credentials.email) {
+        loginPayload.email = credentials.email.trim().toLowerCase();
+        console.log('🚀 Attempting login with email:', loginPayload.email);
+      }
+      
+      console.log('🚀 Attempting login to:', `${API_URL}/api/auth/login`);
+      
+      const response = await axios.post(`${API_URL}/api/auth/login`, loginPayload, {
         timeout: 5000 // 5 second timeout
       });
+      
+      console.log('📡 Raw API response:', response);
+      console.log('📡 Response status:', response.status);
+      console.log('📡 Response data:', response.data);
       
       // Handle both direct response and nested data
       const data = response.data?.data || response.data;
       
+      console.log('📦 Parsed data:', data);
+      
       // Extract token from either tokens.accessToken or token field
       const token = data.tokens?.accessToken || data.token;
       const refreshToken = data.tokens?.refreshToken;
+      
+      console.log('🔑 Tokens extracted:', { hasAccessToken: !!token, hasRefreshToken: !!refreshToken });
       
       if (token) {
         if (typeof window !== 'undefined') {
@@ -73,13 +96,34 @@ export const authService = {
         user: data.user
       };
     } catch (error: any) {
-      console.error('❌ Backend login error:', error.response?.data || error.message);
+      // Log error in multiple ways to ensure we see it
+      console.error('❌ Backend login error:', {
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        message: error.message,
+        code: error.code,
+        name: error.name
+      });
+      
+      // Also log the raw error
+      console.error('Raw error:', error);
+      
+      // Log axios-specific error details
+      if (error.isAxiosError) {
+        console.error('Axios error details:', {
+          url: error.config?.url,
+          method: error.config?.method,
+          baseURL: error.config?.baseURL,
+          timeout: error.config?.timeout
+        });
+      }
       
       // If it's a network error, fallback to mock auth
       if (error.code === 'ERR_NETWORK' || error.code === 'ECONNREFUSED' || !error.response) {
         console.log('🔄 Backend unavailable, falling back to mock authentication');
         try {
-          return await mockAuthService.login(credentials.email, credentials.password);
+          return await mockAuthService.login(credentials.email || credentials.phone || '', credentials.password);
         } catch (mockError) {
           // If mock auth also fails, throw the original error with helpful message
           throw {
@@ -102,7 +146,7 @@ export const authService = {
     }
 
     try {
-      const response = await axios.post(`${API_URL}/auth/register`, {
+      const response = await axios.post(`${API_URL}/api/auth/register`, {
         name: data.name,
         email: data.email,
         password: data.password,
@@ -138,7 +182,13 @@ export const authService = {
         user: responseData.user
       };
     } catch (error: any) {
-      console.error('❌ Backend registration error:', error.response?.data || error.message);
+      console.error('❌ Backend registration error:', {
+        status: error.response?.status,
+        data: error.response?.data,
+        message: error.message,
+        code: error.code,
+        fullError: error
+      });
       
       // If it's a network error, fallback to mock auth
       if (error.code === 'ERR_NETWORK' || error.code === 'ECONNREFUSED' || !error.response) {

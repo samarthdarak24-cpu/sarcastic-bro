@@ -97,12 +97,12 @@ async function seed() {
 
   // ─── Clean existing data ────────────────────────────────────────────
   console.log("🧹 Cleaning existing data...");
-  await prisma.logistics.deleteMany();
-  await prisma.sampleRequest.deleteMany();
-  await prisma.tenderApplication.deleteMany();
-  await prisma.tender.deleteMany();
+  // await prisma.logistics.deleteMany();
+  // await prisma.sampleRequest.deleteMany();
+  // await prisma.tenderApplication.deleteMany();
+  // await prisma.tender.deleteMany();
   await prisma.notification.deleteMany();
-  await prisma.contract.deleteMany();
+  // await prisma.contract.deleteMany();
   await prisma.review.deleteMany();
   await prisma.proposal.deleteMany();
   await prisma.order.deleteMany();
@@ -148,6 +148,22 @@ async function seed() {
     },
   });
   console.log(`  ✓ Test Buyer: ${testBuyer.name} (${testBuyer.email}) - Password: Buyer123`);
+
+  const fpoTestPass = await bcrypt.hash("Fpo123", HASH_ROUNDS);
+  const testFpo = await prisma.user.create({
+    data: {
+      name: "Green Earth FPO",
+      email: "fpo@test.com",
+      phone: "9988776655",
+      password: fpoTestPass,
+      role: "FPO",
+      district: "Pune",
+      state: "Maharashtra",
+      kycStatus: "VERIFIED",
+      isActive: true,
+    },
+  });
+  console.log(`  ✓ Test FPO: ${testFpo.name} (${testFpo.email}) - Password: Fpo123`);
 
   const createdFarmers = [];
   for (const f of farmers) {
@@ -231,7 +247,7 @@ async function seed() {
         paymentMethod: randomElement(["UPI", "Bank Transfer", "Cash on Delivery"]),
         paymentStatus: status === "DELIVERED" ? "PAID" : status === "CANCELLED" ? "REFUNDED" : "PENDING",
         shippingAddress: `${buyer.district}, ${buyer.state} - 110001`,
-        trackingNumber: status === "SHIPPED" || status === "DELIVERED" ? `ODOP${100000 + i}` : null,
+        // trackingNumber: status === "SHIPPED" || status === "DELIVERED" ? `ODOP${100000 + i}` : null,
         notes: i % 3 === 0 ? "Please deliver before festival season" : null,
         createdAt: daysAgo(randomBetween(1, 60)),
       },
@@ -496,31 +512,7 @@ async function seed() {
   console.log(`✓ Created 6 sample requests\n`);
 
   // ─── Create Logistics ──────────────────────────────────────────────
-  console.log("🚚 Creating logistics entries...");
-  const shippedOrders = createdOrders.filter(o => ["SHIPPED", "DELIVERED"].includes(o.status));
-  const logisticsStatuses = ["PICKED_UP", "IN_TRANSIT", "DELIVERED"];
-
-  for (const order of shippedOrders) {
-    const farmer = createdFarmers.find(f => f.id === order.farmerId)!;
-    const buyer = createdBuyers.find(b => b.id === order.buyerId)!;
-
-    await prisma.logistics.create({
-      data: {
-        orderId: order.id,
-        provider: randomElement(["BlueDart", "DTDC", "India Post", "Delhivery", "FedEx"]),
-        trackingId: order.trackingNumber,
-        status: order.status === "DELIVERED" ? "DELIVERED" : randomElement(logisticsStatuses.slice(0, 2)),
-        fromLocation: `${farmer.district}, ${farmer.state}`,
-        toLocation: `${buyer.district}, ${buyer.state}`,
-        estimatedDate: daysFromNow(randomBetween(2, 7)),
-        actualDate: order.status === "DELIVERED" ? daysAgo(randomBetween(0, 3)) : null,
-        temperature: randomBetween(18, 28),
-        humidity: randomBetween(40, 65),
-        createdAt: daysAgo(randomBetween(1, 10)),
-      },
-    });
-  }
-  console.log(`✓ Created ${shippedOrders.length} logistics entries\n`);
+  console.log("🚚 Skipping logistics entries (not in schema)...");
 
   // ─── Summary ───────────────────────────────────────────────────────
   console.log("━".repeat(50));

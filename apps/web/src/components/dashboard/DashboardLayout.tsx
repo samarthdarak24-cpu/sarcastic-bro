@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
@@ -10,7 +10,6 @@ import {
 import { authService } from "@/services/auth";
 import { LivePriceTicker } from "@/components/ui/LivePriceTicker";
 import { LiveNotificationBell } from "@/components/ui/LiveNotificationBell";
-import { JarvisButton } from "@/components/ui/JarvisAssistant/JarvisButton";
 
 
 
@@ -34,8 +33,11 @@ export function DashboardLayout({ children, navItems, userRole }: DashboardLayou
   const router = useRouter();
   const searchParams = useSearchParams();
   const currentSection = searchParams.get("section");
-  const user = authService.getUser();
   
+  // Get real user data from localStorage
+  const user = authService.getUser();
+  const userName = user?.name || 'User';
+  const userInitial = userName.charAt(0).toUpperCase();
 
   const handleLogout = () => {
     authService.logout();
@@ -131,11 +133,11 @@ export function DashboardLayout({ children, navItems, userRole }: DashboardLayou
             <Link href="/profile">
               <div className={`p-3 rounded-2xl border border-slate-800 flex items-center gap-3 transition-all hover:bg-white/5 group cursor-pointer ${sidebarOpen ? 'bg-slate-800/40' : 'justify-center'}`}>
                   <div className={`h-8 w-8 rounded-xl flex items-center justify-center text-white font-black shadow-lg ${themeBg} shrink-0`}>
-                      R
+                      {userInitial}
                   </div>
                   {sidebarOpen && (
                       <div className="flex-1 min-w-0">
-                          <p className="font-bold text-xs text-white truncate">Rajesh Kumar</p>
+                          <p className="font-bold text-xs text-white truncate">{userName}</p>
                           <p className="text-[9px] font-bold text-slate-500 uppercase">{userRole}</p>
                       </div>
                   )}
@@ -186,7 +188,7 @@ export function DashboardLayout({ children, navItems, userRole }: DashboardLayou
                 <LiveNotificationBell />
                 <Link href="/profile">
                   <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white font-black text-sm shadow-sm hover:scale-105 transition-transform cursor-pointer">
-                    R
+                    {userInitial}
                   </div>
                 </Link>
             </div>
@@ -194,7 +196,7 @@ export function DashboardLayout({ children, navItems, userRole }: DashboardLayou
 
         {/* SCROLLABLE CANVAS */}
         <div className="flex-1 overflow-y-auto bg-transparent relative z-10 custom-scrollbar">
-            <div className="min-h-full w-full max-w-[1600px] mx-auto px-6 md:px-12 py-8 md:py-12 space-y-10 flex flex-col bg-transparent">
+            <div className="min-h-full w-full max-w-full mx-auto px-6 md:px-8 py-8 md:py-12 space-y-10 flex flex-col bg-transparent">
                 <AnimatePresence mode="wait">
                     <motion.div
                         key={pathname + currentSection}

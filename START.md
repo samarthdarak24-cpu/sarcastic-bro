@@ -14,7 +14,8 @@ Before starting, ensure you have:
 
 ## ⚡ Quick Start (5 Minutes)
 
-### Option 1: Automated Setup (Recommended)
+### Option 1: Automated Setup
+
 
 ```bash
 # Clone repository

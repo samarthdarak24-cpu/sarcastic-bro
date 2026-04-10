@@ -23,3 +23,12 @@ export const roleMiddleware = (...allowedRoles: string[]) => {
     next();
   };
 };
+
+// Helper function for cleaner route definitions
+export const requireRole = (roles: string[]) => roleMiddleware(...roles);
+
+// Specific role helpers
+export const requireFarmer = roleMiddleware('FARMER');
+export const requireBuyer = roleMiddleware('BUYER');
+export const requireFPO = roleMiddleware('FPO');
+export const requireAdmin = roleMiddleware('ADMIN');

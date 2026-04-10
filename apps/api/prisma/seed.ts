@@ -1,418 +1,448 @@
+// ========================================================================
+// AgriTrust — Comprehensive Seed Script
+// Realistic data for Marathwada region, Maharashtra
+// ========================================================================
+
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log("🌱 Starting premium demo data seed...");
+  console.log('🌱 Seeding AgriTrust database...\n');
 
-  // Hash passwords
-  const hashedPass = await bcrypt.hash("password123", 10);
-  const farmerPass = await bcrypt.hash("Farmer123", 10);
-  const buyerPass = await bcrypt.hash("Buyer123", 10);
-  
-  // Create test users for login demo
-  const testFarmer = await prisma.user.upsert({
-    where: { email: "farmer@test.com" },
-    update: {},
-    create: {
-      email: "farmer@test.com",
-      password: farmerPass,
-      name: "Rajesh Kumar",
-      role: "FARMER",
-      district: "Nashik",
-      state: "Maharashtra",
-      phone: "9876543210",
-      kycStatus: "VERIFIED",
-      reputationScore: 95.5
-    }
-  });
+  // ─── CLEAN EXISTING DATA ────────────────────────────────────────────
+  console.log('🧹 Cleaning existing data...');
+  await prisma.farmerEarning.deleteMany();
+  await prisma.walletTransaction.deleteMany();
+  await prisma.escrowTransaction.deleteMany();
+  await prisma.order.deleteMany();
+  await prisma.qualityCertificate.deleteMany();
+  await prisma.crop.deleteMany();
+  await prisma.aggregatedLot.deleteMany();
+  await prisma.fPOFarmer.deleteMany();
+  await prisma.fPO.deleteMany();
+  await prisma.farm.deleteMany();
+  await prisma.wallet.deleteMany();
+  await prisma.message.deleteMany();
+  await prisma.marketPrice.deleteMany();
+  await prisma.user.deleteMany();
 
-  const testBuyer = await prisma.user.upsert({
-    where: { email: "buyer@test.com" },
-    update: {},
-    create: {
-      email: "buyer@test.com",
-      password: buyerPass,
-      name: "Priya Sharma",
-      role: "BUYER",
-      district: "Mumbai",
-      state: "Maharashtra",
-      phone: "9123456789",
-      kycStatus: "VERIFIED",
-      reputationScore: 97.2
-    }
-  });
-  
-  // 1. Create Premium Demo Farmer
-  const demoFarmer = await prisma.user.upsert({
-    where: { email: "demo.farmer@odop.com" },
-    update: {},
-    create: {
-      email: "demo.farmer@odop.com",
-      password: hashedPass,
-      name: "Rajesh Kumar (Verified)",
-      role: "FARMER",
-      address: "Nashik, Maharashtra",
-      phone: "9876543210",
-      reputationScore: 98.4
-    }
-  });
+  // ─── USERS ──────────────────────────────────────────────────────────
+  console.log('👤 Creating users...');
+  const passwordHash = await bcrypt.hash('Test@1234', 12);
 
-  // 2. Create Premium Demo Buyer
-  const demoBuyer = await prisma.user.upsert({
-    where: { email: "demo.buyer@odop.com" },
-    update: {},
-    create: {
-      email: "demo.buyer@odop.com",
-      password: hashedPass,
-      name: "LuxAgri Global Ltd",
-      role: "BUYER",
-      address: "Mumbai, Maharashtra",
-      phone: "9876543211",
-      reputationScore: 99.2
-    }
-  });
-
-  // 3. Clear old demo products and related data from this farmer to avoid endless duplication
-  // Delete in order of dependencies
-  await prisma.orderTracking.deleteMany({ where: { orderId: { in: (await prisma.order.findMany({ where: { farmerId: demoFarmer.id } })).map(o => o.id) } } });
-  await prisma.escrowOrder.deleteMany({ where: { farmerId: demoFarmer.id } });
-  await prisma.order.deleteMany({ where: { farmerId: demoFarmer.id }});
-
-  // 4. Inject High-Fidelity Products (With beautiful Unsplash images)
-  const productsData = [
-    {
-      name: "Organic Tomatoes Elite (Grade A)",
-      category: "Vegetables",
-      imageUrls: JSON.stringify(["https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=800&q=80"]),
-      price: 45,
-      quantity: 500,
-      unit: "kg",
-      description: "Freshly harvested organic tomatoes from Nashik. AI graded for 0% defects.",
-      qualityGrade: "A",
-      qualityScore: 96.5,
-      isActive: true,
-      district: "Nashik",
-      state: "Maharashtra",
-      farmerId: demoFarmer.id
+  // FPO Admin
+  const fpoAdmin = await prisma.user.create({
+    data: {
+      name: 'Rajendra Patil',
+      phone: '9876543210',
+      email: 'fpo@test.com',
+      passwordHash,
+      role: 'FPO',
+      language: 'mr',
+      kycVerified: true,
+      bankAccount: '1234567890123',
+      ifsc: 'SBIN0001234',
+      bankName: 'State Bank of India',
     },
-    {
-      name: "Alphonso Mangoes Export Spec",
-      category: "Fruits",
-      imageUrls: JSON.stringify(["https://images.unsplash.com/photo-1553284965-83fd3e82fa5a?w=800&q=80"]),
-      price: 850,
-      quantity: 150,
-      unit: "box",
-      description: "Premium export-quality Alphonso Mangoes. Blockchain traced.",
-      qualityGrade: "A+",
-      qualityScore: 99.1,
-      isActive: true,
-      district: "Ratnagiri",
-      state: "Maharashtra",
-      farmerId: demoFarmer.id
-    },
-    {
-      name: "Red Onions Bulk Premium",
-      category: "Vegetables",
-      imageUrls: JSON.stringify(["https://images.unsplash.com/photo-1618512496248-a07ce83aa8cb?w=800&q=80"]),
-      price: 25,
-      quantity: 2500,
-      unit: "kg",
-      description: "High-grade dry red onions perfect for long-haul storage and international export.",
-      qualityGrade: "B",
-      qualityScore: 88.5,
-      isActive: true,
-      district: "Lasalgaon",
-      state: "Maharashtra",
-      farmerId: demoFarmer.id
-    }
+  });
+
+  // Farmers (Marathi names)
+  const farmerData = [
+    { name: 'Suresh Jadhav',    phone: '9876543211', email: 'farmer@test.com',  district: 'Nanded',  lang: 'mr' },
+    { name: 'Ganesh Bhosale',   phone: '9876543212', email: 'ganesh@test.com',  district: 'Nanded',  lang: 'mr' },
+    { name: 'Prakash Shinde',   phone: '9876543213', email: 'prakash@test.com', district: 'Latur',   lang: 'hi' },
+    { name: 'Dnyaneshwar More', phone: '9876543214', email: 'dmore@test.com',   district: 'Pune',    lang: 'mr' },
+    { name: 'Ashok Deshmukh',   phone: '9876543215', email: 'ashok@test.com',   district: 'Nashik',  lang: 'mr' },
   ];
 
-  for (const p of productsData) {
-    await prisma.product.create({ data: p });
-  }
-
-  // 5. Create Realistic Orders
-  await prisma.order.deleteMany({ where: { farmerId: demoFarmer.id }});
-  
-  const fetchedProducts = await prisma.product.findMany({ where: { farmerId: demoFarmer.id }});
-  
-  if (fetchedProducts.length >= 2) {
-      // Shipped Order
-      await prisma.order.create({
-          data: {
-              orderNumber: "ORD-99812-XX",
-              totalPrice: fetchedProducts[0].price * 100,
-              quantity: 100,
-              status: "SHIPPED",
-              buyerId: demoBuyer.id,
-              farmerId: demoFarmer.id,
-              productId: fetchedProducts[0].id,
-              notes: "Express cold-chain logistics applied. Port of Mumbai Delivery"
-          }
-      });
-
-      // Pending Order
-      await prisma.order.create({
-          data: {
-              orderNumber: "ORD-99815-YY",
-              totalPrice: fetchedProducts[1].price * 50,
-              quantity: 50,
-              status: "PENDING",
-              buyerId: demoBuyer.id,
-              farmerId: demoFarmer.id,
-              productId: fetchedProducts[1].id,
-              notes: "Awaiting blockchain smart contract escrow release. Air Cargo Terminal 2"
-          }
-      });
-  }
-
-  // ─── PHASE 2: BUYER DASHBOARD MODELS ───────────────────────────────────
-
-  // 6. Create Supplier Profile
-  const supplier = await prisma.supplier.upsert({
-    where: { userId: demoFarmer.id },
-    update: {},
-    create: {
-      userId: demoFarmer.id,
-      businessName: "Nashik Premium Agro",
-      description: "Premium organic produce supplier from Nashik region",
-      certifications: JSON.stringify(["ORGANIC", "EXPORT_CERTIFIED", "ISO_9001"]),
-      specialties: JSON.stringify(["Tomatoes", "Onions", "Mangoes"]),
-      minOrderQty: 50,
-      maxOrderQty: 5000,
-      leadTime: 3,
-      rating: 4.8,
-      totalOrders: 45,
-      responseTime: 2,
-      verificationStatus: "VERIFIED",
-      isActive: true
-    }
-  });
-
-  // 7. Create Bulk Products
-  const bulkProducts = [];
-  for (let i = 0; i < 3; i++) {
-    const bulkProduct = await prisma.bulkProduct.create({
+  const farmers = [];
+  for (const f of farmerData) {
+    const user = await prisma.user.create({
       data: {
-        supplierId: supplier.id,
-        name: `Bulk Product ${i + 1}`,
-        category: ["Vegetables", "Fruits", "Grains"][i],
-        description: `High-quality bulk ${["Vegetables", "Fruits", "Grains"][i].toLowerCase()} for wholesale`,
-        minQuantity: 100,
-        maxQuantity: 5000,
-        unit: "kg",
-        pricePerUnit: [25, 850, 35][i],
-        qualityGrade: ["A", "A+", "B"][i],
-        certifications: JSON.stringify(["ORGANIC", "EXPORT"]),
-        imageUrls: JSON.stringify(["https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=800&q=80"]),
-        district: "Nashik",
-        state: "Maharashtra",
-        isActive: true
-      }
+        name: f.name,
+        phone: f.phone,
+        email: f.email,
+        passwordHash,
+        role: 'FARMER',
+        language: f.lang,
+        kycVerified: true,
+        aadhaar: `${Math.floor(1000 + Math.random() * 9000)} ${Math.floor(1000 + Math.random() * 9000)} ${Math.floor(1000 + Math.random() * 9000)}`,
+        bankAccount: `${Math.floor(100000000000 + Math.random() * 900000000000)}`,
+        ifsc: 'MAHB0000' + Math.floor(100 + Math.random() * 900),
+        bankName: 'Maharashtra Gramin Bank',
+      },
     });
-    bulkProducts.push(bulkProduct);
+    farmers.push({ user, district: f.district });
   }
 
-  // 8. Create Buyer Reputation
-  const buyerReputation = await prisma.buyerReputation.upsert({
-    where: { userId: demoBuyer.id },
-    update: {},
-    create: {
-      userId: demoBuyer.id,
-      score: 92.5,
-      totalPurchases: 156,
-      onTimePayments: 148,
-      latePayments: 8,
-      disputes: 0,
-      averageOrderValue: 45000,
-      trustScore: 4.7
-    }
-  });
+  // Buyers
+  const buyerData = [
+    { name: 'Mahesh Agarwal', phone: '9876543220', email: 'buyer@test.com',  gst: '27AADCM1234F1Z5', company: 'Agarwal Agro Industries' },
+    { name: 'NutriGrain Pvt Ltd', phone: '9876543221', email: 'nutrigrain@test.com', gst: '27AABCN9876F2Z3', company: 'NutriGrain Pvt Ltd' },
+  ];
 
-  // 9. Create Reputation History
-  for (let i = 0; i < 5; i++) {
-    await prisma.reputationHistory.create({
+  const buyers = [];
+  for (const b of buyerData) {
+    const user = await prisma.user.create({
       data: {
-        reputationId: buyerReputation.id,
-        action: ["PURCHASE", "PAYMENT", "REVIEW", "DISPUTE", "PURCHASE"][i],
-        scoreBefore: 90 + i,
-        scoreAfter: 91 + i,
-        change: 1,
-        reason: `Action: ${["PURCHASE", "PAYMENT", "REVIEW", "DISPUTE", "PURCHASE"][i]}`,
-        metadata: JSON.stringify({ orderId: `ORD-${1000 + i}` })
-      }
+        name: b.name,
+        phone: b.phone,
+        email: b.email,
+        passwordHash,
+        role: 'BUYER',
+        gst: b.gst,
+        kycVerified: true,
+        language: 'en',
+        bankAccount: `${Math.floor(100000000000 + Math.random() * 900000000000)}`,
+        ifsc: 'HDFC0001234',
+        bankName: 'HDFC Bank',
+      },
     });
+    buyers.push(user);
   }
 
-  // 10. Create Pre-Bookings
-  for (let i = 0; i < 2; i++) {
-    await prisma.preBooking.create({
-      data: {
-        buyerId: demoBuyer.id,
-        bulkProductId: bulkProducts[i].id,
-        quantity: 500 + i * 100,
-        pricePerUnit: bulkProducts[i].pricePerUnit,
-        totalPrice: (500 + i * 100) * bulkProducts[i].pricePerUnit,
-        targetDate: new Date(Date.now() + (30 + i * 10) * 24 * 60 * 60 * 1000),
-        status: i === 0 ? "CONFIRMED" : "PENDING",
-        notes: `Pre-booking for ${bulkProducts[i].name}`,
-        confirmedAt: i === 0 ? new Date() : null
-      }
-    });
+  // ─── WALLETS ────────────────────────────────────────────────────────
+  console.log('💰 Creating wallets...');
+  await prisma.wallet.create({ data: { userId: fpoAdmin.id, balance: 50000 } });
+  for (const f of farmers) {
+    await prisma.wallet.create({ data: { userId: f.user.id, balance: 0 } });
+  }
+  // Buyers get initial funds
+  const buyerWallets = [];
+  for (const b of buyers) {
+    const w = await prisma.wallet.create({ data: { userId: b.id, balance: 500000 } });
+    buyerWallets.push(w);
   }
 
-  // 11. Create Bids
-  for (let i = 0; i < 3; i++) {
-    await prisma.bid.create({
-      data: {
-        buyerId: demoBuyer.id,
-        productId: fetchedProducts[i % fetchedProducts.length].id,
-        quantity: 100 + i * 50,
-        pricePerUnit: fetchedProducts[i % fetchedProducts.length].price * (0.9 - i * 0.05),
-        totalPrice: (100 + i * 50) * fetchedProducts[i % fetchedProducts.length].price * (0.9 - i * 0.05),
-        validUntil: new Date(Date.now() + (7 - i) * 24 * 60 * 60 * 1000),
-        status: i === 0 ? "ACCEPTED" : i === 1 ? "COUNTER" : "PENDING",
-        counterOfferPrice: i === 1 ? fetchedProducts[i % fetchedProducts.length].price * 0.85 : null,
-        aiRecommendation: JSON.stringify({ confidence: 0.92, suggestion: "Good market price" }),
-        notes: `Bid for ${fetchedProducts[i % fetchedProducts.length].name}`
-      }
-    });
-  }
-
-  // 12. Create Order Tracking
-  const orders = await prisma.order.findMany({ where: { buyerId: demoBuyer.id } });
-  for (const order of orders) {
-    await prisma.orderTracking.create({
-      data: {
-        orderId: order.id,
-        status: order.status,
-        location: "Nashik, Maharashtra",
-        lat: 19.9975,
-        lng: 73.7898,
-        notes: `Tracking for order ${order.orderNumber}`,
-        estimatedTime: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
-        actualTime: order.status === "DELIVERED" ? new Date() : null
-      }
-    });
-  }
-
-  // 13. Create Bulk Trades
-  for (let i = 0; i < 2; i++) {
-    await prisma.bulkTrade.create({
-      data: {
-        buyerId: demoBuyer.id,
-        bulkProductId: bulkProducts[i].id,
-        quantity: 1000 + i * 500,
-        pricePerUnit: bulkProducts[i].pricePerUnit * 0.95,
-        totalPrice: (1000 + i * 500) * bulkProducts[i].pricePerUnit * 0.95,
-        status: i === 0 ? "MATCHED" : "PENDING",
-        matchedSuppliers: JSON.stringify([supplier.id]),
-        deliveryDate: new Date(Date.now() + (15 + i * 10) * 24 * 60 * 60 * 1000),
-        notes: `Bulk trade for ${bulkProducts[i].name}`
-      }
-    });
-  }
-
-  // 14. Create Blockchain Transactions
-  for (let i = 0; i < 3; i++) {
-    await prisma.blockchainTransaction.create({
-      data: {
-        userId: demoBuyer.id,
-        txHash: `0x${Math.random().toString(16).slice(2)}${Math.random().toString(16).slice(2)}`,
-        type: ["PAYMENT", "ESCROW", "RATING"][i],
-        amount: 50000 + i * 10000,
-        fromAddress: `0xBuyer${i}`,
-        toAddress: `0xSupplier${i}`,
-        status: i === 0 ? "CONFIRMED" : "PENDING",
-        blockNumber: 15000000 + i,
-        gasUsed: 21000 + i * 1000,
-        metadata: JSON.stringify({ orderId: `ORD-${1000 + i}` })
-      }
-    });
-  }
-
-  // 15. Create Security Events
-  for (let i = 0; i < 4; i++) {
-    await prisma.securityEvent.create({
-      data: {
-        userId: demoBuyer.id,
-        eventType: ["LOGIN", "LOGOUT", "PASSWORD_CHANGE", "SUSPICIOUS_ACTIVITY"][i],
-        ipAddress: `192.168.1.${100 + i}`,
-        userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
-        location: ["Mumbai", "Delhi", "Mumbai", "Unknown"][i],
-        riskLevel: i === 3 ? "HIGH" : "LOW",
-        blocked: i === 3,
-        metadata: JSON.stringify({ timestamp: new Date().toISOString() })
-      }
-    });
-  }
-
-  // 16. Create Chat Messages
-  const conversation = await prisma.chatConversation.create({
+  // Add wallet transaction for buyer funds
+  await prisma.walletTransaction.create({
     data: {
-      user1Id: demoBuyer.id,
-      user2Id: demoFarmer.id
-    }
+      walletId: buyerWallets[0].id,
+      type: 'ADD_FUNDS',
+      amount: 500000,
+      balanceBefore: 0,
+      balanceAfter: 500000,
+      description: 'Initial deposit via NEFT',
+    },
   });
 
-  for (let i = 0; i < 3; i++) {
-    await prisma.chatMessage.create({
+  // ─── FARMS ──────────────────────────────────────────────────────────
+  console.log('🌾 Creating farms...');
+  const farmDetails = [
+    { district: 'Nanded',  state: 'Maharashtra', location: 'Hadgaon, Nanded',     area: 5.5,  soil: 'Black Cotton', irrigation: 'Drip' },
+    { district: 'Nanded',  state: 'Maharashtra', location: 'Biloli, Nanded',      area: 3.2,  soil: 'Black Cotton', irrigation: 'Borewell' },
+    { district: 'Latur',   state: 'Maharashtra', location: 'Ausa, Latur',         area: 8.0,  soil: 'Medium Black', irrigation: 'Canal' },
+    { district: 'Pune',    state: 'Maharashtra', location: 'Junnar, Pune',        area: 12.0, soil: 'Red Laterite', irrigation: 'Well' },
+    { district: 'Nashik',  state: 'Maharashtra', location: 'Dindori, Nashik',     area: 6.5,  soil: 'Red Soil',     irrigation: 'Drip' },
+  ];
+
+  for (let i = 0; i < farmers.length; i++) {
+    await prisma.farm.create({
       data: {
-        conversationId: conversation.id,
-        senderId: i % 2 === 0 ? demoBuyer.id : demoFarmer.id,
-        content: i % 2 === 0 
-          ? `Can you provide bulk pricing for 1000kg of ${bulkProducts[0].name}?`
-          : `Yes, we can offer special pricing for bulk orders. Let me send you a quote.`,
-        type: "text",
-        isRead: true
-      }
+        farmerId: farmers[i].user.id,
+        location: farmDetails[i].location,
+        district: farmDetails[i].district,
+        state: farmDetails[i].state,
+        areaAcres: farmDetails[i].area,
+        soilType: farmDetails[i].soil,
+        irrigationType: farmDetails[i].irrigation,
+        photos: JSON.stringify([]),
+      },
     });
   }
 
-  // 17. Create Behavior Events
-  for (let i = 0; i < 5; i++) {
-    await prisma.behaviorEvent.create({
+  // ─── FPO ────────────────────────────────────────────────────────────
+  console.log('🏢 Creating FPO...');
+  const fpo = await prisma.fPO.create({
+    data: {
+      adminUserId: fpoAdmin.id,
+      name: 'Marathwada Kisan Sangha',
+      registrationNo: 'MH-FPO-2024-NAN-001',
+      bankAccount: '9876543210123',
+      ifsc: 'SBIN0005678',
+      district: 'Nanded',
+      state: 'Maharashtra',
+    },
+  });
+
+  // ─── FPO FARMERS ────────────────────────────────────────────────────
+  console.log('👨‍🌾 Onboarding farmers to FPO...');
+  const fpoFarmers = [];
+  for (const f of farmers) {
+    const fpoFarmer = await prisma.fPOFarmer.create({
       data: {
-        userId: demoBuyer.id,
-        action: ["VIEW", "SEARCH", "BUY", "BID", "VIEW"][i],
-        category: ["PRODUCT", "PRODUCT", "CONTRACT", "PRODUCT", "LOGISTICS"][i],
-        metadata: JSON.stringify({ 
-          productId: fetchedProducts[i % fetchedProducts.length].id,
-          timestamp: new Date().toISOString()
-        })
-      }
+        fpoId: fpo.id,
+        name: f.user.name,
+        phone: f.user.phone,
+        aadhaar: f.user.aadhaar || '1234 5678 9012',
+        bankAccount: f.user.bankAccount,
+        ifsc: f.user.ifsc,
+        district: f.district,
+        photos: JSON.stringify([]),
+      },
+    });
+    fpoFarmers.push(fpoFarmer);
+  }
+
+  // ─── CROPS ──────────────────────────────────────────────────────────
+  console.log('🌿 Listing crops...');
+  const cropListings = [
+    { farmer: 0, name: 'Wheat',   cat: 'Grains',      variety: 'Lokwan',         qty: 500,  price: 28, grade: 'A' },
+    { farmer: 0, name: 'Soybean', cat: 'Pulses',      variety: 'JS-335',         qty: 300,  price: 52, grade: 'A' },
+    { farmer: 1, name: 'Wheat',   cat: 'Grains',      variety: 'Lokwan',         qty: 800,  price: 27, grade: 'A' },
+    { farmer: 1, name: 'Cotton',  cat: 'Fibers',      variety: 'Bt Cotton',      qty: 200,  price: 65, grade: 'B' },
+    { farmer: 2, name: 'Soybean', cat: 'Pulses',      variety: 'JS-335',         qty: 600,  price: 50, grade: 'A' },
+    { farmer: 2, name: 'Cotton',  cat: 'Fibers',      variety: 'Bt Cotton',      qty: 400,  price: 68, grade: 'A' },
+    { farmer: 3, name: 'Onion',   cat: 'Vegetables',  variety: 'Nasik Red',      qty: 1500, price: 18, grade: 'A' },
+    { farmer: 3, name: 'Tomato',  cat: 'Vegetables',  variety: 'Hybrid Abhijeet',qty: 800,  price: 22, grade: 'B' },
+    { farmer: 4, name: 'Rice',    cat: 'Grains',      variety: 'Kolam',          qty: 1000, price: 38, grade: 'A' },
+    { farmer: 4, name: 'Onion',   cat: 'Vegetables',  variety: 'Nasik Red',      qty: 700,  price: 20, grade: 'B' },
+  ];
+
+  const crops = [];
+  for (const c of cropListings) {
+    const crop = await prisma.crop.create({
+      data: {
+        farmerId: farmers[c.farmer].user.id,
+        fpoFarmerId: fpoFarmers[c.farmer].id,
+        fpoId: fpo.id,
+        cropName: c.name,
+        category: c.cat,
+        variety: c.variety,
+        quantity: c.qty,
+        pricePerKg: c.price,
+        grade: c.grade,
+        status: 'LISTED',
+      },
+    });
+    crops.push(crop);
+  }
+
+  // ─── AGGREGATED LOTS ────────────────────────────────────────────────
+  console.log('📦 Creating aggregated lots...');
+
+  // Aggregate Wheat (crops[0] + crops[2])
+  const wheatLot = await prisma.aggregatedLot.create({
+    data: {
+      fpoId: fpo.id,
+      cropName: 'Wheat',
+      totalQuantity: 1300,
+      pricePerKg: 27.38,
+      status: 'LISTED',
+    },
+  });
+  await prisma.crop.updateMany({
+    where: { id: { in: [crops[0].id, crops[2].id] } },
+    data: { isAggregated: true, aggregatedLotId: wheatLot.id },
+  });
+
+  // Aggregate Soybean (crops[1] + crops[4])
+  const soybeanLot = await prisma.aggregatedLot.create({
+    data: {
+      fpoId: fpo.id,
+      cropName: 'Soybean',
+      totalQuantity: 900,
+      pricePerKg: 50.67,
+      status: 'LISTED',
+    },
+  });
+  await prisma.crop.updateMany({
+    where: { id: { in: [crops[1].id, crops[4].id] } },
+    data: { isAggregated: true, aggregatedLotId: soybeanLot.id },
+  });
+
+  // Aggregate Onion (crops[6] + crops[9])
+  const onionLot = await prisma.aggregatedLot.create({
+    data: {
+      fpoId: fpo.id,
+      cropName: 'Onion',
+      totalQuantity: 2200,
+      pricePerKg: 18.64,
+      status: 'LISTED',
+    },
+  });
+  await prisma.crop.updateMany({
+    where: { id: { in: [crops[6].id, crops[9].id] } },
+    data: { isAggregated: true, aggregatedLotId: onionLot.id },
+  });
+
+  // ─── ORDERS ────────────────────────────────────────────────────────
+  console.log('📋 Creating orders...');
+
+  // Completed order (Wheat lot → delivered + escrow released)
+  const completedOrder = await prisma.order.create({
+    data: {
+      buyerId: buyers[0].id,
+      lotId: wheatLot.id,
+      quantity: 1300,
+      totalAmount: 1300 * 27.38,
+      status: 'DELIVERED',
+      escrowStatus: 'RELEASED',
+      deliveryAddress: 'Agarwal Agro Industries, MIDC Waluj, Aurangabad 431136',
+    },
+  });
+
+  // Escrow transaction for completed order
+  await prisma.escrowTransaction.create({
+    data: {
+      orderId: completedOrder.id,
+      buyerId: buyers[0].id,
+      sellerId: fpoAdmin.id,
+      amount: completedOrder.totalAmount,
+      status: 'RELEASED',
+      heldAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+      releasedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+    },
+  });
+
+  // Farmer earnings for completed order
+  const wheatFarmers = [
+    { id: farmers[0].user.id, qty: 500 },
+    { id: farmers[1].user.id, qty: 800 },
+  ];
+  for (const wf of wheatFarmers) {
+    const share = (wf.qty / 1300) * completedOrder.totalAmount;
+    const fee = share * 0.02;
+    await prisma.farmerEarning.create({
+      data: {
+        farmerId: wf.id,
+        orderId: completedOrder.id,
+        amount: share - fee,
+        platformFee: fee,
+        status: 'COMPLETED',
+        paidAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+      },
     });
   }
 
-  // 18. Create Escrow Orders
-  if (orders.length > 0) {
-    for (let i = 0; i < Math.min(2, orders.length); i++) {
-      await prisma.escrowOrder.create({
-        data: {
-          orderId: orders[i].id,
-          buyerId: demoBuyer.id,
-          farmerId: demoFarmer.id,
-          amount: orders[i].totalPrice,
-          status: i === 0 ? "RELEASED" : "HELD",
-          escrowAddress: `0xEscrow${i}`,
-          depositTxHash: `0xDeposit${i}`,
-          releaseTxHash: i === 0 ? `0xRelease${i}` : null,
-          buyerConfirmed: i === 0,
-          farmerDelivered: i === 0,
-          releasedAt: i === 0 ? new Date() : null
-        }
-      });
+  // Pending order (Soybean lot → confirmed, escrow held)
+  const pendingOrder = await prisma.order.create({
+    data: {
+      buyerId: buyers[1].id,
+      lotId: soybeanLot.id,
+      quantity: 900,
+      totalAmount: 900 * 50.67,
+      status: 'IN_TRANSIT',
+      escrowStatus: 'HELD',
+      deliveryAddress: 'NutriGrain Processing Plant, Satara Road, Pune 411009',
+    },
+  });
+
+  await prisma.escrowTransaction.create({
+    data: {
+      orderId: pendingOrder.id,
+      buyerId: buyers[1].id,
+      sellerId: fpoAdmin.id,
+      amount: pendingOrder.totalAmount,
+      status: 'HELD',
+      heldAt: new Date(),
+    },
+  });
+
+  // ─── MARKET PRICES (6 months × 6 crops × 4 districts) ──────────────
+  console.log('📊 Seeding market price history...');
+
+  const cropPrices: Record<string, { base: number; variance: number; variety: string }> = {
+    Wheat:   { base: 26, variance: 5,  variety: 'Lokwan' },
+    Rice:    { base: 36, variance: 6,  variety: 'Kolam' },
+    Soybean: { base: 48, variance: 8,  variety: 'JS-335' },
+    Cotton:  { base: 62, variance: 10, variety: 'Bt Cotton' },
+    Onion:   { base: 15, variance: 12, variety: 'Nasik Red' },
+    Tomato:  { base: 18, variance: 15, variety: 'Hybrid' },
+  };
+
+  const districts = ['Nanded', 'Latur', 'Pune', 'Nashik'];
+  const now = new Date();
+
+  for (const [cropName, info] of Object.entries(cropPrices)) {
+    for (const district of districts) {
+      for (let day = 0; day < 180; day++) {
+        const date = new Date(now.getTime() - day * 24 * 60 * 60 * 1000);
+        // Simulate price fluctuation with seasonal trend
+        const seasonalFactor = 1 + 0.1 * Math.sin((day / 30) * Math.PI);
+        const noise = (Math.random() - 0.5) * info.variance;
+        const districtFactor = district === 'Pune' ? 1.05 : district === 'Nashik' ? 1.03 : 1;
+        const price = Math.round((info.base * seasonalFactor + noise) * districtFactor * 100) / 100;
+
+        await prisma.marketPrice.create({
+          data: {
+            cropName,
+            variety: info.variety,
+            grade: 'A',
+            pricePerKg: Math.max(price, info.base * 0.6), // floor at 60% of base
+            district,
+            recordedAt: date,
+          },
+        });
+      }
     }
   }
 
-  console.log("✨ Seed complete! Premium Hackathon dummy data with Phase 2 models injected.");
+  // ─── QUALITY CERTIFICATES ──────────────────────────────────────────
+  console.log('📜 Adding quality certificates...');
+  await prisma.qualityCertificate.create({
+    data: {
+      cropId: crops[0].id,
+      uploadedBy: fpoAdmin.id,
+      fileUrl: '/uploads/cert-wheat-gradeA-sample.pdf',
+      verifiedByFPO: true,
+      aiScore: 92.5,
+    },
+  });
+  await prisma.qualityCertificate.create({
+    data: {
+      cropId: crops[1].id,
+      uploadedBy: fpoAdmin.id,
+      fileUrl: '/uploads/cert-soybean-gradeA-sample.pdf',
+      verifiedByFPO: true,
+      aiScore: 88.0,
+    },
+  });
+
+  // ─── CHAT MESSAGES ────────────────────────────────────────────────
+  console.log('💬 Adding sample chat messages...');
+  const chatMessages = [
+    { from: buyers[0].id, to: fpoAdmin.id, content: 'Namaste! I need 1300kg Grade-A Lokwan wheat. Can you provide quality certificate?', order: completedOrder.id },
+    { from: fpoAdmin.id, to: buyers[0].id, content: 'Namaskar ji! Yes, certificate uploaded. Our wheat is freshly harvested from Hadgaon and Biloli farms.', order: completedOrder.id },
+    { from: buyers[0].id, to: fpoAdmin.id, content: 'Great. I have placed the order. Please dispatch within 3 days.', order: completedOrder.id },
+    { from: fpoAdmin.id, to: buyers[0].id, content: 'Order dispatched today morning via truck. Expected delivery in 2 days. Invoice attached.', order: completedOrder.id },
+    { from: buyers[1].id, to: fpoAdmin.id, content: 'We are interested in your soybean lot. What is the moisture content?', order: pendingOrder.id },
+    { from: fpoAdmin.id, to: buyers[1].id, content: 'Moisture is 10-12%. Lab-tested certificate available. Shall I share it?', order: pendingOrder.id },
+  ];
+
+  for (let i = 0; i < chatMessages.length; i++) {
+    const m = chatMessages[i];
+    await prisma.message.create({
+      data: {
+        senderId: m.from,
+        receiverId: m.to,
+        content: m.content,
+        orderId: m.order,
+        read: i < 4,
+        createdAt: new Date(now.getTime() - (chatMessages.length - i) * 3600000),
+      },
+    });
+  }
+
+  // ─── SUMMARY ────────────────────────────────────────────────────────
+  console.log('\n✅ Seeding complete!\n');
+  console.log('═══════════════════════════════════════════');
+  console.log('  📋 Login Credentials (all password: Test@1234)');
+  console.log('═══════════════════════════════════════════');
+  console.log('  FPO Admin:  fpo@test.com    / 9876543210');
+  console.log('  Farmer 1:   farmer@test.com / 9876543211');
+  console.log('  Buyer 1:    buyer@test.com  / 9876543220');
+  console.log('═══════════════════════════════════════════');
+  console.log(`  Users: 8 | Farms: 5 | FPO: 1 | Crops: 10`);
+  console.log(`  Lots: 3 | Orders: 2 | Market Prices: ${180 * 6 * 4}`);
+  console.log('═══════════════════════════════════════════\n');
 }
 
 main()
   .catch((e) => {
-    console.error(e);
+    console.error('❌ Seed failed:', e);
     process.exit(1);
   })
   .finally(async () => {

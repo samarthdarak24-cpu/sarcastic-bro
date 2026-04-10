@@ -106,25 +106,37 @@ export const productService = {
 
   // Create product (alias)
   async create(data: any): Promise<Product> {
-    const response = await api.post('/products', data);
+    const isFormData = data instanceof FormData;
+    const response = await api.post('/products', data, {
+      headers: isFormData ? { 'Content-Type': undefined } : {}
+    });
     return response.data.data || response.data;
   },
 
   // Create product
-  async createProduct(data: CreateProductData): Promise<Product> {
-    const response = await api.post('/products', data);
+  async createProduct(data: any): Promise<Product> {
+    const isFormData = data instanceof FormData;
+    const response = await api.post('/products', data, {
+      headers: isFormData ? { 'Content-Type': undefined } : {}
+    });
     return response.data;
   },
 
   // Update product (alias)
-  async update(id: string, data: Partial<CreateProductData>): Promise<Product> {
-    const response = await api.patch(`/products/${id}`, data);
+  async update(id: string, data: Partial<CreateProductData> | FormData): Promise<Product> {
+    const isFormData = data instanceof FormData;
+    const response = await api.patch(`/products/${id}`, data, {
+      headers: isFormData ? { 'Content-Type': undefined } : {}
+    });
     return response.data.data || response.data;
   },
 
   // Update product
-  async updateProduct(id: string, data: Partial<CreateProductData>): Promise<Product> {
-    const response = await api.put(`/products/${id}`, data);
+  async updateProduct(id: string, data: Partial<CreateProductData> | FormData): Promise<Product> {
+    const isFormData = data instanceof FormData;
+    const response = await api.put(`/products/${id}`, data, {
+      headers: isFormData ? { 'Content-Type': undefined } : {}
+    });
     return response.data;
   },
 

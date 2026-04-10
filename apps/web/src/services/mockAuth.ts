@@ -1,84 +1,66 @@
-// Mock authentication service for development/testing
-// This simulates backend responses without needing a running server
-
-export interface MockUser {
-  id: string;
-  name: string;
-  email: string;
-  role: 'FARMER' | 'BUYER';
-  phone?: string;
+// Mock authentication service for development/fallback
+export interface AuthResponse {
+  token: string;
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    role: 'FARMER' | 'BUYER' | 'FPO';
+  };
 }
 
-// Mock database of users
-const mockUsers: Record<string, { password: string; user: MockUser }> = {
-  'farmer@test.com': {
+// Mock users database
+const mockUsers = [
+  {
+    id: '1',
+    name: 'Rajesh Kumar',
+    email: 'farmer@test.com',
     password: 'Farmer123',
-    user: {
-      id: 'farmer-001',
-      name: 'Rajesh Kumar',
-      email: 'farmer@test.com',
-      role: 'FARMER',
-      phone: '9876543210'
-    }
+    role: 'FARMER' as const,
   },
-  'buyer@test.com': {
+  {
+    id: '2',
+    name: 'Priya Sharma',
+    email: 'buyer@test.com',
     password: 'Buyer123',
-    user: {
-      id: 'buyer-001',
-      name: 'Priya Sharma',
-      email: 'buyer@test.com',
-      role: 'BUYER',
-      phone: '9123456789'
-    }
-  }
-};
+    role: 'BUYER' as const,
+  },
+  {
+    id: '3',
+    name: 'Sahakari FPO',
+    email: 'fpo@test.com',
+    password: 'Fpo123',
+    role: 'FPO' as const,
+  },
+];
 
 export const mockAuthService = {
-  async login(email: string, password: string) {
+  async login(email: string, password: string): Promise<AuthResponse> {
+    console.log('🔧 Mock Auth: Login attempt', { email });
+    
     // Simulate network delay
     await new Promise(resolve => setTimeout(resolve, 500));
-
-    const user = mockUsers[email.toLowerCase()];
+    
+    const user = mockUsers.find(
+      u => u.email.toLowerCase() === email.toLowerCase() && u.password === password
+    );
     
     if (!user) {
-      throw {
-        response: {
-          status: 401,
-          data: {
-            message: 'Invalid email or password'
-          }
-        }
-      };
+      throw new Error('Invalid email or password');
     }
-
-    if (user.password !== password) {
-      throw {
-        response: {
-          status: 401,
-          data: {
-            message: 'Invalid email or password'
-          }
-        }
-      };
-    }
-
-    // Generate mock tokens
-    const accessToken = `mock_access_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    const refreshToken = `mock_refresh_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-
-    console.log('✅ Mock login successful:', { 
-      email: user.user.email, 
-      role: user.user.role,
-      name: user.user.name 
-    });
-
+    
+    const token = `mock-token-${user.id}-${Date.now()}`;
+    
+    console.log('✅ Mock Auth: Login successful', { user: user.name, role: user.role });
+    
     return {
-      tokens: {
-        accessToken,
-        refreshToken
+      token,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
       },
-      token: accessToken, // For backward compatibility
-      user: user.user
     };
   },
 
@@ -86,92 +68,46 @@ export const mockAuthService = {
     name: string;
     email: string;
     password: string;
-    role: 'FARMER' | 'BUYER';
+    role: 'FARMER' | 'BUYER' | 'FPO';
     phone?: string;
-  }) {
+  }): Promise<AuthResponse> {
+    console.log('🔧 Mock Auth: Registration attempt', { email: data.email, role: data.role });
+    
     // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 800));
-
-    const email = data.email.toLowerCase();
-
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
     // Check if user already exists
-    if (mockUsers[email]) {
-      throw {
-        response: {
-          status: 400,
-          data: {
-            message: 'Email already registered'
-          }
-        }
-      };
+    const existingUser = mockUsers.find(
+      u => u.email.toLowerCase() === data.email.toLowerCase()
+    );
+    
+    if (existingUser) {
+      throw new Error('User with this email already exists');
     }
-
-    // Validate password format
-    if (data.password.length < 8) {
-      throw {
-        response: {
-          status: 400,
-          data: {
-            message: 'Password must be at least 8 characters'
-          }
-        }
-      };
-    }
-
-    if (!/[A-Z]/.test(data.password)) {
-      throw {
-        response: {
-          status: 400,
-          data: {
-            message: 'Password must contain at least one uppercase letter'
-          }
-        }
-      };
-    }
-
-    if (!/[0-9]/.test(data.password)) {
-      throw {
-        response: {
-          status: 400,
-          data: {
-            message: 'Password must contain at least one number'
-          }
-        }
-      };
-    }
-
+    
     // Create new user
-    const newUser: MockUser = {
-      id: `${data.role.toLowerCase()}-${Date.now()}`,
+    const newUser = {
+      id: `${mockUsers.length + 1}`,
       name: data.name,
-      email: email,
-      role: data.role,
-      phone: data.phone
-    };
-
-    // Store in mock database
-    mockUsers[email] = {
+      email: data.email,
       password: data.password,
-      user: newUser
+      role: data.role,
     };
-
-    // Generate mock tokens
-    const accessToken = `mock_access_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    const refreshToken = `mock_refresh_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-
-    console.log('✅ Mock registration successful:', { 
-      email: newUser.email, 
-      role: newUser.role,
-      name: newUser.name 
-    });
-
+    
+    mockUsers.push(newUser);
+    
+    const token = `mock-token-${newUser.id}-${Date.now()}`;
+    
+    console.log('✅ Mock Auth: Registration successful', { user: newUser.name, role: newUser.role });
+    
     return {
-      tokens: {
-        accessToken,
-        refreshToken
+      token,
+      user: {
+        id: newUser.id,
+        name: newUser.name,
+        email: newUser.email,
+        role: newUser.role,
       },
-      token: accessToken, // For backward compatibility
-      user: newUser
     };
-  }
+  },
 };

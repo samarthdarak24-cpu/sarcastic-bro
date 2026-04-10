@@ -8,6 +8,7 @@ export interface AuthRequest extends Request {
     email: string;
     role: string;
     userId?: string;
+    fpoId?: string;
   };
 }
 
@@ -29,7 +30,8 @@ export const authenticateToken = (
       id: decoded.userId || decoded.id,
       userId: decoded.userId || decoded.id,
       email: decoded.email,
-      role: decoded.role
+      role: decoded.role,
+      fpoId: decoded.fpoId
     };
     next();
   } catch (error) {
@@ -60,6 +62,7 @@ export const requireRole = (...roles: string[]) => {
 
 export const requireBuyer = requireRole('BUYER', 'ADMIN');
 export const requireFarmer = requireRole('FARMER', 'ADMIN');
+export const requireFPO = requireRole('FPO', 'ADMIN');
 export const requireAdmin = requireRole('ADMIN');
 
 // Rate limiting middleware
