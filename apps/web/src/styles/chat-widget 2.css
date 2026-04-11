@@ -1,0 +1,179 @@
+/* N8N Chat Widget Styles */
+
+.chat-button {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 99999;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background-color: #10b981;
+  border: 3px solid white;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 20px rgba(16, 185, 129, 0.5);
+  transition: all 0.3s ease;
+  font-size: 24px;
+  padding: 0;
+  font-family: inherit;
+}
+
+.chat-button:hover {
+  background-color: #059669;
+  box-shadow: 0 6px 25px rgba(16, 185, 129, 0.6);
+  transform: scale(1.1);
+}
+
+.chat-button:active {
+  transform: scale(0.95);
+}
+
+.chat-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 99998;
+  background-color: rgba(0, 0, 0, 0.3);
+}
+
+.chat-modal {
+  position: fixed;
+  bottom: 96px;
+  right: 24px;
+  z-index: 99999;
+  width: 384px;
+  max-width: calc(100vw - 48px);
+  height: 600px;
+  max-height: calc(100vh - 150px);
+  border-radius: 16px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(16, 185, 129, 0.2);
+  overflow: hidden;
+  background-color: white;
+  display: flex;
+  flex-direction: column;
+}
+
+.chat-modal-header {
+  background-color: #10b981;
+  color: white;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: none;
+  flex-shrink: 0;
+}
+
+.chat-modal-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.3px;
+}
+
+.chat-modal-header p {
+  margin: 4px 0 0 0;
+  font-size: 12px;
+  color: #d1fae5;
+}
+
+.chat-modal-header-close {
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+  margin-left: 12px;
+}
+
+.chat-modal-header-close:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+.chat-modal-content {
+  flex: 1;
+  overflow: hidden;
+  width: 100%;
+  background-color: white;
+}
+
+/* Hide n8n web component header and styling */
+.chat-modal-content n8n-embedded-chat-interface {
+  display: contents;
+}
+
+.chat-modal-content n8n-embedded-chat-interface::part(header) {
+  display: none !important;
+}
+
+.chat-modal-content n8n-embedded-chat-interface::part(title) {
+  display: none !important;
+}
+
+/* Style the web component content area */
+.chat-modal-content > div {
+  width: 100%;
+  height: 100%;
+}
+
+.debug-info {
+  position: fixed;
+  bottom: 8px;
+  left: 8px;
+  font-size: 12px;
+  color: #999;
+  pointer-events: none;
+  background-color: rgba(255, 255, 255, 0.9);
+  padding: 8px;
+  border-radius: 4px;
+  font-family: monospace;
+  z-index: 99997;
+}
+
+.debug-info div {
+  margin: 2px 0;
+}
+
+/* Mobile responsive */
+@media (max-width: 640px) {
+  .chat-button {
+    bottom: 16px;
+    right: 16px;
+    width: 48px;
+    height: 48px;
+    font-size: 20px;
+  }
+
+  .chat-modal {
+    bottom: 80px;
+    right: 16px;
+    width: calc(100vw - 32px);
+    max-width: 100%;
+    height: 70vh;
+    border-radius: 12px;
+  }
+
+  .chat-modal-header {
+    padding: 12px;
+  }
+
+  .chat-modal-header h3 {
+    font-size: 14px;
+  }
+
+  .chat-modal-header p {
+    font-size: 11px;
+  }
+}

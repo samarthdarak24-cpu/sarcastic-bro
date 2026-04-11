@@ -1,0 +1,19 @@
+{
+  "dashboard": "Overview",
+  "profile": "Profile",
+  "orders": "Orders",
+  "reports": "Reports",
+  "market": "Bazaar",
+  "community": "Samuday",
+  "logout": "Logout",
+  "search_placeholder": "Marketplace mein dhundein...",
+  "profile_settings": "Profile Settings",
+  "personal_info": "Personal jankari",
+  "address": "Pata",
+  "phone": "Phone Number",
+  "update": "Profile Update karein",
+  "save_changes": "Changes save karein",
+  "change_photo": "Photo change karein",
+  "language": "Bhasha",
+  "hello": "Namaste"
+}
